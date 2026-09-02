@@ -40,12 +40,11 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Future<void> _showAddAccountDialog(
-    BuildContext context,
     FinanceStore store,
   ) async {
     _controller.clear();
 
-    await showDialog<void>(
+    final name = await showDialog<String>(
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
@@ -62,11 +61,14 @@ class _SettingsPageState extends State<SettingsPage> {
                 Icons.account_balance_wallet_outlined,
               ),
             ),
-            onSubmitted: (_) async {
-              await _saveNewAccount(
-                dialogContext,
-                store,
-              );
+            onSubmitted: (_) {
+              final value = _controller.text.trim();
+
+              if (value.isEmpty) {
+                return;
+              }
+
+              Navigator.of(dialogContext).pop(value);
             },
           ),
           actions: [
@@ -77,11 +79,14 @@ class _SettingsPageState extends State<SettingsPage> {
               child: const Text('Batal'),
             ),
             FilledButton(
-              onPressed: () async {
-                await _saveNewAccount(
-                  dialogContext,
-                  store,
-                );
+              onPressed: () {
+                final value = _controller.text.trim();
+
+                if (value.isEmpty) {
+                  return;
+                }
+
+                Navigator.of(dialogContext).pop(value);
               },
               child: const Text('Tambah'),
             ),
@@ -89,65 +94,25 @@ class _SettingsPageState extends State<SettingsPage> {
         );
       },
     );
-  }
 
-  Future<void> _saveNewAccount(
-    BuildContext dialogContext,
-    FinanceStore store,
-  ) async {
-    final name = _controller.text.trim();
-
-    if (name.isEmpty) {
-      ScaffoldMessenger.of(dialogContext)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Nama akun wajib diisi.',
-            ),
-          ),
-        );
+    if (name == null || name.trim().isEmpty || !mounted) {
       return;
     }
 
-    final success = await store.addAccount(name);
-
-    if (!dialogContext.mounted) {
-      return;
-    }
-
-    if (!success) {
-      ScaffoldMessenger.of(dialogContext)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Akun gagal ditambahkan. Nama mungkin sudah digunakan.',
-            ),
-          ),
-        );
-      return;
-    }
-
-    Navigator.of(dialogContext).pop();
+    final success = await store.addAccount(name.trim());
 
     if (!mounted) {
       return;
     }
 
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(
-            '$name berhasil ditambahkan.',
-          ),
-        ),
-      );
+    _showMessage(
+      success
+          ? '${name.trim()} berhasil ditambahkan.'
+          : 'Akun gagal ditambahkan. Nama mungkin sudah digunakan.',
+    );
   }
 
   Future<void> _showRenameAccountDialog(
-    BuildContext context,
     FinanceStore store,
     String oldName,
   ) async {
@@ -157,7 +122,7 @@ class _SettingsPageState extends State<SettingsPage> {
       extentOffset: _controller.text.length,
     );
 
-    await showDialog<void>(
+    final newName = await showDialog<String>(
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
@@ -173,12 +138,14 @@ class _SettingsPageState extends State<SettingsPage> {
                 Icons.edit_outlined,
               ),
             ),
-            onSubmitted: (_) async {
-              await _saveRenamedAccount(
-                dialogContext,
-                store,
-                oldName,
-              );
+            onSubmitted: (_) {
+              final value = _controller.text.trim();
+
+              if (value.isEmpty) {
+                return;
+              }
+
+              Navigator.of(dialogContext).pop(value);
             },
           ),
           actions: [
@@ -189,12 +156,14 @@ class _SettingsPageState extends State<SettingsPage> {
               child: const Text('Batal'),
             ),
             FilledButton(
-              onPressed: () async {
-                await _saveRenamedAccount(
-                  dialogContext,
-                  store,
-                  oldName,
-                );
+              onPressed: () {
+                final value = _controller.text.trim();
+
+                if (value.isEmpty) {
+                  return;
+                }
+
+                Navigator.of(dialogContext).pop(value);
               },
               child: const Text('Simpan'),
             ),
@@ -202,87 +171,41 @@ class _SettingsPageState extends State<SettingsPage> {
         );
       },
     );
-  }
 
-  Future<void> _saveRenamedAccount(
-    BuildContext dialogContext,
-    FinanceStore store,
-    String oldName,
-  ) async {
-    final newName = _controller.text.trim();
-
-    if (newName.isEmpty) {
-      ScaffoldMessenger.of(dialogContext)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Nama akun wajib diisi.',
-            ),
-          ),
-        );
+    if (newName == null || newName.trim().isEmpty || !mounted) {
       return;
     }
 
-    if (newName == oldName) {
-      Navigator.of(dialogContext).pop();
+    final trimmedName = newName.trim();
+
+    if (trimmedName == oldName) {
       return;
     }
 
     final success = await store.renameAccount(
       oldName,
-      newName,
+      trimmedName,
     );
-
-    if (!dialogContext.mounted) {
-      return;
-    }
-
-    if (!success) {
-      ScaffoldMessenger.of(dialogContext)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Nama akun tidak dapat digunakan atau sudah ada.',
-            ),
-          ),
-        );
-      return;
-    }
-
-    Navigator.of(dialogContext).pop();
 
     if (!mounted) {
       return;
     }
 
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Nama akun berhasil diperbarui.',
-          ),
-        ),
-      );
+    _showMessage(
+      success
+          ? 'Nama akun berhasil diperbarui.'
+          : 'Nama akun tidak dapat digunakan atau sudah ada.',
+    );
   }
 
   Future<void> _showDeleteAccountDialog(
-    BuildContext context,
     FinanceStore store,
     String name,
   ) async {
     if (store.accounts.length <= 1) {
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Minimal harus ada satu akun keuangan.',
-            ),
-          ),
-        );
+      _showMessage(
+        'Minimal harus ada satu akun keuangan.',
+      );
       return;
     }
 
@@ -319,25 +242,18 @@ class _SettingsPageState extends State<SettingsPage> {
 
     final success = await store.deleteAccount(name);
 
-    if (!context.mounted) {
+    if (!mounted) {
       return;
     }
 
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(
-            success
-                ? 'Akun berhasil dihapus.'
-                : 'Akun tidak dapat dihapus.',
-          ),
-        ),
-      );
+    _showMessage(
+      success
+          ? 'Akun berhasil dihapus.'
+          : 'Akun tidak dapat dihapus.',
+    );
   }
 
   void _selectAccount(
-    BuildContext context,
     FinanceStore store,
     String name,
   ) {
@@ -347,15 +263,9 @@ class _SettingsPageState extends State<SettingsPage> {
 
     store.setActiveAccount(name);
 
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(
-            '$name sekarang menjadi akun aktif.',
-          ),
-        ),
-      );
+    _showMessage(
+      '$name sekarang menjadi akun aktif.',
+    );
   }
 
   Future<List<String>> _loadCategories(
@@ -367,7 +277,6 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Future<void> _showAddCategoryDialog(
-    BuildContext context,
     FinanceStore store,
   ) async {
     if (store.activeAccount == null) {
@@ -379,7 +288,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
     _controller.clear();
 
-    await showDialog<void>(
+    final name = await showDialog<String>(
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
@@ -396,11 +305,14 @@ class _SettingsPageState extends State<SettingsPage> {
                 Icons.category_outlined,
               ),
             ),
-            onSubmitted: (_) async {
-              await _saveNewCategory(
-                dialogContext,
-                store,
-              );
+            onSubmitted: (_) {
+              final value = _controller.text.trim();
+
+              if (value.isEmpty) {
+                return;
+              }
+
+              Navigator.of(dialogContext).pop(value);
             },
           ),
           actions: [
@@ -411,11 +323,14 @@ class _SettingsPageState extends State<SettingsPage> {
               child: const Text('Batal'),
             ),
             FilledButton(
-              onPressed: () async {
-                await _saveNewCategory(
-                  dialogContext,
-                  store,
-                );
+              onPressed: () {
+                final value = _controller.text.trim();
+
+                if (value.isEmpty) {
+                  return;
+                }
+
+                Navigator.of(dialogContext).pop(value);
               },
               child: const Text('Tambah'),
             ),
@@ -423,80 +338,51 @@ class _SettingsPageState extends State<SettingsPage> {
         );
       },
     );
-  }
 
-  Future<void> _saveNewCategory(
-    BuildContext dialogContext,
-    FinanceStore store,
-  ) async {
-    final name = _controller.text.trim();
-
-    if (name.isEmpty) {
-      ScaffoldMessenger.of(dialogContext)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Nama kategori wajib diisi.',
-            ),
-          ),
-        );
+    if (name == null || name.trim().isEmpty || !mounted) {
       return;
     }
+
+    final trimmedName = name.trim();
 
     final success = await store.addCategory(
       account: store.activeAccount,
-      name: name,
+      name: trimmedName,
     );
-
-    if (!dialogContext.mounted) {
-      return;
-    }
-
-    if (!success) {
-      ScaffoldMessenger.of(dialogContext)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Kategori gagal ditambahkan. Nama mungkin sudah digunakan.',
-            ),
-          ),
-        );
-      return;
-    }
-
-    Navigator.of(dialogContext).pop();
 
     if (!mounted) {
       return;
     }
 
-    setState(() {});
+    if (success) {
+      setState(() {});
+    }
 
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(
-            '$name berhasil ditambahkan.',
-          ),
-        ),
-      );
+    _showMessage(
+      success
+          ? '$trimmedName berhasil ditambahkan.'
+          : 'Kategori gagal ditambahkan. Nama mungkin sudah digunakan.',
+    );
   }
 
   Future<void> _showRenameCategoryDialog(
-    BuildContext context,
     FinanceStore store,
     String oldName,
   ) async {
+    if (store.activeAccount == null) {
+      _showMessage(
+        'Pilih akun terlebih dahulu.',
+      );
+      return;
+    }
+
     _controller.text = oldName;
     _controller.selection = TextSelection(
       baseOffset: 0,
       extentOffset: _controller.text.length,
     );
 
-    await showDialog<void>(
+    final newName = await showDialog<String>(
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
@@ -512,12 +398,14 @@ class _SettingsPageState extends State<SettingsPage> {
                 Icons.edit_outlined,
               ),
             ),
-            onSubmitted: (_) async {
-              await _saveRenamedCategory(
-                dialogContext,
-                store,
-                oldName,
-              );
+            onSubmitted: (_) {
+              final value = _controller.text.trim();
+
+              if (value.isEmpty) {
+                return;
+              }
+
+              Navigator.of(dialogContext).pop(value);
             },
           ),
           actions: [
@@ -528,12 +416,14 @@ class _SettingsPageState extends State<SettingsPage> {
               child: const Text('Batal'),
             ),
             FilledButton(
-              onPressed: () async {
-                await _saveRenamedCategory(
-                  dialogContext,
-                  store,
-                  oldName,
-                );
+              onPressed: () {
+                final value = _controller.text.trim();
+
+                if (value.isEmpty) {
+                  return;
+                }
+
+                Navigator.of(dialogContext).pop(value);
               },
               child: const Text('Simpan'),
             ),
@@ -541,82 +431,53 @@ class _SettingsPageState extends State<SettingsPage> {
         );
       },
     );
-  }
 
-  Future<void> _saveRenamedCategory(
-    BuildContext dialogContext,
-    FinanceStore store,
-    String oldName,
-  ) async {
-    final newName = _controller.text.trim();
-
-    if (newName.isEmpty) {
-      ScaffoldMessenger.of(dialogContext)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Nama kategori wajib diisi.',
-            ),
-          ),
-        );
+    if (newName == null || newName.trim().isEmpty || !mounted) {
       return;
     }
 
-    if (newName == oldName) {
-      Navigator.of(dialogContext).pop();
+    final trimmedName = newName.trim();
+
+    if (trimmedName == oldName) {
       return;
     }
 
     final success = await store.renameCategory(
       account: store.activeAccount,
       oldName: oldName,
-      newName: newName,
+      newName: trimmedName,
     );
-
-    if (!dialogContext.mounted) {
-      return;
-    }
-
-    if (!success) {
-      ScaffoldMessenger.of(dialogContext)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Kategori tidak dapat digunakan atau sudah ada.',
-            ),
-          ),
-        );
-      return;
-    }
-
-    Navigator.of(dialogContext).pop();
 
     if (!mounted) {
       return;
     }
 
-    setState(() {});
+    if (success) {
+      setState(() {});
+    }
 
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Kategori berhasil diperbarui.',
-          ),
-        ),
-      );
+    _showMessage(
+      success
+          ? 'Kategori berhasil diperbarui.'
+          : 'Kategori tidak dapat digunakan atau sudah ada.',
+    );
   }
 
   Future<void> _showDeleteCategoryDialog(
-    BuildContext context,
     FinanceStore store,
     String name,
   ) async {
+    final account = store.activeAccount;
+
+    if (account == null) {
+      _showMessage(
+        'Pilih akun terlebih dahulu.',
+      );
+      return;
+    }
+
     final used = await store.isCategoryUsed(
-      account: store.activeAccount,
+      account: account,
       name: name,
     );
 
@@ -663,7 +524,7 @@ class _SettingsPageState extends State<SettingsPage> {
     }
 
     final success = await store.deleteCategory(
-      account: store.activeAccount,
+      account: account,
       name: name,
     );
 
@@ -671,7 +532,9 @@ class _SettingsPageState extends State<SettingsPage> {
       return;
     }
 
-    setState(() {});
+    if (success) {
+      setState(() {});
+    }
 
     _showMessage(
       success
@@ -756,8 +619,7 @@ class _SettingsPageState extends State<SettingsPage> {
                           Text(
                             activeAccount ?? 'Belum ada akun',
                             maxLines: 1,
-                            overflow:
-                                TextOverflow.ellipsis,
+                            overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
                               fontSize: 17,
                               fontWeight: FontWeight.w800,
@@ -799,7 +661,6 @@ class _SettingsPageState extends State<SettingsPage> {
                             BorderRadius.circular(22),
                         onTap: () {
                           _selectAccount(
-                            context,
                             store,
                             name,
                           );
@@ -830,15 +691,13 @@ class _SettingsPageState extends State<SettingsPage> {
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment:
-                                      CrossAxisAlignment
-                                          .start,
+                                      CrossAxisAlignment.start,
                                   children: [
                                     Text(
                                       name,
                                       maxLines: 1,
                                       overflow:
-                                          TextOverflow
-                                              .ellipsis,
+                                          TextOverflow.ellipsis,
                                       style:
                                           const TextStyle(
                                         fontSize: 16,
@@ -846,9 +705,7 @@ class _SettingsPageState extends State<SettingsPage> {
                                             FontWeight.w800,
                                       ),
                                     ),
-                                    const SizedBox(
-                                      height: 4,
-                                    ),
+                                    const SizedBox(height: 4),
                                     Text(
                                       isActive
                                           ? 'Sedang digunakan'
@@ -869,25 +726,21 @@ class _SettingsPageState extends State<SettingsPage> {
                               ),
                               PopupMenuButton<String>(
                                 tooltip: 'Menu akun',
-                                onSelected:
-                                    (value) async {
+                                onSelected: (value) async {
                                   if (value == 'select') {
                                     _selectAccount(
-                                      context,
                                       store,
                                       name,
                                     );
                                   } else if (value ==
                                       'rename') {
                                     await _showRenameAccountDialog(
-                                      context,
                                       store,
                                       name,
                                     );
                                   } else if (value ==
                                       'delete') {
                                     await _showDeleteAccountDialog(
-                                      context,
                                       store,
                                       name,
                                     );
@@ -895,8 +748,7 @@ class _SettingsPageState extends State<SettingsPage> {
                                 },
                                 itemBuilder: (_) => [
                                   if (!isActive)
-                                    const PopupMenuItem<
-                                        String>(
+                                    const PopupMenuItem<String>(
                                       value: 'select',
                                       child: Row(
                                         children: [
@@ -923,8 +775,7 @@ class _SettingsPageState extends State<SettingsPage> {
                                   ),
                                   if (store.accounts.length >
                                       1)
-                                    const PopupMenuItem<
-                                        String>(
+                                    const PopupMenuItem<String>(
                                       value: 'delete',
                                       child: Row(
                                         children: [
@@ -951,7 +802,6 @@ class _SettingsPageState extends State<SettingsPage> {
             OutlinedButton.icon(
               onPressed: () async {
                 await _showAddAccountDialog(
-                  context,
                   store,
                 );
               },
@@ -1058,7 +908,6 @@ class _SettingsPageState extends State<SettingsPage> {
                             OutlinedButton.icon(
                               onPressed: () async {
                                 await _showAddCategoryDialog(
-                                  context,
                                   store,
                                 );
                               },
@@ -1127,14 +976,12 @@ class _SettingsPageState extends State<SettingsPage> {
                                       (value) async {
                                     if (value == 'rename') {
                                       await _showRenameCategoryDialog(
-                                        context,
                                         store,
                                         category,
                                       );
                                     } else if (value ==
                                         'delete') {
                                       await _showDeleteCategoryDialog(
-                                        context,
                                         store,
                                         category,
                                       );
@@ -1178,7 +1025,6 @@ class _SettingsPageState extends State<SettingsPage> {
                       OutlinedButton.icon(
                         onPressed: () async {
                           await _showAddCategoryDialog(
-                            context,
                             store,
                           );
                         },
