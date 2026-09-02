@@ -10,6 +10,8 @@ Future<void> main() async {
   final store = FinanceStore();
   await store.load();
 
+  await store.generateDueRecurringTransactions();
+
   runApp(FinanceApp(store: store));
 }
 
