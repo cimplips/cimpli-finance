@@ -16,15 +16,27 @@ class HistoryPage extends StatefulWidget {
 class _HistoryPageState extends State<HistoryPage> {
   String? _selectedCategory;
   TransactionType? _selectedType;
+  String _searchQuery = '';
 
   Future<List<Tx>> _loadTransactions() async {
     final store = FinanceScope.of(context);
 
-    return store.getTransactions(
+    final transactions = await store.getTransactions(
       account: store.activeAccount,
       category: _selectedCategory,
       type: _selectedType,
     );
+
+    final query = _searchQuery.trim().toLowerCase();
+
+    if (query.isEmpty) {
+      return transactions;
+    }
+
+    return transactions.where((transaction) {
+      return transaction.title.toLowerCase().contains(query) ||
+          transaction.category.toLowerCase().contains(query);
+    }).toList();
   }
 
   Future<List<String>> _loadCategories() async {
@@ -371,6 +383,30 @@ class _HistoryPageState extends State<HistoryPage> {
             ),
           ),
           const SizedBox(height: 16),
+          TextField(
+            onChanged: (value) {
+              setState(() {
+                _searchQuery = value;
+              });
+            },
+            textInputAction: TextInputAction.search,
+            decoration: InputDecoration(
+              hintText: 'Cari transaksi atau kategori',
+              prefixIcon: const Icon(Icons.search),
+              suffixIcon: _searchQuery.isNotEmpty
+                  ? IconButton(
+                      tooltip: 'Hapus pencarian',
+                      onPressed: () {
+                        setState(() {
+                          _searchQuery = '';
+                        });
+                      },
+                      icon: const Icon(Icons.clear),
+                    )
+                  : null,
+            ),
+          ),
+          const SizedBox(height: 16),
           if (_selectedCategory != null ||
               _selectedType != null)
             Wrap(
@@ -427,11 +463,14 @@ class _HistoryPageState extends State<HistoryPage> {
                   snapshot.data ?? <Tx>[];
 
               if (transactions.isEmpty) {
-                return const _HistoryMessage(
-                  icon: Icons.receipt_long_outlined,
-                  title: 'Belum ada transaksi',
-                  message:
-                      'Transaksi yang sesuai filter akan muncul di sini.',
+                return _HistoryMessage(
+                  icon: Icons.search_off_outlined,
+                  title: _searchQuery.trim().isEmpty
+                      ? 'Belum ada transaksi'
+                      : 'Transaksi tidak ditemukan',
+                  message: _searchQuery.trim().isEmpty
+                      ? 'Transaksi yang sesuai filter akan muncul di sini.'
+                      : 'Coba gunakan kata kunci lain atau hapus pencarian.',
                 );
               }
 
