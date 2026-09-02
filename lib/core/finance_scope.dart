@@ -1,4 +1,3 @@
-```dart
 import 'package:flutter/widgets.dart';
 
 import '../services/finance_store.dart';
@@ -24,4 +23,3 @@ class FinanceScope extends InheritedNotifier<FinanceStore> {
     return scope!.notifier!;
   }
 }
-```
