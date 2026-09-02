@@ -277,7 +277,7 @@ class _AddTransactionPageState
         category: category,
       );
     } else {
-      final id = await store.addTransaction(
+      await store.addTransaction(
         title: _titleController.text.trim(),
         amount: amount,
         type: _type,
@@ -286,7 +286,7 @@ class _AddTransactionPageState
         category: category,
       );
 
-      success = id != null;
+      success = true;
     }
 
     if (!mounted) {
