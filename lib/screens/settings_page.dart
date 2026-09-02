@@ -131,7 +131,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
     Navigator.of(dialogContext).pop();
 
-    if (!context.mounted) {
+    if (!mounted) {
       return;
     }
 
@@ -319,7 +319,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
     final success = await store.deleteAccount(name);
 
-    if (!context.mounted) {
+    if (!mounted) {
       return;
     }
 
@@ -444,8 +444,14 @@ class _SettingsPageState extends State<SettingsPage> {
       return;
     }
 
+    final account = store.activeAccount;
+
+    if (account == null) {
+      return;
+    }
+
     final success = await store.addCategory(
-      account: store.activeAccount,
+      account: account,
       name: name,
     );
 
@@ -468,7 +474,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
     Navigator.of(dialogContext).pop();
 
-    if (!context.mounted) {
+    if (!mounted) {
       return;
     }
 
@@ -568,8 +574,14 @@ class _SettingsPageState extends State<SettingsPage> {
       return;
     }
 
+    final account = store.activeAccount;
+
+    if (account == null) {
+      return;
+    }
+
     final success = await store.renameCategory(
-      account: store.activeAccount,
+      account: account,
       oldName: oldName,
       newName: newName,
     );
@@ -593,7 +605,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
     Navigator.of(dialogContext).pop();
 
-    if (!context.mounted) {
+    if (!mounted) {
       return;
     }
 
@@ -615,12 +627,18 @@ class _SettingsPageState extends State<SettingsPage> {
     FinanceStore store,
     String name,
   ) async {
+    final account = store.activeAccount;
+
+    if (account == null) {
+      return;
+    }
+
     final used = await store.isCategoryUsed(
-      account: store.activeAccount,
+      account: account,
       name: name,
     );
 
-    if (!context.mounted) {
+    if (!mounted) {
       return;
     }
 
@@ -663,7 +681,7 @@ class _SettingsPageState extends State<SettingsPage> {
     }
 
     final success = await store.deleteCategory(
-      account: store.activeAccount,
+      account: account,
       name: name,
     );
 
