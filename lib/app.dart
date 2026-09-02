@@ -1,7 +1,9 @@
+```dart
 import 'package:flutter/material.dart';
-import 'services/finance_store.dart';
+
 import 'core/finance_scope.dart';
 import 'screens/home_page.dart';
+import 'services/finance_store.dart';
 
 class FinanceApp extends StatelessWidget {
   const FinanceApp({
@@ -70,3 +72,4 @@ class FinanceApp extends StatelessWidget {
     );
   }
 }
+```
