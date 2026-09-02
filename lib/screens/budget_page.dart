@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../core/finance_scope.dart';
+import '../models/transaction.dart';
 import '../services/budget_store.dart';
+import '../services/finance_store.dart';
 
 class BudgetPage extends StatefulWidget {
   const BudgetPage({
@@ -37,7 +39,7 @@ class _BudgetPageState extends State<BudgetPage> {
 
   Future<_BudgetPageData> _loadData({
     required String account,
-    required dynamic financeStore,
+    required FinanceStore financeStore,
   }) async {
     await _budgetStore.load();
 
@@ -72,7 +74,7 @@ class _BudgetPageState extends State<BudgetPage> {
 
   void _ensureFuture({
     required String account,
-    required dynamic financeStore,
+    required FinanceStore financeStore,
   }) {
     final key =
         '$account-${_selectedMonth.year}-${_selectedMonth.month}';
@@ -514,6 +516,67 @@ class _BudgetPageState extends State<BudgetPage> {
     return categories;
   }
 
+  Future<void> _showBudgetDetail({
+    required Budget budget,
+    required String account,
+  }) async {
+    final store = FinanceScope.of(context);
+
+    final startDate = DateTime(
+      _selectedMonth.year,
+      _selectedMonth.month,
+    );
+
+    final endDate = DateTime(
+      _selectedMonth.year,
+      _selectedMonth.month + 1,
+    );
+
+    final transactions = await store.getTransactions(
+      account: account,
+      category: budget.category,
+      type: TransactionType.expense,
+      startDate: startDate,
+      endDate: endDate,
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return _BudgetDetailDialog(
+          budget: budget,
+          transactions: transactions,
+          monthName: _monthName(budget.month.month),
+          formatRupiah: _formatRupiah,
+          formatDate: _formatDate,
+        );
+      },
+    );
+  }
+
+  String _formatDate(DateTime date) {
+    const months = <String>[
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'Mei',
+      'Jun',
+      'Jul',
+      'Agu',
+      'Sep',
+      'Okt',
+      'Nov',
+      'Des',
+    ];
+
+    return '${date.day} ${months[date.month - 1]} ${date.year}';
+  }
+
   String _statusText(Budget budget) {
     if (budget.isOverBudget) {
       return 'Terlampaui';
@@ -567,98 +630,145 @@ class _BudgetPageState extends State<BudgetPage> {
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 46,
-                  height: 46,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF30343A),
-                    borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () {
+          _showBudgetDetail(
+            budget: budget,
+            account: account,
+          );
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(18),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 46,
+                    height: 46,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF30343A),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: const Icon(
+                      Icons.category_outlined,
+                    ),
                   ),
-                  child: const Icon(
-                    Icons.category_outlined,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment:
+                          CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          budget.category,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Batas ${_formatRupiah(budget.limit)}',
+                          style: const TextStyle(
+                            color: Color(0xFF9A9DA3),
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment:
-                        CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        budget.category,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
+                  PopupMenuButton<String>(
+                    tooltip: 'Menu anggaran',
+                    onSelected: (value) async {
+                      if (value == 'detail') {
+                        await _showBudgetDetail(
+                          budget: budget,
+                          account: account,
+                        );
+                      } else if (value == 'edit') {
+                        await _showBudgetDialog(
+                          account: account,
+                          budget: budget,
+                        );
+                      } else if (value == 'delete') {
+                        await _showDeleteBudgetDialog(budget);
+                      }
+                    },
+                    itemBuilder: (_) => const [
+                      PopupMenuItem<String>(
+                        value: 'detail',
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.visibility_outlined,
+                            ),
+                            SizedBox(width: 10),
+                            Text('Lihat Detail'),
+                          ],
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Batas ${_formatRupiah(budget.limit)}',
-                        style: const TextStyle(
-                          color: Color(0xFF9A9DA3),
-                          fontSize: 12,
+                      PopupMenuItem<String>(
+                        value: 'edit',
+                        child: Row(
+                          children: [
+                            Icon(Icons.edit_outlined),
+                            SizedBox(width: 10),
+                            Text('Edit'),
+                          ],
+                        ),
+                      ),
+                      PopupMenuItem<String>(
+                        value: 'delete',
+                        child: Row(
+                          children: [
+                            Icon(Icons.delete_outline),
+                            SizedBox(width: 10),
+                            Text('Hapus'),
+                          ],
                         ),
                       ),
                     ],
                   ),
-                ),
-                PopupMenuButton<String>(
-                  tooltip: 'Menu anggaran',
-                  onSelected: (value) async {
-                    if (value == 'edit') {
-                      await _showBudgetDialog(
-                        account: account,
-                        budget: budget,
-                      );
-                    } else if (value == 'delete') {
-                      await _showDeleteBudgetDialog(budget);
-                    }
-                  },
-                  itemBuilder: (_) => const [
-                    PopupMenuItem<String>(
-                      value: 'edit',
-                      child: Row(
-                        children: [
-                          Icon(Icons.edit_outlined),
-                          SizedBox(width: 10),
-                          Text('Edit'),
-                        ],
-                      ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment:
+                          CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Terpakai',
+                          style: TextStyle(
+                            color: Color(0xFF9A9DA3),
+                            fontSize: 12,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          _formatRupiah(budget.spent),
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ],
                     ),
-                    PopupMenuItem<String>(
-                      value: 'delete',
-                      child: Row(
-                        children: [
-                          Icon(Icons.delete_outline),
-                          SizedBox(width: 10),
-                          Text('Hapus'),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Expanded(
-                  child: Column(
+                  ),
+                  Column(
                     crossAxisAlignment:
-                        CrossAxisAlignment.start,
+                        CrossAxisAlignment.end,
                     children: [
                       const Text(
-                        'Terpakai',
+                        'Sisa',
                         style: TextStyle(
                           color: Color(0xFF9A9DA3),
                           fontSize: 12,
@@ -666,84 +776,77 @@ class _BudgetPageState extends State<BudgetPage> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        _formatRupiah(budget.spent),
-                        style: const TextStyle(
-                          fontSize: 20,
+                        _formatRupiah(remaining),
+                        style: TextStyle(
+                          fontSize: 16,
                           fontWeight: FontWeight.w800,
+                          color: budget.isOverBudget
+                              ? Colors.redAccent
+                              : null,
                         ),
                       ),
                     ],
                   ),
-                ),
-                Column(
-                  crossAxisAlignment:
-                      CrossAxisAlignment.end,
-                  children: [
-                    const Text(
-                      'Sisa',
-                      style: TextStyle(
-                        color: Color(0xFF9A9DA3),
-                        fontSize: 12,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      _formatRupiah(remaining),
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                        color: budget.isOverBudget
-                            ? Colors.redAccent
-                            : null,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            const SizedBox(height: 14),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: LinearProgressIndicator(
-                value: progress,
-                minHeight: 10,
-                backgroundColor:
-                    const Color(0xFF30343A),
-                valueColor:
-                    AlwaysStoppedAnimation<Color>(
-                  statusColor,
+                ],
+              ),
+              const SizedBox(height: 14),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: LinearProgressIndicator(
+                  value: progress,
+                  minHeight: 10,
+                  backgroundColor:
+                      const Color(0xFF30343A),
+                  valueColor:
+                      AlwaysStoppedAnimation<Color>(
+                    statusColor,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                Icon(
-                  _statusIcon(budget),
-                  size: 17,
-                  color: statusColor,
-                ),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    _statusText(budget),
-                    style: TextStyle(
-                      color: statusColor,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Icon(
+                    _statusIcon(budget),
+                    size: 17,
+                    color: statusColor,
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      _statusText(budget),
+                      style: TextStyle(
+                        color: statusColor,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
-                ),
-                Text(
-                  '${(percentage * 100).round()}%',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 12,
+                  const Icon(
+                    Icons.chevron_right,
+                    size: 18,
+                    color: Color(0xFF9A9DA3),
                   ),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${(percentage * 100).round()}%',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Ketuk untuk melihat detail',
+                style: TextStyle(
+                  color: Color(0xFF70747B),
+                  fontSize: 11,
                 ),
-              ],
-            ),
-          ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -1183,6 +1286,378 @@ class _BudgetPageState extends State<BudgetPage> {
           },
         ),
       ),
+    );
+  }
+}
+
+class _BudgetDetailDialog extends StatelessWidget {
+  const _BudgetDetailDialog({
+    required this.budget,
+    required this.transactions,
+    required this.monthName,
+    required this.formatRupiah,
+    required this.formatDate,
+  });
+
+  final Budget budget;
+  final List<Tx> transactions;
+  final String monthName;
+  final String Function(double) formatRupiah;
+  final String Function(DateTime) formatDate;
+
+  String _statusText() {
+    if (budget.isOverBudget) {
+      return 'Terlampaui';
+    }
+
+    if (budget.limit > 0 &&
+        budget.spent / budget.limit >= 0.8) {
+      return 'Hampir habis';
+    }
+
+    return 'Aman';
+  }
+
+  Color _statusColor() {
+    if (budget.isOverBudget) {
+      return Colors.redAccent;
+    }
+
+    if (budget.limit > 0 &&
+        budget.spent / budget.limit >= 0.8) {
+      return Colors.orangeAccent;
+    }
+
+    return Colors.greenAccent;
+  }
+
+  IconData _statusIcon() {
+    if (budget.isOverBudget) {
+      return Icons.warning_amber_rounded;
+    }
+
+    if (budget.limit > 0 &&
+        budget.spent / budget.limit >= 0.8) {
+      return Icons.info_outline;
+    }
+
+    return Icons.check_circle_outline;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final percentage = budget.limit <= 0
+        ? 0.0
+        : budget.spent / budget.limit;
+
+    final progress = percentage.clamp(0.0, 1.0);
+    final statusColor = _statusColor();
+
+    return AlertDialog(
+      titlePadding: const EdgeInsets.fromLTRB(
+        24,
+        24,
+        12,
+        8,
+      ),
+      contentPadding: const EdgeInsets.fromLTRB(
+        24,
+        8,
+        24,
+        24,
+      ),
+      title: Row(
+        children: [
+          Expanded(
+            child: Text(
+              budget.category,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          IconButton(
+            tooltip: 'Tutup',
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            icon: const Icon(Icons.close),
+          ),
+        ],
+      ),
+      content: SizedBox(
+        width: 520,
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment:
+                CrossAxisAlignment.start,
+            children: [
+              Text(
+                '$monthName ${budget.month.year}',
+                style: const TextStyle(
+                  color: Color(0xFF9A9DA3),
+                  fontSize: 13,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1C1E22),
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _DetailValue(
+                            label: 'Batas',
+                            value: formatRupiah(
+                              budget.limit,
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: _DetailValue(
+                            label: 'Terpakai',
+                            value: formatRupiah(
+                              budget.spent,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 18),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _DetailValue(
+                            label: 'Sisa',
+                            value: formatRupiah(
+                              budget.remaining,
+                            ),
+                            valueColor:
+                                budget.isOverBudget
+                                    ? Colors.redAccent
+                                    : null,
+                          ),
+                        ),
+                        Expanded(
+                          child: _DetailValue(
+                            label: 'Pemakaian',
+                            value:
+                                '${(percentage * 100).round()}%',
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              ClipRRect(
+                borderRadius:
+                    BorderRadius.circular(10),
+                child: LinearProgressIndicator(
+                  value: progress,
+                  minHeight: 11,
+                  backgroundColor:
+                      const Color(0xFF30343A),
+                  valueColor:
+                      AlwaysStoppedAnimation<Color>(
+                    statusColor,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Icon(
+                    _statusIcon(),
+                    size: 18,
+                    color: statusColor,
+                  ),
+                  const SizedBox(width: 7),
+                  Text(
+                    _statusText(),
+                    style: TextStyle(
+                      color: statusColor,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  const Expanded(
+                    child: Text(
+                      'Transaksi Pengeluaran',
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                  Text(
+                    '${transactions.length} transaksi',
+                    style: const TextStyle(
+                      color: Color(0xFF9A9DA3),
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              if (transactions.isEmpty)
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1C1E22),
+                    borderRadius:
+                        BorderRadius.circular(16),
+                  ),
+                  child: const Column(
+                    children: [
+                      Icon(
+                        Icons.receipt_long_outlined,
+                        size: 34,
+                      ),
+                      SizedBox(height: 10),
+                      Text(
+                        'Belum ada transaksi',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        'Belum ada pengeluaran pada '
+                        'kategori ini di bulan tersebut.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Color(0xFF9A9DA3),
+                          fontSize: 12,
+                          height: 1.4,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              else
+                ...transactions.map(
+                  (transaction) =>
+                      _buildTransactionItem(
+                    transaction,
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTransactionItem(Tx transaction) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1C1E22),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: const Color(0xFF30343A),
+              borderRadius:
+                  BorderRadius.circular(12),
+            ),
+            child: const Icon(
+              Icons.arrow_upward_rounded,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment:
+                  CrossAxisAlignment.start,
+              children: [
+                Text(
+                  transaction.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  formatDate(transaction.date),
+                  style: const TextStyle(
+                    color: Color(0xFF9A9DA3),
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          Text(
+            '-${formatRupiah(transaction.amount)}',
+            textAlign: TextAlign.end,
+            style: const TextStyle(
+              fontWeight: FontWeight.w800,
+              fontSize: 13,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DetailValue extends StatelessWidget {
+  const _DetailValue({
+    required this.label,
+    required this.value,
+    this.valueColor,
+  });
+
+  final String label;
+  final String value;
+  final Color? valueColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment:
+          CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            color: Color(0xFF9A9DA3),
+            fontSize: 11,
+          ),
+        ),
+        const SizedBox(height: 5),
+        Text(
+          value,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w800,
+            color: valueColor,
+          ),
+        ),
+      ],
     );
   }
 }
