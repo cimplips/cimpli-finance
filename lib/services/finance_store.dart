@@ -1,358 +1,609 @@
 import 'package:flutter/foundation.dart';
-import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
+
 import '../models/transaction.dart';
 
 class FinanceStore extends ChangeNotifier {
   Database? _db;
 
-  final accounts = <String>[];
-  final transactions = <Tx>[];
+  final List<String> _accounts = <String>[];
+  String? _activeAccount;
 
-  String activeAccount = 'Keuangan Pribadi';
+  bool _loading = true;
+  String? _error;
+
+  List<String> get accounts => List.unmodifiable(_accounts);
+  String? get activeAccount => _activeAccount;
+  bool get isLoading => _loading;
+  String? get error => _error;
 
   Future<void> load() async {
-    final dbPath = join(
-      await getDatabasesPath(),
-      'keuangan_prima.db',
-    );
+    _loading = true;
+    _error = null;
+    notifyListeners();
 
-    _db = await openDatabase(
-      dbPath,
-      version: 1,
-      onCreate: (db, version) async {
-        await db.execute(
-          'CREATE TABLE accounts(name TEXT PRIMARY KEY)',
-        );
+    try {
+      final databasePath = await getDatabasesPath();
 
-        await db.execute('''
-          CREATE TABLE transactions(
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            title TEXT NOT NULL,
-            amount REAL NOT NULL,
-            type TEXT NOT NULL,
-            date TEXT NOT NULL,
-            account TEXT NOT NULL,
-            category TEXT NOT NULL
-          )
-        ''');
+      _db = await openDatabase(
+        '$databasePath/keuangan_prima.db',
+        version: 1,
+        onCreate: (db, version) async {
+          await db.execute('''
+            CREATE TABLE transactions (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              title TEXT NOT NULL,
+              amount REAL NOT NULL,
+              type INTEGER NOT NULL,
+              date TEXT NOT NULL,
+              account TEXT NOT NULL,
+              category TEXT NOT NULL
+            )
+          ''');
 
-        final defaultAccounts = [
-          'Keuangan Pribadi',
-          'Keuangan Kantor',
-          'Keuangan Rumah',
-        ];
+          await db.execute('''
+            CREATE INDEX idx_transactions_account_date
+            ON transactions(account, date)
+          ''');
 
-        for (final name in defaultAccounts) {
+          await db.execute('''
+            CREATE TABLE accounts (
+              name TEXT PRIMARY KEY
+            )
+          ''');
+
           await db.insert(
             'accounts',
-            {'name': name},
+            <String, Object?>{
+              'name': 'Pribadi',
+            },
           );
-        }
-      },
-    );
-
-    await refresh();
-  }
-
-  Future<void> refresh() async {
-    final db = _db;
-
-    if (db == null) {
-      return;
-    }
-
-    accounts
-      ..clear()
-      ..addAll(
-        (await db.query('accounts'))
-            .map((row) => row['name'] as String),
+        },
       );
 
-    if (accounts.isNotEmpty &&
-        !accounts.contains(activeAccount)) {
-      activeAccount = accounts.first;
-    }
-
-    if (accounts.isEmpty) {
-      transactions.clear();
+      await _loadAccounts();
+    } catch (e) {
+      _error = e.toString();
+    } finally {
+      _loading = false;
       notifyListeners();
+    }
+  }
+
+  Future<void> _loadAccounts() async {
+    final db = _db;
+    if (db == null) {
       return;
     }
 
     final rows = await db.query(
-      'transactions',
-      where: 'account = ?',
-      whereArgs: [activeAccount],
-      orderBy: 'date DESC, id DESC',
+      'accounts',
+      orderBy: 'name COLLATE NOCASE ASC',
     );
 
-    transactions
+    _accounts
       ..clear()
       ..addAll(
-        rows.map(
-          (row) => Tx(
-            id: row['id'] as int,
-            title: row['title'] as String,
-            amount: (row['amount'] as num).toDouble(),
-            type: TransactionType.values.byName(
-              row['type'] as String,
-            ),
-            date: DateTime.parse(
-              row['date'] as String,
-            ),
-            account: row['account'] as String,
-            category: row['category'] as String,
-          ),
-        ),
+        rows
+            .map((row) => row['name'])
+            .whereType<String>(),
       );
 
-    notifyListeners();
-  }
+    if (_accounts.isEmpty) {
+      await db.insert(
+        'accounts',
+        <String, Object?>{
+          'name': 'Pribadi',
+        },
+      );
 
-  Future<void> selectAccount(String name) async {
-    if (!accounts.contains(name)) {
-      return;
+      _accounts.add('Pribadi');
     }
 
-    activeAccount = name;
-    await refresh();
+    if (_activeAccount == null || !_accounts.contains(_activeAccount)) {
+      _activeAccount = _accounts.first;
+    }
   }
 
   Future<bool> addAccount(String name) async {
-    final cleaned = name.trim();
+    final db = _db;
+    final cleanName = name.trim();
 
-    if (cleaned.isEmpty) {
+    if (db == null || cleanName.isEmpty) {
       return false;
     }
 
-    final result = await _db!.insert(
-      'accounts',
-      {'name': cleaned},
-      conflictAlgorithm: ConflictAlgorithm.ignore,
-    );
+    if (_accounts.any(
+      (account) => account.toLowerCase() == cleanName.toLowerCase(),
+    )) {
+      return false;
+    }
 
-    await refresh();
+    try {
+      await db.insert(
+        'accounts',
+        <String, Object?>{
+          'name': cleanName,
+        },
+      );
 
-    return result > 0;
+      _accounts.add(cleanName);
+      _accounts.sort(
+        (a, b) => a.toLowerCase().compareTo(
+              b.toLowerCase(),
+            ),
+      );
+
+      _activeAccount = cleanName;
+
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+      return false;
+    }
   }
 
-  Future<bool> renameAccount({
-    required String oldName,
-    required String newName,
-  }) async {
-    final cleaned = newName.trim();
-
-    if (cleaned.isEmpty || cleaned == oldName) {
-      return false;
-    }
-
-    if (accounts.contains(cleaned)) {
-      return false;
-    }
-
+  Future<bool> renameAccount(
+    String oldName,
+    String newName,
+  ) async {
     final db = _db;
+    final cleanName = newName.trim();
 
-    if (db == null) {
+    if (db == null ||
+        oldName.trim().isEmpty ||
+        cleanName.isEmpty) {
       return false;
     }
 
-    await db.transaction((txn) async {
-      await txn.update(
-        'accounts',
-        {'name': cleaned},
-        where: 'name = ?',
-        whereArgs: [oldName],
-      );
+    final duplicate = _accounts.any(
+      (account) =>
+          account != oldName &&
+          account.toLowerCase() == cleanName.toLowerCase(),
+    );
 
-      await txn.update(
-        'transactions',
-        {'account': cleaned},
-        where: 'account = ?',
-        whereArgs: [oldName],
-      );
-    });
-
-    if (activeAccount == oldName) {
-      activeAccount = cleaned;
+    if (duplicate) {
+      return false;
     }
 
-    await refresh();
+    try {
+      await db.transaction((txn) async {
+        await txn.update(
+          'accounts',
+          <String, Object?>{
+            'name': cleanName,
+          },
+          where: 'name = ?',
+          whereArgs: <Object?>[oldName],
+        );
 
-    return true;
+        await txn.update(
+          'transactions',
+          <String, Object?>{
+            'account': cleanName,
+          },
+          where: 'account = ?',
+          whereArgs: <Object?>[oldName],
+        );
+      });
+
+      final index = _accounts.indexOf(oldName);
+
+      if (index >= 0) {
+        _accounts[index] = cleanName;
+      }
+
+      _accounts.sort(
+        (a, b) => a.toLowerCase().compareTo(
+              b.toLowerCase(),
+            ),
+      );
+
+      if (_activeAccount == oldName) {
+        _activeAccount = cleanName;
+      }
+
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+      return false;
+    }
   }
 
   Future<bool> deleteAccount(String name) async {
-    if (accounts.length <= 1) {
+    final db = _db;
+
+    if (db == null || _accounts.length <= 1) {
       return false;
     }
 
-    if (!accounts.contains(name)) {
+    if (!_accounts.contains(name)) {
       return false;
     }
 
+    try {
+      await db.transaction((txn) async {
+        await txn.delete(
+          'transactions',
+          where: 'account = ?',
+          whereArgs: <Object?>[name],
+        );
+
+        await txn.delete(
+          'accounts',
+          where: 'name = ?',
+          whereArgs: <Object?>[name],
+        );
+      });
+
+      _accounts.remove(name);
+
+      if (_activeAccount == name) {
+        _activeAccount = _accounts.first;
+      }
+
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
+  void setActiveAccount(String account) {
+    if (!_accounts.contains(account)) {
+      return;
+    }
+
+    if (_activeAccount == account) {
+      return;
+    }
+
+    _activeAccount = account;
+    notifyListeners();
+  }
+
+  Future<int?> addTransaction({
+    required String title,
+    required double amount,
+    required TransactionType type,
+    required DateTime date,
+    required String account,
+    required String category,
+  }) async {
+    final db = _db;
+
+    if (db == null) {
+      return null;
+    }
+
+    final cleanTitle = title.trim();
+    final cleanAccount = account.trim();
+    final cleanCategory = category.trim();
+
+    if (cleanTitle.isEmpty ||
+        cleanAccount.isEmpty ||
+        cleanCategory.isEmpty ||
+        amount <= 0) {
+      return null;
+    }
+
+    try {
+      final id = await db.insert(
+        'transactions',
+        <String, Object?>{
+          'title': cleanTitle,
+          'amount': amount,
+          'type': type == TransactionType.income ? 0 : 1,
+          'date': date.toIso8601String(),
+          'account': cleanAccount,
+          'category': cleanCategory,
+        },
+      );
+
+      notifyListeners();
+      return id;
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+      return null;
+    }
+  }
+
+  Future<bool> updateTransaction({
+    required int id,
+    required String title,
+    required double amount,
+    required TransactionType type,
+    required DateTime date,
+    required String account,
+    required String category,
+  }) async {
     final db = _db;
 
     if (db == null) {
       return false;
     }
 
-    await db.transaction((txn) async {
-      await txn.delete(
+    final cleanTitle = title.trim();
+    final cleanAccount = account.trim();
+    final cleanCategory = category.trim();
+
+    if (cleanTitle.isEmpty ||
+        cleanAccount.isEmpty ||
+        cleanCategory.isEmpty ||
+        amount <= 0) {
+      return false;
+    }
+
+    try {
+      final affected = await db.update(
         'transactions',
-        where: 'account = ?',
-        whereArgs: [name],
+        <String, Object?>{
+          'title': cleanTitle,
+          'amount': amount,
+          'type': type == TransactionType.income ? 0 : 1,
+          'date': date.toIso8601String(),
+          'account': cleanAccount,
+          'category': cleanCategory,
+        },
+        where: 'id = ?',
+        whereArgs: <Object?>[id],
       );
 
-      await txn.delete(
-        'accounts',
-        where: 'name = ?',
-        whereArgs: [name],
+      if (affected == 0) {
+        return false;
+      }
+
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> deleteTransaction(int id) async {
+    final db = _db;
+
+    if (db == null) {
+      return false;
+    }
+
+    try {
+      final affected = await db.delete(
+        'transactions',
+        where: 'id = ?',
+        whereArgs: <Object?>[id],
       );
-    });
 
-    if (activeAccount == name) {
-      final remainingAccounts =
-          accounts.where((item) => item != name).toList();
+      if (affected == 0) {
+        return false;
+      }
 
-      if (remainingAccounts.isNotEmpty) {
-        activeAccount = remainingAccounts.first;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<List<Tx>> getTransactions({
+    String? account,
+    String? category,
+    TransactionType? type,
+    DateTime? startDate,
+    DateTime? endDate,
+  }) async {
+    final db = _db;
+
+    if (db == null) {
+      return <Tx>[];
+    }
+
+    final where = <String>[];
+    final args = <Object?>[];
+
+    if (account != null && account.trim().isNotEmpty) {
+      where.add('account = ?');
+      args.add(account.trim());
+    }
+
+    if (category != null &&
+        category.trim().isNotEmpty &&
+        category != 'Semua') {
+      where.add('category = ?');
+      args.add(category.trim());
+    }
+
+    if (type != null) {
+      where.add('type = ?');
+      args.add(
+        type == TransactionType.income ? 0 : 1,
+      );
+    }
+
+    if (startDate != null) {
+      where.add('date >= ?');
+      args.add(
+        DateTime(
+          startDate.year,
+          startDate.month,
+          startDate.day,
+        ).toIso8601String(),
+      );
+    }
+
+    if (endDate != null) {
+      final exclusiveEnd = DateTime(
+        endDate.year,
+        endDate.month,
+        endDate.day,
+      ).add(const Duration(days: 1));
+
+      where.add('date < ?');
+      args.add(exclusiveEnd.toIso8601String());
+    }
+
+    try {
+      final rows = await db.query(
+        'transactions',
+        where: where.isEmpty ? null : where.join(' AND '),
+        whereArgs: args.isEmpty ? null : args,
+        orderBy: 'date DESC, id DESC',
+      );
+
+      return rows.map(_transactionFromRow).toList();
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+      return <Tx>[];
+    }
+  }
+
+  Tx _transactionFromRow(
+    Map<String, Object?> row,
+  ) {
+    return Tx(
+      id: row['id'] as int?,
+      title: row['title'] as String? ?? '',
+      amount: (row['amount'] as num?)?.toDouble() ?? 0,
+      type: (row['type'] as int? ?? 0) == 0
+          ? TransactionType.income
+          : TransactionType.expense,
+      date: DateTime.tryParse(
+            row['date'] as String? ?? '',
+          ) ??
+          DateTime.now(),
+      account: row['account'] as String? ?? '',
+      category: row['category'] as String? ?? '',
+    );
+  }
+
+  Future<List<String>> getCategories({
+    String? account,
+  }) async {
+    final db = _db;
+
+    if (db == null) {
+      return <String>[];
+    }
+
+    final targetAccount =
+        account?.trim().isNotEmpty == true
+            ? account!.trim()
+            : _activeAccount;
+
+    if (targetAccount == null || targetAccount.isEmpty) {
+      return <String>[];
+    }
+
+    try {
+      final rows = await db.rawQuery(
+        '''
+        SELECT DISTINCT category
+        FROM transactions
+        WHERE account = ?
+          AND category IS NOT NULL
+          AND TRIM(category) != ''
+        ORDER BY category COLLATE NOCASE ASC
+        ''',
+        <Object?>[targetAccount],
+      );
+
+      return rows
+          .map((row) => row['category'])
+          .whereType<String>()
+          .toList();
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+      return <String>[];
+    }
+  }
+
+  Future<double> getBalance({
+    String? account,
+    DateTime? startDate,
+    DateTime? endDate,
+  }) async {
+    final transactions = await getTransactions(
+      account: account ?? _activeAccount,
+      startDate: startDate,
+      endDate: endDate,
+    );
+
+    double balance = 0;
+
+    for (final transaction in transactions) {
+      if (transaction.type == TransactionType.income) {
+        balance += transaction.amount;
+      } else {
+        balance -= transaction.amount;
       }
     }
 
-    await refresh();
-
-    return true;
+    return balance;
   }
 
-  Future<int> transactionCountForAccount(
-    String account,
-  ) async {
+  Future<double> getTotalIncome({
+    String? account,
+    DateTime? startDate,
+    DateTime? endDate,
+  }) async {
+    final transactions = await getTransactions(
+      account: account ?? _activeAccount,
+      type: TransactionType.income,
+      startDate: startDate,
+      endDate: endDate,
+    );
+
+    return transactions.fold<double>(
+      0,
+      (sum, transaction) => sum + transaction.amount,
+    );
+  }
+
+  Future<double> getTotalExpense({
+    String? account,
+    DateTime? startDate,
+    DateTime? endDate,
+  }) async {
+    final transactions = await getTransactions(
+      account: account ?? _activeAccount,
+      type: TransactionType.expense,
+      startDate: startDate,
+      endDate: endDate,
+    );
+
+    return transactions.fold<double>(
+      0,
+      (sum, transaction) => sum + transaction.amount,
+    );
+  }
+
+  Future<void> close() async {
     final db = _db;
 
     if (db == null) {
-      return 0;
+      return;
     }
 
-    final result = Sqflite.firstIntValue(
-      await db.rawQuery(
-        '''
-        SELECT COUNT(*)
-        FROM transactions
-        WHERE account = ?
-        ''',
-        [account],
-      ),
-    );
-
-    return result ?? 0;
+    await db.close();
+    _db = null;
   }
 
-  Future<void> addTransaction(Tx tx) async {
-    await _db!.insert(
-      'transactions',
-      {
-        'title': tx.title,
-        'amount': tx.amount,
-        'type': tx.type.name,
-        'date': tx.date.toIso8601String(),
-        'account': tx.account,
-        'category': tx.category,
-      },
-    );
-
-    await refresh();
-  }
-
-  Future<bool> updateTransaction(Tx tx) async {
-    if (tx.id == null) {
-      return false;
-    }
-
-    final db = _db;
-
-    if (db == null) {
-      return false;
-    }
-
-    final result = await db.update(
-      'transactions',
-      {
-        'title': tx.title,
-        'amount': tx.amount,
-        'type': tx.type.name,
-        'date': tx.date.toIso8601String(),
-        'account': tx.account,
-        'category': tx.category,
-      },
-      where: 'id = ?',
-      whereArgs: [tx.id],
-    );
-
-    await refresh();
-
-    return result > 0;
-  }
-
-  Future<void> deleteTransaction(int id) async {
-    await _db!.delete(
-      'transactions',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
-
-    await refresh();
-  }
-
-  double get income {
-    return transactions
-        .where(
-          (tx) => tx.type == TransactionType.income,
-        )
-        .fold(
-          0.0,
-          (total, tx) => total + tx.amount,
-        );
-  }
-
-  double get expense {
-    return transactions
-        .where(
-          (tx) => tx.type == TransactionType.expense,
-        )
-        .fold(
-          0.0,
-          (total, tx) => total + tx.amount,
-        );
-  }
-
-  double get balance => income - expense;
-
-  double incomeForMonth(DateTime month) {
-    return transactions
-        .where(
-          (tx) =>
-              tx.type == TransactionType.income &&
-              tx.date.year == month.year &&
-              tx.date.month == month.month,
-        )
-        .fold(
-          0.0,
-          (total, tx) => total + tx.amount,
-        );
-  }
-
-  double expenseForMonth(DateTime month) {
-    return transactions
-        .where(
-          (tx) =>
-              tx.type == TransactionType.expense &&
-              tx.date.year == month.year &&
-              tx.date.month == month.month,
-        )
-        .fold(
-          0.0,
-          (total, tx) => total + tx.amount,
-        );
+  @override
+  void dispose() {
+    close();
+    super.dispose();
   }
 }
