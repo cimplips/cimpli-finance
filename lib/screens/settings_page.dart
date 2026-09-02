@@ -319,7 +319,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
     final success = await store.deleteAccount(name);
 
-    if (!mounted) {
+    if (!context.mounted) {
       return;
     }
 
@@ -638,7 +638,7 @@ class _SettingsPageState extends State<SettingsPage> {
       name: name,
     );
 
-    if (!mounted) {
+    if (!context.mounted) {
       return;
     }
 
@@ -685,7 +685,7 @@ class _SettingsPageState extends State<SettingsPage> {
       name: name,
     );
 
-    if (!mounted) {
+    if (!context.mounted) {
       return;
     }
 
