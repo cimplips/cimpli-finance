@@ -47,6 +47,7 @@ class _DashboardPageState extends State<DashboardPage> {
     }
 
     final now = DateTime.now();
+
     final startOfMonth = DateTime(
       now.year,
       now.month,
@@ -258,7 +259,6 @@ class _DashboardPageState extends State<DashboardPage> {
     return RefreshIndicator(
       onRefresh: () async {
         await store.load();
-        await _budgetStoreFuture;
 
         if (mounted) {
           setState(() {});
@@ -266,17 +266,17 @@ class _DashboardPageState extends State<DashboardPage> {
       },
       child: FutureBuilder<void>(
         future: _budgetStoreFuture,
-        builder: (context, budgetStoreSnapshot) {
-          if (budgetStoreSnapshot.connectionState ==
+        builder: (context, budgetSnapshot) {
+          if (budgetSnapshot.connectionState ==
               ConnectionState.waiting) {
             return const Center(
               child: CircularProgressIndicator(),
             );
           }
 
-          if (budgetStoreSnapshot.hasError) {
+          if (budgetSnapshot.hasError) {
             return _ErrorView(
-              message: budgetStoreSnapshot.error.toString(),
+              message: budgetSnapshot.error.toString(),
               onRetry: () {
                 setState(() {});
               },
