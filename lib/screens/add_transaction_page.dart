@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../core/finance_scope.dart';
 import '../models/transaction.dart';
+import '../services/budget_store.dart';
 
 class AddTransactionPage extends StatefulWidget {
   const AddTransactionPage({
@@ -303,7 +304,136 @@ class _AddTransactionPageState
       return;
     }
 
+    await _showBudgetAlertIfNeeded(
+      account: account,
+      category: category,
+      date: _date,
+      type: _type,
+    );
+
+    if (!mounted) {
+      return;
+    }
+
     Navigator.of(context).pop(true);
+  }
+
+  Future<void> _showBudgetAlertIfNeeded({
+    required String account,
+    required String category,
+    required DateTime date,
+    required TransactionType type,
+  }) async {
+    if (type != TransactionType.expense) {
+      return;
+    }
+
+    final budgetStore = BudgetStore();
+
+    try {
+      await budgetStore.load();
+
+      if (!mounted) {
+        return;
+      }
+
+      final budget = await budgetStore.getBudget(
+        account: account,
+        category: category,
+        month: date,
+      );
+
+      if (!mounted || budget == null) {
+        return;
+      }
+
+      if (budget.limit <= 0) {
+        return;
+      }
+
+      final percentage =
+          (budget.spent / budget.limit) * 100;
+
+      if (percentage < 80) {
+        return;
+      }
+
+      final isOverBudget =
+          percentage > 100;
+
+      final title = isOverBudget
+          ? 'Anggaran Terlampaui'
+          : 'Anggaran Hampir Habis';
+
+      final icon = isOverBudget
+          ? Icons.warning_amber_rounded
+          : Icons.notifications_active_outlined;
+
+      final message = isOverBudget
+          ? 'Pengeluaran kategori "$category" '
+              'sudah melebihi anggaran bulan ini.'
+          : 'Pengeluaran kategori "$category" '
+              'sudah mencapai ${percentage.round()}% '
+              'dari anggaran bulan ini.';
+
+      final remaining = budget.remaining;
+
+      final detail = isOverBudget
+          ? 'Melebihi anggaran sebesar '
+              '${_formatRupiah(remaining.abs())}.'
+          : 'Sisa anggaran sekitar '
+              '${_formatRupiah(remaining)}.';
+
+      await showDialog<void>(
+        context: context,
+        builder: (dialogContext) {
+          return AlertDialog(
+            icon: Icon(
+              icon,
+              size: 42,
+            ),
+            title: Text(title),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  message,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  detail,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Color(0xFF9A9DA3),
+                    fontSize: 13,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  '${_formatRupiah(budget.spent)} '
+                  'dari ${_formatRupiah(budget.limit)}',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              FilledButton(
+                onPressed: () {
+                  Navigator.of(dialogContext).pop();
+                },
+                child: const Text('Mengerti'),
+              ),
+            ],
+          );
+        },
+      );
+    } finally {
+      await budgetStore.close();
+    }
   }
 
   void _showMessage(String message) {
@@ -444,7 +574,7 @@ class _AddTransactionPageState
             ),
             const SizedBox(height: 14),
             DropdownButtonFormField<String>(
-              initialValue: _selectedAccount,
+              value: _selectedAccount,
               isExpanded: true,
               decoration: const InputDecoration(
                 labelText: 'Akun',
@@ -495,7 +625,7 @@ class _AddTransactionPageState
                         : null;
 
                 return DropdownButtonFormField<String>(
-                  initialValue: selected,
+                  value: selected,
                   isExpanded: true,
                   decoration: const InputDecoration(
                     labelText: 'Kategori',
