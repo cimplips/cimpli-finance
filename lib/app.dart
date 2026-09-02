@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'core/finance_scope.dart';
 import 'screens/home_page.dart';
+import 'screens/recurring_transactions_page.dart';
 import 'services/finance_store.dart';
 
 class FinanceApp extends StatelessWidget {
@@ -67,6 +68,11 @@ class FinanceApp extends StatelessWidget {
           ),
         ),
         home: const HomePage(),
+        routes: {
+          '/recurring-transactions':
+              (context) =>
+                  const RecurringTransactionsPage(),
+        },
       ),
     );
   }
