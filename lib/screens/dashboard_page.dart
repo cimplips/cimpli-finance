@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../core/finance_scope.dart';
+import '../models/recurring_transaction.dart';
 import '../models/transaction.dart';
 import '../services/budget_store.dart';
 import '../services/finance_store.dart';
@@ -65,6 +66,7 @@ class _DashboardPageState extends State<DashboardPage> {
         expense: 0,
         recentTransactions: <Tx>[],
         budgets: <Budget>[],
+        recurringTransactions: <RecurringTransaction>[],
       );
     }
 
@@ -109,12 +111,21 @@ class _DashboardPageState extends State<DashboardPage> {
       month: startOfMonth,
     );
 
+    final recurringTransactions =
+        await store.getRecurringTransactions(
+      account: account,
+      activeOnly: true,
+    );
+
     return _DashboardData(
       balance: balance,
       income: income,
       expense: expense,
-      recentTransactions: transactions.take(5).toList(),
+      recentTransactions:
+          transactions.take(5).toList(),
       budgets: budgets,
+      recurringTransactions:
+          recurringTransactions,
     );
   }
 
@@ -150,6 +161,19 @@ class _DashboardPageState extends State<DashboardPage> {
     _refresh();
   }
 
+  Future<void> _openRecurringTransactions() async {
+    await Navigator.pushNamed(
+      context,
+      '/recurring-transactions',
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    _refresh();
+  }
+
   void _showAccountSelector() {
     final store = FinanceScope.of(context);
 
@@ -172,7 +196,8 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment:
+                  CrossAxisAlignment.start,
               children: [
                 const Text(
                   'Pilih akun',
@@ -194,7 +219,8 @@ class _DashboardPageState extends State<DashboardPage> {
                             ? const Color(0xFFE8EAED)
                             : const Color(0xFF34373D),
                         child: Icon(
-                          Icons.account_balance_wallet_outlined,
+                          Icons
+                              .account_balance_wallet_outlined,
                           color: selected
                               ? const Color(0xFF111214)
                               : Colors.white,
@@ -313,6 +339,8 @@ class _DashboardPageState extends State<DashboardPage> {
                 expense: 0,
                 recentTransactions: <Tx>[],
                 budgets: <Budget>[],
+                recurringTransactions:
+                    <RecurringTransaction>[],
               );
 
           final account =
@@ -402,6 +430,14 @@ class _DashboardPageState extends State<DashboardPage> {
                 expense: data.expense,
                 formatRupiah: _formatRupiah,
               ),
+              const SizedBox(height: 16),
+              _RecurringSummaryCard(
+                recurringTransactions:
+                    data.recurringTransactions,
+                formatRupiah: _formatRupiah,
+                onTap:
+                    _openRecurringTransactions,
+              ),
               const SizedBox(height: 20),
               _BudgetAlertSection(
                 budgets: data.budgets,
@@ -477,6 +513,7 @@ class _DashboardData {
     required this.expense,
     required this.recentTransactions,
     required this.budgets,
+    required this.recurringTransactions,
   });
 
   final double balance;
@@ -484,6 +521,300 @@ class _DashboardData {
   final double expense;
   final List<Tx> recentTransactions;
   final List<Budget> budgets;
+  final List<RecurringTransaction> recurringTransactions;
+}
+
+class _RecurringSummaryCard
+    extends StatelessWidget {
+  const _RecurringSummaryCard({
+    required this.recurringTransactions,
+    required this.formatRupiah,
+    required this.onTap,
+  });
+
+  final List<RecurringTransaction>
+      recurringTransactions;
+  final String Function(double) formatRupiah;
+  final VoidCallback onTap;
+
+  double _monthlyAmount(
+    RecurringTransaction recurring,
+  ) {
+    switch (recurring.frequency) {
+      case RecurringFrequency.weekly:
+        return recurring.amount * 52 / 12;
+      case RecurringFrequency.monthly:
+        return recurring.amount;
+      case RecurringFrequency.yearly:
+        return recurring.amount / 12;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final income = recurringTransactions
+        .where((item) => item.isIncome)
+        .fold<double>(
+          0,
+          (total, item) =>
+              total + _monthlyAmount(item),
+        );
+
+    final expense = recurringTransactions
+        .where((item) => !item.isIncome)
+        .fold<double>(
+          0,
+          (total, item) =>
+              total + _monthlyAmount(item),
+        );
+
+    final net = income - expense;
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1C1E22),
+          borderRadius:
+              BorderRadius.circular(20),
+        ),
+        child: Column(
+          crossAxisAlignment:
+              CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const CircleAvatar(
+                  radius: 21,
+                  backgroundColor:
+                      Color(0xFF34373D),
+                  child: Icon(
+                    Icons.repeat_rounded,
+                    size: 22,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment:
+                        CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Transaksi Berulang',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight:
+                              FontWeight.w800,
+                        ),
+                      ),
+                      SizedBox(height: 3),
+                      Text(
+                        'Estimasi rutin per bulan',
+                        style: TextStyle(
+                          color:
+                              Color(0xFF9A9DA3),
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(
+                  Icons.chevron_right_rounded,
+                  color: Color(0xFF9A9DA3),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            if (recurringTransactions.isEmpty)
+              const _EmptyRecurringSummary()
+            else ...[
+              Row(
+                children: [
+                  Expanded(
+                    child: _RecurringValue(
+                      label: 'Jadwal aktif',
+                      value:
+                          '${recurringTransactions.length}',
+                    ),
+                  ),
+                  Container(
+                    width: 1,
+                    height: 42,
+                    color:
+                        Color(0xFF3A3D42),
+                  ),
+                  Expanded(
+                    child: _RecurringValue(
+                      label: 'Pemasukan',
+                      value:
+                          formatRupiah(income),
+                    ),
+                  ),
+                  Container(
+                    width: 1,
+                    height: 42,
+                    color:
+                        Color(0xFF3A3D42),
+                  ),
+                  Expanded(
+                    child: _RecurringValue(
+                      label: 'Pengeluaran',
+                      value:
+                          formatRupiah(expense),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(
+                  horizontal: 13,
+                  vertical: 10,
+                ),
+                decoration: BoxDecoration(
+                  color:
+                      const Color(0xFF282B30),
+                  borderRadius:
+                      BorderRadius.circular(13),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      net >= 0
+                          ? Icons
+                              .trending_up_rounded
+                          : Icons
+                              .trending_down_rounded,
+                      size: 18,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        net >= 0
+                            ? 'Surplus rutin'
+                            : 'Defisit rutin',
+                        style:
+                            const TextStyle(
+                          color:
+                              Color(0xFF9A9DA3),
+                          fontSize: 11,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      formatRupiah(net.abs()),
+                      style:
+                          const TextStyle(
+                        fontSize: 13,
+                        fontWeight:
+                            FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            const SizedBox(height: 10),
+            const Text(
+              'Ketuk untuk mengelola jadwal',
+              style: TextStyle(
+                color: Color(0xFF777B82),
+                fontSize: 10,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _RecurringValue
+    extends StatelessWidget {
+  const _RecurringValue({
+    required this.label,
+    required this.value,
+  });
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding:
+          const EdgeInsets.symmetric(
+        horizontal: 6,
+      ),
+      child: Column(
+        crossAxisAlignment:
+            CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            maxLines: 1,
+            overflow:
+                TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: Color(0xFF9A9DA3),
+              fontSize: 10,
+            ),
+          ),
+          const SizedBox(height: 5),
+          Text(
+            value,
+            maxLines: 1,
+            overflow:
+                TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EmptyRecurringSummary
+    extends StatelessWidget {
+  const _EmptyRecurringSummary();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(13),
+      decoration: BoxDecoration(
+        color: const Color(0xFF282B30),
+        borderRadius:
+            BorderRadius.circular(13),
+      ),
+      child: const Row(
+        children: [
+          Icon(
+            Icons.info_outline_rounded,
+            size: 19,
+          ),
+          SizedBox(width: 9),
+          Expanded(
+            child: Text(
+              'Belum ada jadwal transaksi berulang aktif.',
+              style: TextStyle(
+                color: Color(0xFF9A9DA3),
+                fontSize: 11,
+                height: 1.35,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _FinancialHealthCard
