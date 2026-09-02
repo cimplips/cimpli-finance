@@ -35,10 +35,11 @@ class _BudgetPageState extends State<BudgetPage> {
     super.dispose();
   }
 
-  Future<_BudgetPageData> _loadData(String account) async {
+  Future<_BudgetPageData> _loadData({
+    required String account,
+    required dynamic financeStore,
+  }) async {
     await _budgetStore.load();
-
-    final financeStore = FinanceScope.of(context);
 
     final budgets = await _budgetStore.getBudgets(
       account: account,
@@ -69,7 +70,10 @@ class _BudgetPageState extends State<BudgetPage> {
     );
   }
 
-  void _ensureFuture(String account) {
+  void _ensureFuture({
+    required String account,
+    required dynamic financeStore,
+  }) {
     final key =
         '$account-${_selectedMonth.year}-${_selectedMonth.month}';
 
@@ -78,7 +82,10 @@ class _BudgetPageState extends State<BudgetPage> {
     }
 
     _futureKey = key;
-    _dataFuture = _loadData(account);
+    _dataFuture = _loadData(
+      account: account,
+      financeStore: financeStore,
+    );
   }
 
   void _refresh() {
@@ -91,7 +98,10 @@ class _BudgetPageState extends State<BudgetPage> {
 
     setState(() {
       _futureKey = null;
-      _dataFuture = _loadData(account);
+      _dataFuture = _loadData(
+        account: account,
+        financeStore: financeStore,
+      );
       _futureKey =
           '$account-${_selectedMonth.year}-${_selectedMonth.month}';
     });
@@ -610,9 +620,7 @@ class _BudgetPageState extends State<BudgetPage> {
                         budget: budget,
                       );
                     } else if (value == 'delete') {
-                      await _showDeleteBudgetDialog(
-                        budget,
-                      );
+                      await _showDeleteBudgetDialog(budget);
                     }
                   },
                   itemBuilder: (_) => const [
@@ -1020,7 +1028,10 @@ class _BudgetPageState extends State<BudgetPage> {
       );
     }
 
-    _ensureFuture(account);
+    _ensureFuture(
+      account: account,
+      financeStore: financeStore,
+    );
 
     return SafeArea(
       child: Scaffold(
