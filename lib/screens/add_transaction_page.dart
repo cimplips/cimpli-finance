@@ -444,7 +444,7 @@ class _AddTransactionPageState
             ),
             const SizedBox(height: 14),
             DropdownButtonFormField<String>(
-              value: _selectedAccount,
+              initialValue: _selectedAccount,
               isExpanded: true,
               decoration: const InputDecoration(
                 labelText: 'Akun',
@@ -495,7 +495,7 @@ class _AddTransactionPageState
                         : null;
 
                 return DropdownButtonFormField<String>(
-                  value: selected,
+                  initialValue: selected,
                   isExpanded: true,
                   decoration: const InputDecoration(
                     labelText: 'Kategori',
