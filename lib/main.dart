@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 import 'core/finance_scope.dart';
+import 'screens/app_lock_page.dart';
 import 'screens/home_page.dart';
+import 'services/app_lock_service.dart';
 import 'services/finance_store.dart';
 
 Future<void> main() async {
@@ -12,7 +14,11 @@ Future<void> main() async {
 
   await store.generateDueRecurringTransactions();
 
-  runApp(FinanceApp(store: store));
+  runApp(
+    FinanceApp(
+      store: store,
+    ),
+  );
 }
 
 class FinanceApp extends StatelessWidget {
@@ -34,7 +40,7 @@ class FinanceApp extends StatelessWidget {
       store: store,
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
-        title: 'Keuangan Prima',
+        title: 'Cimpli Finance',
         theme: ThemeData(
           useMaterial3: true,
           brightness: Brightness.dark,
@@ -77,8 +83,72 @@ class FinanceApp extends StatelessWidget {
             ),
           ),
         ),
-        home: const HomePage(),
+        home: const AppLockGate(),
       ),
     );
+  }
+}
+
+class AppLockGate extends StatefulWidget {
+  const AppLockGate({
+    super.key,
+  });
+
+  @override
+  State<AppLockGate> createState() => _AppLockGateState();
+}
+
+class _AppLockGateState extends State<AppLockGate> {
+  final AppLockService _lockService = AppLockService();
+
+  bool _checking = true;
+  bool _locked = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkLockStatus();
+  }
+
+  Future<void> _checkLockStatus() async {
+    final enabled = await _lockService.isEnabled();
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _locked = enabled;
+      _checking = false;
+    });
+  }
+
+  void _unlock() {
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _locked = false;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_checking) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    if (_locked) {
+      return AppLockPage(
+        onUnlocked: _unlock,
+      );
+    }
+
+    return const HomePage();
   }
 }
