@@ -361,8 +361,14 @@ class _SettingsPageState extends State<SettingsPage> {
   Future<List<String>> _loadCategories(
     FinanceStore store,
   ) {
+    final account = store.activeAccount;
+
+    if (account == null) {
+      return Future.value(<String>[]);
+    }
+
     return store.getCategories(
-      account: store.activeAccount,
+      account: account,
     );
   }
 
@@ -370,7 +376,9 @@ class _SettingsPageState extends State<SettingsPage> {
     BuildContext context,
     FinanceStore store,
   ) async {
-    if (store.activeAccount == null) {
+    final account = store.activeAccount;
+
+    if (account == null) {
       _showMessage(
         'Pilih akun terlebih dahulu.',
       );
@@ -445,7 +453,7 @@ class _SettingsPageState extends State<SettingsPage> {
     }
 
     final success = await store.addCategory(
-      account: store.activeAccount,
+      account: account,
       name: name,
     );
 
@@ -568,8 +576,25 @@ class _SettingsPageState extends State<SettingsPage> {
       return;
     }
 
+    final account = store.activeAccount;
+
+    if (account == null) {
+      if (dialogContext.mounted) {
+        ScaffoldMessenger.of(dialogContext)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Pilih akun terlebih dahulu.',
+              ),
+            ),
+          );
+      }
+      return;
+    }
+
     final success = await store.renameCategory(
-      account: store.activeAccount,
+      account: account,
       oldName: oldName,
       newName: newName,
     );
