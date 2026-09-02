@@ -358,6 +358,342 @@ class _SettingsPageState extends State<SettingsPage> {
       );
   }
 
+  Future<List<String>> _loadCategories(
+    FinanceStore store,
+  ) {
+    return store.getCategories(
+      account: store.activeAccount,
+    );
+  }
+
+  Future<void> _showAddCategoryDialog(
+    BuildContext context,
+    FinanceStore store,
+  ) async {
+    if (store.activeAccount == null) {
+      _showMessage(
+        'Pilih akun terlebih dahulu.',
+      );
+      return;
+    }
+
+    _controller.clear();
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Tambah Kategori'),
+          content: TextField(
+            controller: _controller,
+            autofocus: true,
+            textCapitalization: TextCapitalization.words,
+            textInputAction: TextInputAction.done,
+            decoration: const InputDecoration(
+              labelText: 'Nama kategori',
+              hintText: 'Contoh: Makan',
+              prefixIcon: Icon(
+                Icons.category_outlined,
+              ),
+            ),
+            onSubmitted: (_) async {
+              await _saveNewCategory(
+                dialogContext,
+                store,
+              );
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+              },
+              child: const Text('Batal'),
+            ),
+            FilledButton(
+              onPressed: () async {
+                await _saveNewCategory(
+                  dialogContext,
+                  store,
+                );
+              },
+              child: const Text('Tambah'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _saveNewCategory(
+    BuildContext dialogContext,
+    FinanceStore store,
+  ) async {
+    final name = _controller.text.trim();
+
+    if (name.isEmpty) {
+      ScaffoldMessenger.of(dialogContext)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Nama kategori wajib diisi.',
+            ),
+          ),
+        );
+      return;
+    }
+
+    final success = await store.addCategory(
+      account: store.activeAccount,
+      name: name,
+    );
+
+    if (!dialogContext.mounted) {
+      return;
+    }
+
+    if (!success) {
+      ScaffoldMessenger.of(dialogContext)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Kategori gagal ditambahkan. Nama mungkin sudah digunakan.',
+            ),
+          ),
+        );
+      return;
+    }
+
+    Navigator.of(dialogContext).pop();
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {});
+
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            '$name berhasil ditambahkan.',
+          ),
+        ),
+      );
+  }
+
+  Future<void> _showRenameCategoryDialog(
+    BuildContext context,
+    FinanceStore store,
+    String oldName,
+  ) async {
+    _controller.text = oldName;
+    _controller.selection = TextSelection(
+      baseOffset: 0,
+      extentOffset: _controller.text.length,
+    );
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Edit Kategori'),
+          content: TextField(
+            controller: _controller,
+            autofocus: true,
+            textCapitalization: TextCapitalization.words,
+            textInputAction: TextInputAction.done,
+            decoration: const InputDecoration(
+              labelText: 'Nama kategori',
+              prefixIcon: Icon(
+                Icons.edit_outlined,
+              ),
+            ),
+            onSubmitted: (_) async {
+              await _saveRenamedCategory(
+                dialogContext,
+                store,
+                oldName,
+              );
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+              },
+              child: const Text('Batal'),
+            ),
+            FilledButton(
+              onPressed: () async {
+                await _saveRenamedCategory(
+                  dialogContext,
+                  store,
+                  oldName,
+                );
+              },
+              child: const Text('Simpan'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _saveRenamedCategory(
+    BuildContext dialogContext,
+    FinanceStore store,
+    String oldName,
+  ) async {
+    final newName = _controller.text.trim();
+
+    if (newName.isEmpty) {
+      ScaffoldMessenger.of(dialogContext)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Nama kategori wajib diisi.',
+            ),
+          ),
+        );
+      return;
+    }
+
+    if (newName == oldName) {
+      Navigator.of(dialogContext).pop();
+      return;
+    }
+
+    final success = await store.renameCategory(
+      account: store.activeAccount,
+      oldName: oldName,
+      newName: newName,
+    );
+
+    if (!dialogContext.mounted) {
+      return;
+    }
+
+    if (!success) {
+      ScaffoldMessenger.of(dialogContext)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Kategori tidak dapat digunakan atau sudah ada.',
+            ),
+          ),
+        );
+      return;
+    }
+
+    Navigator.of(dialogContext).pop();
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {});
+
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Kategori berhasil diperbarui.',
+          ),
+        ),
+      );
+  }
+
+  Future<void> _showDeleteCategoryDialog(
+    BuildContext context,
+    FinanceStore store,
+    String name,
+  ) async {
+    final used = await store.isCategoryUsed(
+      account: store.activeAccount,
+      name: name,
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    if (used) {
+      _showMessage(
+        'Kategori "$name" masih digunakan oleh transaksi. '
+        'Edit kategori atau transaksi terlebih dahulu.',
+      );
+      return;
+    }
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Hapus Kategori?'),
+          content: Text(
+            'Kategori "$name" akan dihapus dari akun ini.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop(false);
+              },
+              child: const Text('Batal'),
+            ),
+            FilledButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop(true);
+              },
+              child: const Text('Hapus'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true || !mounted) {
+      return;
+    }
+
+    final success = await store.deleteCategory(
+      account: store.activeAccount,
+      name: name,
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {});
+
+    _showMessage(
+      success
+          ? 'Kategori berhasil dihapus.'
+          : 'Kategori tidak dapat dihapus.',
+    );
+  }
+
+  void _showMessage(String message) {
+    if (!mounted) {
+      return;
+    }
+
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(message),
+        ),
+      );
+  }
+
   @override
   Widget build(BuildContext context) {
     final store = FinanceScope.of(context);
@@ -629,7 +965,238 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
               ),
             ),
+            const SizedBox(height: 34),
+            const Divider(),
             const SizedBox(height: 30),
+            const Text(
+              'Kategori Transaksi',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              activeAccount == null
+                  ? 'Pilih akun untuk mengelola kategori.'
+                  : 'Kategori khusus untuk akun "$activeAccount".',
+              style: const TextStyle(
+                color: Color(0xFF9A9DA3),
+              ),
+            ),
+            const SizedBox(height: 20),
+            if (activeAccount == null)
+              const Card(
+                child: Padding(
+                  padding: EdgeInsets.all(20),
+                  child: Text(
+                    'Belum ada akun aktif.',
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              )
+            else
+              FutureBuilder<List<String>>(
+                future: _loadCategories(store),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState ==
+                      ConnectionState.waiting) {
+                    return const Padding(
+                      padding: EdgeInsets.symmetric(
+                        vertical: 24,
+                      ),
+                      child: Center(
+                        child: CircularProgressIndicator(),
+                      ),
+                    );
+                  }
+
+                  if (snapshot.hasError) {
+                    return Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(18),
+                        child: Text(
+                          'Gagal memuat kategori: '
+                          '${snapshot.error}',
+                        ),
+                      ),
+                    );
+                  }
+
+                  final categories =
+                      snapshot.data ?? <String>[];
+
+                  if (categories.isEmpty) {
+                    return Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: Column(
+                          children: [
+                            const Icon(
+                              Icons.category_outlined,
+                              size: 42,
+                            ),
+                            const SizedBox(height: 12),
+                            const Text(
+                              'Belum ada kategori',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w800,
+                                fontSize: 16,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            const Text(
+                              'Tambahkan kategori pertama untuk '
+                              'akun ini.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: Color(0xFF9A9DA3),
+                                fontSize: 13,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            OutlinedButton.icon(
+                              onPressed: () async {
+                                await _showAddCategoryDialog(
+                                  context,
+                                  store,
+                                );
+                              },
+                              icon: const Icon(Icons.add),
+                              label: const Text(
+                                'Tambah Kategori',
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+
+                  return Column(
+                    children: [
+                      ...categories.map(
+                        (category) {
+                          return Padding(
+                            padding:
+                                const EdgeInsets.only(
+                              bottom: 10,
+                            ),
+                            child: Card(
+                              child: ListTile(
+                                leading: Container(
+                                  width: 44,
+                                  height: 44,
+                                  decoration:
+                                      BoxDecoration(
+                                    color: const Color(
+                                      0xFF30343A,
+                                    ),
+                                    borderRadius:
+                                        BorderRadius.circular(
+                                      14,
+                                    ),
+                                  ),
+                                  child: const Icon(
+                                    Icons.category_outlined,
+                                  ),
+                                ),
+                                title: Text(
+                                  category,
+                                  maxLines: 1,
+                                  overflow:
+                                      TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontWeight:
+                                        FontWeight.w700,
+                                  ),
+                                ),
+                                subtitle: const Text(
+                                  'Kategori transaksi',
+                                  style: TextStyle(
+                                    color:
+                                        Color(0xFF777B82),
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                trailing:
+                                    PopupMenuButton<String>(
+                                  tooltip:
+                                      'Menu kategori',
+                                  onSelected:
+                                      (value) async {
+                                    if (value == 'rename') {
+                                      await _showRenameCategoryDialog(
+                                        context,
+                                        store,
+                                        category,
+                                      );
+                                    } else if (value ==
+                                        'delete') {
+                                      await _showDeleteCategoryDialog(
+                                        context,
+                                        store,
+                                        category,
+                                      );
+                                    }
+                                  },
+                                  itemBuilder: (_) => const [
+                                    PopupMenuItem<String>(
+                                      value: 'rename',
+                                      child: Row(
+                                        children: [
+                                          Icon(
+                                            Icons
+                                                .edit_outlined,
+                                          ),
+                                          SizedBox(width: 10),
+                                          Text('Edit'),
+                                        ],
+                                      ),
+                                    ),
+                                    PopupMenuItem<String>(
+                                      value: 'delete',
+                                      child: Row(
+                                        children: [
+                                          Icon(
+                                            Icons
+                                                .delete_outline,
+                                          ),
+                                          SizedBox(width: 10),
+                                          Text('Hapus'),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 6),
+                      OutlinedButton.icon(
+                        onPressed: () async {
+                          await _showAddCategoryDialog(
+                            context,
+                            store,
+                          );
+                        },
+                        icon: const Icon(Icons.add),
+                        label: const Padding(
+                          padding: EdgeInsets.symmetric(
+                            vertical: 12,
+                          ),
+                          child: Text(
+                            'Tambah Kategori',
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            const SizedBox(height: 24),
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -648,7 +1215,9 @@ class _SettingsPageState extends State<SettingsPage> {
                   SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'Menghapus akun juga akan menghapus seluruh transaksi yang tersimpan pada akun tersebut.',
+                      'Kategori yang masih digunakan oleh transaksi '
+                      'tidak dapat dihapus. Edit kategori akan otomatis '
+                      'memperbarui transaksi yang menggunakannya.',
                       style: TextStyle(
                         color: Color(0xFF9A9DA3),
                         fontSize: 12,
