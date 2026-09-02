@@ -452,6 +452,23 @@ class _SettingsPageState extends State<SettingsPage> {
       return;
     }
 
+    final account = store.activeAccount;
+
+    if (account == null) {
+      if (dialogContext.mounted) {
+        ScaffoldMessenger.of(dialogContext)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Pilih akun terlebih dahulu.',
+              ),
+            ),
+          );
+      }
+      return;
+    }
+
     final success = await store.addCategory(
       account: account,
       name: name,
