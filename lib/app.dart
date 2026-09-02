@@ -1,4 +1,3 @@
-```dart
 import 'package:flutter/material.dart';
 
 import 'core/finance_scope.dart';
@@ -72,4 +71,3 @@ class FinanceApp extends StatelessWidget {
     );
   }
 }
-```
