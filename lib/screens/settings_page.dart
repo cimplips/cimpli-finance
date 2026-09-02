@@ -421,7 +421,7 @@ class _SettingsPageState extends State<SettingsPage> {
       },
     );
 
-    if (confirmed != true || !mounted) {
+    if (confirmed != true || !context.mounted) {
       return;
     }
 
