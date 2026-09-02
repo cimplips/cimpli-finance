@@ -19,6 +19,8 @@ class FinanceStore extends ChangeNotifier {
 
   bool get loading => _loading;
 
+  bool get isLoading => _loading;
+
   String? get error => _error;
 
   Future<void> load() async {
@@ -37,17 +39,13 @@ class FinanceStore extends ChangeNotifier {
         version: 3,
         onCreate: (db, version) async {
           await _createBaseTables(db);
-
           await _createCategoriesTable(db);
-
           await _createRecurringTransactionsTable(db);
-
           await _seedDefaultAccounts(db);
         },
         onUpgrade: (db, oldVersion, newVersion) async {
           if (oldVersion < 2) {
             await _createCategoriesTable(db);
-
             await _migrateTransactionCategories(db);
           }
 
@@ -762,7 +760,7 @@ class FinanceStore extends ChangeNotifier {
           );
 
           if (categoryResult == 0) {
-            throw DatabaseException(
+            throw StateError(
               'Kategori tidak ditemukan.',
             );
           }
@@ -789,6 +787,8 @@ class FinanceStore extends ChangeNotifier {
         },
       );
     } on DatabaseException {
+      return false;
+    } on StateError {
       return false;
     }
 
@@ -1260,20 +1260,18 @@ class FinanceStore extends ChangeNotifier {
   }) {
     final dates = <DateTime>[];
 
-    var nextDate = _nextRecurringDate(
+    DateTime? nextDate = _nextRecurringDate(
       recurring: recurring,
     );
 
-    if (nextDate == null) {
-      return dates;
-    }
-
-    while (!nextDate.isAfter(until)) {
-      dates.add(nextDate);
+    while (nextDate != null &&
+        !nextDate.isAfter(until)) {
+      final dueDate = nextDate;
+      dates.add(dueDate);
 
       nextDate = _nextRecurringDate(
         recurring: recurring,
-        after: nextDate,
+        after: dueDate,
       );
 
       if (dates.length >= 120) {
@@ -1337,14 +1335,11 @@ class FinanceStore extends ChangeNotifier {
   }
 
   DateTime _dateBeforeStart(DateTime date) {
-    switch (date) {
-      case _:
-        return DateTime(
-          date.year,
-          date.month,
-          date.day - 1,
-        );
-    }
+    return DateTime(
+      date.year,
+      date.month,
+      date.day - 1,
+    );
   }
 
   int _safeDayOfMonth(
