@@ -27,7 +27,7 @@ class FinanceStore extends ChangeNotifier {
 
       _db = await openDatabase(
         '$databasePath/keuangan_prima.db',
-        version: 1,
+        version: 2,
         onCreate: (db, version) async {
           await db.execute('''
             CREATE TABLE transactions (
@@ -58,6 +58,14 @@ class FinanceStore extends ChangeNotifier {
               'name': 'Pribadi',
             },
           );
+
+          await _createCategoriesTable(db);
+        },
+        onUpgrade: (db, oldVersion, newVersion) async {
+          if (oldVersion < 2) {
+            await _createCategoriesTable(db);
+            await _migrateExistingCategories(db);
+          }
         },
       );
 
@@ -70,8 +78,58 @@ class FinanceStore extends ChangeNotifier {
     }
   }
 
+  Future<void> _createCategoriesTable(DatabaseExecutor db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS categories (
+        account TEXT NOT NULL,
+        name TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        PRIMARY KEY (account, name)
+      )
+    ''');
+
+    await db.execute('''
+      CREATE INDEX IF NOT EXISTS idx_categories_account
+      ON categories(account)
+    ''');
+  }
+
+  Future<void> _migrateExistingCategories(
+    DatabaseExecutor db,
+  ) async {
+    final rows = await db.rawQuery('''
+      SELECT DISTINCT account, category
+      FROM transactions
+      WHERE category IS NOT NULL
+        AND TRIM(category) != ''
+    ''');
+
+    for (final row in rows) {
+      final account = row['account'] as String?;
+      final category = row['category'] as String?;
+
+      if (account == null ||
+          category == null ||
+          account.trim().isEmpty ||
+          category.trim().isEmpty) {
+        continue;
+      }
+
+      await db.insert(
+        'categories',
+        <String, Object?>{
+          'account': account.trim(),
+          'name': category.trim(),
+          'created_at': DateTime.now().toIso8601String(),
+        },
+        conflictAlgorithm: ConflictAlgorithm.ignore,
+      );
+    }
+  }
+
   Future<void> _loadAccounts() async {
     final db = _db;
+
     if (db == null) {
       return;
     }
@@ -100,7 +158,8 @@ class FinanceStore extends ChangeNotifier {
       _accounts.add('Pribadi');
     }
 
-    if (_activeAccount == null || !_accounts.contains(_activeAccount)) {
+    if (_activeAccount == null ||
+        !_accounts.contains(_activeAccount)) {
       _activeAccount = _accounts.first;
     }
   }
@@ -114,7 +173,8 @@ class FinanceStore extends ChangeNotifier {
     }
 
     if (_accounts.any(
-      (account) => account.toLowerCase() == cleanName.toLowerCase(),
+      (account) =>
+          account.toLowerCase() == cleanName.toLowerCase(),
     )) {
       return false;
     }
@@ -187,6 +247,15 @@ class FinanceStore extends ChangeNotifier {
           where: 'account = ?',
           whereArgs: <Object?>[oldName],
         );
+
+        await txn.update(
+          'categories',
+          <String, Object?>{
+            'account': cleanName,
+          },
+          where: 'account = ?',
+          whereArgs: <Object?>[oldName],
+        );
       });
 
       final index = _accounts.indexOf(oldName);
@@ -229,6 +298,12 @@ class FinanceStore extends ChangeNotifier {
       await db.transaction((txn) async {
         await txn.delete(
           'transactions',
+          where: 'account = ?',
+          whereArgs: <Object?>[name],
+        );
+
+        await txn.delete(
+          'categories',
           where: 'account = ?',
           whereArgs: <Object?>[name],
         );
@@ -294,6 +369,12 @@ class FinanceStore extends ChangeNotifier {
     }
 
     try {
+      await _ensureCategoryExists(
+        db,
+        cleanAccount,
+        cleanCategory,
+      );
+
       final id = await db.insert(
         'transactions',
         <String, Object?>{
@@ -342,6 +423,12 @@ class FinanceStore extends ChangeNotifier {
     }
 
     try {
+      await _ensureCategoryExists(
+        db,
+        cleanAccount,
+        cleanCategory,
+      );
+
       final affected = await db.update(
         'transactions',
         <String, Object?>{
@@ -509,6 +596,23 @@ class FinanceStore extends ChangeNotifier {
     try {
       final rows = await db.rawQuery(
         '''
+        SELECT DISTINCT name
+        FROM categories
+        WHERE account = ?
+          AND name IS NOT NULL
+          AND TRIM(name) != ''
+        ORDER BY name COLLATE NOCASE ASC
+        ''',
+        <Object?>[targetAccount],
+      );
+
+      final categories = rows
+          .map((row) => row['name'])
+          .whereType<String>()
+          .toList();
+
+      final transactionRows = await db.rawQuery(
+        '''
         SELECT DISTINCT category
         FROM transactions
         WHERE account = ?
@@ -519,15 +623,311 @@ class FinanceStore extends ChangeNotifier {
         <Object?>[targetAccount],
       );
 
-      return rows
-          .map((row) => row['category'])
-          .whereType<String>()
-          .toList();
+      final result = <String>{
+        ...categories,
+        ...transactionRows
+            .map((row) => row['category'])
+            .whereType<String>(),
+      }.toList()
+        ..sort(
+          (a, b) => a.toLowerCase().compareTo(
+                b.toLowerCase(),
+              ),
+        );
+
+      return result;
     } catch (e) {
       _error = e.toString();
       notifyListeners();
       return <String>[];
     }
+  }
+
+  Future<bool> addCategory({
+    String? account,
+    required String name,
+  }) async {
+    final db = _db;
+
+    final targetAccount =
+        account?.trim().isNotEmpty == true
+            ? account!.trim()
+            : _activeAccount;
+
+    final cleanName = name.trim();
+
+    if (db == null ||
+        targetAccount == null ||
+        targetAccount.isEmpty ||
+        cleanName.isEmpty) {
+      return false;
+    }
+
+    try {
+      final existing = await db.query(
+        'categories',
+        columns: <String>['name'],
+        where: 'account = ?',
+        whereArgs: <Object?>[targetAccount],
+      );
+
+      final duplicate = existing.any(
+        (row) =>
+            (row['name'] as String? ?? '').toLowerCase() ==
+            cleanName.toLowerCase(),
+      );
+
+      if (duplicate) {
+        return false;
+      }
+
+      await db.insert(
+        'categories',
+        <String, Object?>{
+          'account': targetAccount,
+          'name': cleanName,
+          'created_at': DateTime.now().toIso8601String(),
+        },
+      );
+
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> renameCategory({
+    String? account,
+    required String oldName,
+    required String newName,
+  }) async {
+    final db = _db;
+
+    final targetAccount =
+        account?.trim().isNotEmpty == true
+            ? account!.trim()
+            : _activeAccount;
+
+    final cleanOldName = oldName.trim();
+    final cleanNewName = newName.trim();
+
+    if (db == null ||
+        targetAccount == null ||
+        targetAccount.isEmpty ||
+        cleanOldName.isEmpty ||
+        cleanNewName.isEmpty) {
+      return false;
+    }
+
+    if (cleanOldName.toLowerCase() ==
+        cleanNewName.toLowerCase()) {
+      return false;
+    }
+
+    try {
+      final existing = await db.query(
+        'categories',
+        columns: <String>['name'],
+        where: 'account = ?',
+        whereArgs: <Object?>[targetAccount],
+      );
+
+      final duplicate = existing.any(
+        (row) =>
+            (row['name'] as String? ?? '').toLowerCase() ==
+            cleanNewName.toLowerCase(),
+      );
+
+      if (duplicate) {
+        return false;
+      }
+
+      final categoryExists = existing.any(
+        (row) =>
+            (row['name'] as String? ?? '') == cleanOldName,
+      );
+
+      if (!categoryExists) {
+        return false;
+      }
+
+      await db.transaction((txn) async {
+        await txn.update(
+          'categories',
+          <String, Object?>{
+            'name': cleanNewName,
+          },
+          where: 'account = ? AND name = ?',
+          whereArgs: <Object?>[
+            targetAccount,
+            cleanOldName,
+          ],
+        );
+
+        await txn.update(
+          'transactions',
+          <String, Object?>{
+            'category': cleanNewName,
+          },
+          where: 'account = ? AND category = ?',
+          whereArgs: <Object?>[
+            targetAccount,
+            cleanOldName,
+          ],
+        );
+      });
+
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> deleteCategory({
+    String? account,
+    required String name,
+  }) async {
+    final db = _db;
+
+    final targetAccount =
+        account?.trim().isNotEmpty == true
+            ? account!.trim()
+            : _activeAccount;
+
+    final cleanName = name.trim();
+
+    if (db == null ||
+        targetAccount == null ||
+        targetAccount.isEmpty ||
+        cleanName.isEmpty) {
+      return false;
+    }
+
+    try {
+      final usedRows = await db.query(
+        'transactions',
+        columns: <String>['id'],
+        where: 'account = ? AND category = ?',
+        whereArgs: <Object?>[
+          targetAccount,
+          cleanName,
+        ],
+        limit: 1,
+      );
+
+      if (usedRows.isNotEmpty) {
+        return false;
+      }
+
+      final affected = await db.delete(
+        'categories',
+        where: 'account = ? AND name = ?',
+        whereArgs: <Object?>[
+          targetAccount,
+          cleanName,
+        ],
+      );
+
+      if (affected == 0) {
+        return false;
+      }
+
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> isCategoryUsed({
+    String? account,
+    required String name,
+  }) async {
+    final db = _db;
+
+    final targetAccount =
+        account?.trim().isNotEmpty == true
+            ? account!.trim()
+            : _activeAccount;
+
+    final cleanName = name.trim();
+
+    if (db == null ||
+        targetAccount == null ||
+        targetAccount.isEmpty ||
+        cleanName.isEmpty) {
+      return false;
+    }
+
+    try {
+      final rows = await db.query(
+        'transactions',
+        columns: <String>['id'],
+        where: 'account = ? AND category = ?',
+        whereArgs: <Object?>[
+          targetAccount,
+          cleanName,
+        ],
+        limit: 1,
+      );
+
+      return rows.isNotEmpty;
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<void> _ensureCategoryExists(
+    DatabaseExecutor db,
+    String account,
+    String category,
+  ) async {
+    final existing = await db.query(
+      'categories',
+      columns: <String>['name'],
+      where: 'account = ?',
+      whereArgs: <Object?>[account],
+      limit: 1,
+    );
+
+    final allRows = await db.query(
+      'categories',
+      columns: <String>['name'],
+      where: 'account = ?',
+      whereArgs: <Object?>[account],
+    );
+
+    final alreadyExists = allRows.any(
+      (row) =>
+          (row['name'] as String? ?? '').toLowerCase() ==
+          category.toLowerCase(),
+    );
+
+    if (alreadyExists || existing.isEmpty) {
+      if (alreadyExists) {
+        return;
+      }
+    }
+
+    await db.insert(
+      'categories',
+      <String, Object?>{
+        'account': account,
+        'name': category,
+        'created_at': DateTime.now().toIso8601String(),
+      },
+      conflictAlgorithm: ConflictAlgorithm.ignore,
+    );
   }
 
   Future<double> getBalance({
