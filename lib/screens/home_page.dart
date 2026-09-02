@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'budget_page.dart';
 import 'dashboard_page.dart';
 import 'history_page.dart';
 import 'report_page.dart';
@@ -20,6 +21,7 @@ class _HomePageState extends State<HomePage> {
   static const List<Widget> _pages = <Widget>[
     DashboardPage(),
     HistoryPage(),
+    BudgetPage(),
     ReportPage(),
     SettingsPage(),
   ];
@@ -50,6 +52,13 @@ class _HomePageState extends State<HomePage> {
             icon: Icon(Icons.receipt_long_outlined),
             selectedIcon: Icon(Icons.receipt_long),
             label: 'Riwayat',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.account_balance_wallet_outlined),
+            selectedIcon: Icon(
+              Icons.account_balance_wallet,
+            ),
+            label: 'Anggaran',
           ),
           NavigationDestination(
             icon: Icon(Icons.bar_chart_outlined),
