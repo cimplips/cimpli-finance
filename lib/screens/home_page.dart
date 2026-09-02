@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../core/finance_scope.dart';
 import 'dashboard_page.dart';
 import 'history_page.dart';
 import 'report_page.dart';
@@ -27,8 +26,6 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    final store = FinanceScope.of(context);
-
     return Scaffold(
       body: SafeArea(
         child: _pages[_currentIndex],
