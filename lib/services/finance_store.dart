@@ -246,7 +246,9 @@ class FinanceStore extends ChangeNotifier {
       }
 
       if (_activeAccount == null) {
-        _activeAccount = cleaned;
+        _activeAccount = _accounts.first;
+      } else if (!_accounts.contains(_activeAccount)) {
+        _activeAccount = _accounts.first;
       }
 
       await _loadAccounts();
