@@ -319,7 +319,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
     final success = await store.deleteAccount(name);
 
-    if (!mounted) {
+    if (!context.mounted) {
       return;
     }
 
@@ -386,8 +386,6 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
             ),
             const SizedBox(height: 20),
-
-            // Akun aktif
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(18),
@@ -439,10 +437,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
               ),
             ),
-
             const SizedBox(height: 24),
-
-            // Daftar akun
             if (store.accounts.isEmpty)
               const Card(
                 child: Padding(
@@ -616,10 +611,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   );
                 },
               ),
-
             const SizedBox(height: 8),
-
-            // Tambah akun
             OutlinedButton.icon(
               onPressed: () async {
                 await _showAddAccountDialog(
@@ -637,9 +629,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
               ),
             ),
-
             const SizedBox(height: 30),
-
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -669,7 +659,6 @@ class _SettingsPageState extends State<SettingsPage> {
                 ],
               ),
             ),
-
             const SizedBox(height: 110),
           ],
         ),
