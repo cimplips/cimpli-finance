@@ -152,7 +152,7 @@ class _HistoryPageState extends State<HistoryPage> {
                     ),
                     const SizedBox(height: 8),
                     DropdownButtonFormField<TransactionType?>(
-                      value: _selectedType,
+                      initialValue: _selectedType,
                       decoration: const InputDecoration(
                         labelText: 'Jenis',
                       ),
@@ -197,7 +197,7 @@ class _HistoryPageState extends State<HistoryPage> {
                                 : 'Semua';
 
                         return DropdownButtonFormField<String>(
-                          value: selected,
+                          initialValue: selected,
                           isExpanded: true,
                           decoration: const InputDecoration(
                             labelText: 'Kategori',
