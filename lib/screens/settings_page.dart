@@ -361,14 +361,8 @@ class _SettingsPageState extends State<SettingsPage> {
   Future<List<String>> _loadCategories(
     FinanceStore store,
   ) {
-    final account = store.activeAccount;
-
-    if (account == null) {
-      return Future<List<String>>.value(<String>[]);
-    }
-
     return store.getCategories(
-      account: account,
+      account: store.activeAccount,
     );
   }
 
@@ -450,25 +444,8 @@ class _SettingsPageState extends State<SettingsPage> {
       return;
     }
 
-    final account = store.activeAccount;
-
-    if (account == null) {
-      if (dialogContext.mounted) {
-        ScaffoldMessenger.of(dialogContext)
-          ..hideCurrentSnackBar()
-          ..showSnackBar(
-            const SnackBar(
-              content: Text(
-                'Pilih akun terlebih dahulu.',
-              ),
-            ),
-          );
-      }
-      return;
-    }
-
     final success = await store.addCategory(
-      account: account,
+      account: store.activeAccount,
       name: name,
     );
 
@@ -591,14 +568,8 @@ class _SettingsPageState extends State<SettingsPage> {
       return;
     }
 
-    final account = store.activeAccount;
-
-    if (account == null) {
-      return;
-    }
-
     final success = await store.renameCategory(
-      account: account,
+      account: store.activeAccount,
       oldName: oldName,
       newName: newName,
     );
@@ -658,7 +629,7 @@ class _SettingsPageState extends State<SettingsPage> {
       name: name,
     );
 
-    if (!mounted) {
+    if (!context.mounted) {
       return;
     }
 
@@ -696,16 +667,7 @@ class _SettingsPageState extends State<SettingsPage> {
       },
     );
 
-    if (confirmed != true || !mounted) {
-      return;
-    }
-
-    final account = store.activeAccount;
-
-    if (account == null) {
-      _showMessage(
-        'Pilih akun terlebih dahulu.',
-      );
+    if (confirmed != true || !context.mounted) {
       return;
     }
 
@@ -714,7 +676,7 @@ class _SettingsPageState extends State<SettingsPage> {
       name: name,
     );
 
-    if (!mounted) {
+    if (!context.mounted) {
       return;
     }
 
