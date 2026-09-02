@@ -18,6 +18,10 @@ class _HistoryPageState extends State<HistoryPage> {
   TransactionType? _selectedType;
   String _searchQuery = '';
 
+  String _selectedPeriod = 'Semua';
+  DateTime? _startDate;
+  DateTime? _endDate;
+
   Future<List<Tx>> _loadTransactions() async {
     final store = FinanceScope.of(context);
 
@@ -29,14 +33,40 @@ class _HistoryPageState extends State<HistoryPage> {
 
     final query = _searchQuery.trim().toLowerCase();
 
-    if (query.isEmpty) {
-      return transactions;
+    var filtered = transactions;
+
+    if (query.isNotEmpty) {
+      filtered = filtered.where((transaction) {
+        return transaction.title.toLowerCase().contains(query) ||
+            transaction.category.toLowerCase().contains(query);
+      }).toList();
     }
 
-    return transactions.where((transaction) {
-      return transaction.title.toLowerCase().contains(query) ||
-          transaction.category.toLowerCase().contains(query);
-    }).toList();
+    if (_startDate != null && _endDate != null) {
+      final start = DateTime(
+        _startDate!.year,
+        _startDate!.month,
+        _startDate!.day,
+      );
+
+      final end = DateTime(
+        _endDate!.year,
+        _endDate!.month,
+        _endDate!.day,
+        23,
+        59,
+        59,
+        999,
+      );
+
+      filtered = filtered.where((transaction) {
+        final date = transaction.date;
+
+        return !date.isBefore(start) && !date.isAfter(end);
+      }).toList();
+    }
+
+    return filtered;
   }
 
   Future<List<String>> _loadCategories() async {
@@ -127,11 +157,182 @@ class _HistoryPageState extends State<HistoryPage> {
     }
   }
 
+  Future<void> _selectCustomDateRange(
+    BuildContext pickerContext,
+  ) async {
+    final now = DateTime.now();
+
+    final initialStart = _startDate ?? now;
+    final initialEnd = _endDate ?? now;
+
+    final firstDate = DateTime(2000);
+    final lastDate = DateTime(
+      now.year + 10,
+      now.month,
+      now.day,
+    );
+
+    final start = initialStart.isBefore(firstDate)
+        ? firstDate
+        : initialStart;
+
+    final end = initialEnd.isAfter(lastDate)
+        ? lastDate
+        : initialEnd;
+
+    final initialRange = start.isAfter(end)
+        ? DateTimeRange(
+            start: start,
+            end: start,
+          )
+        : DateTimeRange(
+            start: start,
+            end: end,
+          );
+
+    final selected = await showDateRangePicker(
+      context: pickerContext,
+      firstDate: firstDate,
+      lastDate: lastDate,
+      initialDateRange: initialRange,
+      helpText: 'Pilih periode transaksi',
+      cancelText: 'Batal',
+      confirmText: 'Pilih',
+      saveText: 'Simpan',
+      fieldStartHintText: 'Tanggal mulai',
+      fieldEndHintText: 'Tanggal akhir',
+    );
+
+    if (selected == null || !mounted) {
+      return;
+    }
+
+    setState(() {
+      _selectedPeriod = 'Rentang tanggal';
+      _startDate = selected.start;
+      _endDate = selected.end;
+    });
+  }
+
+  DateTime _dateOnly(DateTime date) {
+    return DateTime(
+      date.year,
+      date.month,
+      date.day,
+    );
+  }
+
+  void _setPeriod(String period) {
+    final now = DateTime.now();
+    final today = _dateOnly(now);
+
+    DateTime? start;
+    DateTime? end;
+
+    switch (period) {
+      case 'Hari ini':
+        start = today;
+        end = today;
+        break;
+
+      case '7 hari terakhir':
+        start = today.subtract(
+          const Duration(days: 6),
+        );
+        end = today;
+        break;
+
+      case 'Bulan ini':
+        start = DateTime(
+          now.year,
+          now.month,
+          1,
+        );
+        end = DateTime(
+          now.year,
+          now.month + 1,
+          0,
+        );
+        break;
+
+      case 'Bulan lalu':
+        start = DateTime(
+          now.year,
+          now.month - 1,
+          1,
+        );
+        end = DateTime(
+          now.year,
+          now.month,
+          0,
+        );
+        break;
+
+      default:
+        start = null;
+        end = null;
+    }
+
+    setState(() {
+      _selectedPeriod = period;
+      _startDate = start;
+      _endDate = end;
+    });
+  }
+
+  void _resetFilters() {
+    setState(() {
+      _selectedCategory = null;
+      _selectedType = null;
+      _selectedPeriod = 'Semua';
+      _startDate = null;
+      _endDate = null;
+    });
+  }
+
+  bool get _hasActiveFilter {
+    return _selectedCategory != null ||
+        _selectedType != null ||
+        _selectedPeriod != 'Semua';
+  }
+
+  String _periodLabel() {
+    if (_selectedPeriod != 'Rentang tanggal') {
+      return _selectedPeriod;
+    }
+
+    if (_startDate == null || _endDate == null) {
+      return 'Rentang tanggal';
+    }
+
+    return '${_formatShortDate(_startDate!)} - ${_formatShortDate(_endDate!)}';
+  }
+
+  String _formatShortDate(DateTime date) {
+    const months = <String>[
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'Mei',
+      'Jun',
+      'Jul',
+      'Agu',
+      'Sep',
+      'Okt',
+      'Nov',
+      'Des',
+    ];
+
+    return '${date.day} ${months[date.month - 1]} ${date.year}';
+  }
+
   void _showFilterSheet() {
     showModalBottomSheet<void>(
       context: context,
       backgroundColor: const Color(0xFF1C1E22),
       showDragHandle: true,
+      isScrollControlled: true,
       builder: (sheetContext) {
         return StatefulBuilder(
           builder: (context, setSheetState) {
@@ -143,131 +344,204 @@ class _HistoryPageState extends State<HistoryPage> {
                   20,
                   24,
                 ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Filter transaksi',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    const Text(
-                      'Jenis transaksi',
-                      style: TextStyle(
-                        color: Color(0xFF9A9DA3),
-                        fontSize: 13,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    DropdownButtonFormField<TransactionType?>(
-                      initialValue: _selectedType,
-                      decoration: const InputDecoration(
-                        labelText: 'Jenis',
-                      ),
-                      items: const [
-                        DropdownMenuItem<TransactionType?>(
-                          value: null,
-                          child: Text('Semua'),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Filter transaksi',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w800,
                         ),
-                        DropdownMenuItem<TransactionType?>(
-                          value: TransactionType.income,
-                          child: Text('Pemasukan'),
+                      ),
+                      const SizedBox(height: 20),
+                      const Text(
+                        'Periode',
+                        style: TextStyle(
+                          color: Color(0xFF9A9DA3),
+                          fontSize: 13,
                         ),
-                        DropdownMenuItem<TransactionType?>(
-                          value: TransactionType.expense,
-                          child: Text('Pengeluaran'),
+                      ),
+                      const SizedBox(height: 8),
+                      DropdownButtonFormField<String>(
+                        initialValue: _selectedPeriod,
+                        isExpanded: true,
+                        decoration: const InputDecoration(
+                          labelText: 'Periode tanggal',
+                        ),
+                        items: const [
+                          DropdownMenuItem<String>(
+                            value: 'Semua',
+                            child: Text('Semua tanggal'),
+                          ),
+                          DropdownMenuItem<String>(
+                            value: 'Hari ini',
+                            child: Text('Hari ini'),
+                          ),
+                          DropdownMenuItem<String>(
+                            value: '7 hari terakhir',
+                            child: Text('7 hari terakhir'),
+                          ),
+                          DropdownMenuItem<String>(
+                            value: 'Bulan ini',
+                            child: Text('Bulan ini'),
+                          ),
+                          DropdownMenuItem<String>(
+                            value: 'Bulan lalu',
+                            child: Text('Bulan lalu'),
+                          ),
+                          DropdownMenuItem<String>(
+                            value: 'Rentang tanggal',
+                            child: Text('Rentang tanggal'),
+                          ),
+                        ],
+                        onChanged: (value) async {
+                          if (value == null) {
+                            return;
+                          }
+
+                          if (value == 'Rentang tanggal') {
+                            await _selectCustomDateRange(
+                              sheetContext,
+                            );
+
+                            if (mounted) {
+                              setSheetState(() {});
+                            }
+                            return;
+                          }
+
+                          _setPeriod(value);
+                          setSheetState(() {});
+                        },
+                      ),
+                      if (_selectedPeriod == 'Rentang tanggal' &&
+                          _startDate != null &&
+                          _endDate != null) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          _periodLabel(),
+                          style: const TextStyle(
+                            color: Color(0xFFB8BCC2),
+                            fontSize: 13,
+                          ),
                         ),
                       ],
-                      onChanged: (value) {
-                        setSheetState(() {
-                          _selectedType = value;
-                        });
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'Kategori',
-                      style: TextStyle(
-                        color: Color(0xFF9A9DA3),
-                        fontSize: 13,
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Jenis transaksi',
+                        style: TextStyle(
+                          color: Color(0xFF9A9DA3),
+                          fontSize: 13,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    FutureBuilder<List<String>>(
-                      future: _loadCategories(),
-                      builder: (context, snapshot) {
-                        final categories =
-                            snapshot.data ?? <String>['Semua'];
-
-                        final selected =
-                            categories.contains(_selectedCategory)
-                                ? _selectedCategory
-                                : 'Semua';
-
-                        return DropdownButtonFormField<String>(
-                          initialValue: selected,
-                          isExpanded: true,
-                          decoration: const InputDecoration(
-                            labelText: 'Kategori',
+                      const SizedBox(height: 8),
+                      DropdownButtonFormField<TransactionType?>(
+                        initialValue: _selectedType,
+                        decoration: const InputDecoration(
+                          labelText: 'Jenis',
+                        ),
+                        items: const [
+                          DropdownMenuItem<TransactionType?>(
+                            value: null,
+                            child: Text('Semua'),
                           ),
-                          items: categories
-                              .map(
-                                (category) =>
-                                    DropdownMenuItem<String>(
-                                  value: category,
-                                  child: Text(
-                                    category,
-                                    overflow:
-                                        TextOverflow.ellipsis,
+                          DropdownMenuItem<TransactionType?>(
+                            value: TransactionType.income,
+                            child: Text('Pemasukan'),
+                          ),
+                          DropdownMenuItem<TransactionType?>(
+                            value: TransactionType.expense,
+                            child: Text('Pengeluaran'),
+                          ),
+                        ],
+                        onChanged: (value) {
+                          setSheetState(() {
+                            _selectedType = value;
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Kategori',
+                        style: TextStyle(
+                          color: Color(0xFF9A9DA3),
+                          fontSize: 13,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      FutureBuilder<List<String>>(
+                        future: _loadCategories(),
+                        builder: (context, snapshot) {
+                          final categories =
+                              snapshot.data ?? <String>['Semua'];
+
+                          final selected =
+                              categories.contains(_selectedCategory)
+                                  ? _selectedCategory
+                                  : 'Semua';
+
+                          return DropdownButtonFormField<String>(
+                            initialValue: selected,
+                            isExpanded: true,
+                            decoration: const InputDecoration(
+                              labelText: 'Kategori',
+                            ),
+                            items: categories
+                                .map(
+                                  (category) =>
+                                      DropdownMenuItem<String>(
+                                    value: category,
+                                    child: Text(
+                                      category,
+                                      overflow:
+                                          TextOverflow.ellipsis,
+                                    ),
                                   ),
-                                ),
-                              )
-                              .toList(),
-                          onChanged: (value) {
-                            setSheetState(() {
-                              _selectedCategory =
-                                  value == 'Semua'
-                                      ? null
-                                      : value;
-                            });
-                          },
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 24),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: () {
+                                )
+                                .toList(),
+                            onChanged: (value) {
                               setSheetState(() {
-                                _selectedType = null;
-                                _selectedCategory = null;
+                                _selectedCategory =
+                                    value == 'Semua'
+                                        ? null
+                                        : value;
                               });
                             },
-                            child: const Text('Reset'),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 24),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: () {
+                                _resetFilters();
+                                Navigator.of(sheetContext).pop();
+                              },
+                              child: const Text('Reset'),
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: FilledButton(
-                            onPressed: () {
-                              Navigator.of(sheetContext).pop();
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: FilledButton(
+                              onPressed: () {
+                                Navigator.of(sheetContext).pop();
 
-                              if (mounted) {
-                                setState(() {});
-                              }
-                            },
-                            child: const Text('Terapkan'),
+                                if (mounted) {
+                                  setState(() {});
+                                }
+                              },
+                              child: const Text('Terapkan'),
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ],
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
             );
@@ -367,8 +641,7 @@ class _HistoryPageState extends State<HistoryPage> {
                 tooltip: 'Filter',
                 onPressed: _showFilterSheet,
                 icon: Icon(
-                  (_selectedCategory != null ||
-                          _selectedType != null)
+                  _hasActiveFilter
                       ? Icons.filter_alt
                       : Icons.filter_alt_outlined,
                 ),
@@ -407,12 +680,28 @@ class _HistoryPageState extends State<HistoryPage> {
             ),
           ),
           const SizedBox(height: 16),
-          if (_selectedCategory != null ||
-              _selectedType != null)
+          if (_hasActiveFilter)
             Wrap(
               spacing: 8,
               runSpacing: 8,
               children: [
+                if (_selectedPeriod != 'Semua')
+                  Chip(
+                    avatar: const Icon(
+                      Icons.date_range_outlined,
+                      size: 18,
+                    ),
+                    label: Text(
+                      _periodLabel(),
+                    ),
+                    onDeleted: () {
+                      setState(() {
+                        _selectedPeriod = 'Semua';
+                        _startDate = null;
+                        _endDate = null;
+                      });
+                    },
+                  ),
                 if (_selectedType != null)
                   Chip(
                     label: Text(
@@ -435,8 +724,7 @@ class _HistoryPageState extends State<HistoryPage> {
                   ),
               ],
             ),
-          if (_selectedCategory != null ||
-              _selectedType != null)
+          if (_hasActiveFilter)
             const SizedBox(height: 12),
           FutureBuilder<List<Tx>>(
             future: _loadTransactions(),
@@ -463,14 +751,19 @@ class _HistoryPageState extends State<HistoryPage> {
                   snapshot.data ?? <Tx>[];
 
               if (transactions.isEmpty) {
+                final hasSearch =
+                    _searchQuery.trim().isNotEmpty;
+
                 return _HistoryMessage(
-                  icon: Icons.search_off_outlined,
-                  title: _searchQuery.trim().isEmpty
-                      ? 'Belum ada transaksi'
-                      : 'Transaksi tidak ditemukan',
-                  message: _searchQuery.trim().isEmpty
-                      ? 'Transaksi yang sesuai filter akan muncul di sini.'
-                      : 'Coba gunakan kata kunci lain atau hapus pencarian.',
+                  icon: hasSearch || _hasActiveFilter
+                      ? Icons.search_off_outlined
+                      : Icons.receipt_long_outlined,
+                  title: hasSearch || _hasActiveFilter
+                      ? 'Transaksi tidak ditemukan'
+                      : 'Belum ada transaksi',
+                  message: hasSearch || _hasActiveFilter
+                      ? 'Coba ubah kata pencarian atau filter yang digunakan.'
+                      : 'Transaksi yang ditambahkan akan muncul di sini.',
                 );
               }
 
