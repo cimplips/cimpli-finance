@@ -29,18 +29,11 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   @override
-  void dispose() {
-    _budgetStore.close();
-    super.dispose();
-  }
-
-  @override
   void didChangeDependencies() {
     super.didChangeDependencies();
 
     final store = FinanceScope.of(context);
     final account = store.activeAccount;
-
     final key = account ?? '__no_account__';
 
     if (_futureKey == key && _dataFuture != null) {
@@ -48,10 +41,17 @@ class _DashboardPageState extends State<DashboardPage> {
     }
 
     _futureKey = key;
+
     _dataFuture = _loadData(
       store: store,
       account: account,
     );
+  }
+
+  @override
+  void dispose() {
+    _budgetStore.close();
+    super.dispose();
   }
 
   Future<_DashboardData> _loadData({
@@ -128,6 +128,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
     setState(() {
       _futureKey = account ?? '__no_account__';
+
       _dataFuture = _loadData(
         store: store,
         account: account,
@@ -205,7 +206,6 @@ class _DashboardPageState extends State<DashboardPage> {
                           : null,
                       onTap: () {
                         store.setActiveAccount(account);
-
                         Navigator.of(sheetContext).pop();
                       },
                     );
@@ -396,6 +396,12 @@ class _DashboardPageState extends State<DashboardPage> {
                   ),
                 ],
               ),
+              const SizedBox(height: 16),
+              _FinancialHealthCard(
+                income: data.income,
+                expense: data.expense,
+                formatRupiah: _formatRupiah,
+              ),
               const SizedBox(height: 20),
               _BudgetAlertSection(
                 budgets: data.budgets,
@@ -480,7 +486,209 @@ class _DashboardData {
   final List<Budget> budgets;
 }
 
-class _BudgetAlertSection extends StatelessWidget {
+class _FinancialHealthCard
+    extends StatelessWidget {
+  const _FinancialHealthCard({
+    required this.income,
+    required this.expense,
+    required this.formatRupiah,
+  });
+
+  final double income;
+  final double expense;
+  final String Function(double) formatRupiah;
+
+  @override
+  Widget build(BuildContext context) {
+    final surplus = income - expense;
+
+    final hasIncome = income > 0;
+
+    final ratio = hasIncome
+        ? (expense / income)
+            .clamp(0.0, 1.0)
+        : 0.0;
+
+    final percentage =
+        (ratio * 100).round();
+
+    final isSurplus = surplus >= 0;
+
+    String title;
+    String description;
+    IconData icon;
+
+    if (!hasIncome && expense <= 0) {
+      title = 'Belum ada aktivitas bulan ini';
+      description =
+          'Tambahkan transaksi untuk melihat kesehatan keuangan.';
+      icon = Icons.insights_outlined;
+    } else if (!hasIncome && expense > 0) {
+      title = 'Belum ada pemasukan';
+      description =
+          'Pengeluaran bulan ini sudah tercatat, tetapi belum ada pemasukan.';
+      icon = Icons.warning_amber_rounded;
+    } else if (isSurplus) {
+      title = 'Keuangan bulan ini surplus';
+      description =
+          'Pemasukan masih lebih besar daripada pengeluaran.';
+      icon = Icons.trending_up_rounded;
+    } else {
+      title = 'Pengeluaran melebihi pemasukan';
+      description =
+          'Perlu diperhatikan agar pengeluaran tidak terus bertambah.';
+      icon = Icons.trending_down_rounded;
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1C1E22),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        crossAxisAlignment:
+            CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              CircleAvatar(
+                radius: 20,
+                backgroundColor:
+                    const Color(0xFF34373D),
+                child: Icon(
+                  icon,
+                  size: 21,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment:
+                      CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Kesehatan Keuangan',
+                      style: TextStyle(
+                        color: Color(0xFF9A9DA3),
+                        fontSize: 12,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Container(
+            padding:
+                const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: const Color(0xFF282B30),
+              borderRadius:
+                  BorderRadius.circular(15),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: _HealthValue(
+                    label: isSurplus
+                        ? 'Surplus'
+                        : 'Defisit',
+                    value:
+                        formatRupiah(
+                      surplus.abs(),
+                    ),
+                  ),
+                ),
+                Container(
+                  width: 1,
+                  height: 38,
+                  color: const Color(
+                    0xFF3A3D42,
+                  ),
+                ),
+                Expanded(
+                  child: _HealthValue(
+                    label: 'Rasio Pengeluaran',
+                    value: hasIncome
+                        ? '$percentage%'
+                        : '-',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            description,
+            style: const TextStyle(
+              color: Color(0xFF9A9DA3),
+              fontSize: 12,
+              height: 1.4,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HealthValue
+    extends StatelessWidget {
+  const _HealthValue({
+    required this.label,
+    required this.value,
+  });
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding:
+          const EdgeInsets.symmetric(
+        horizontal: 8,
+      ),
+      child: Column(
+        crossAxisAlignment:
+            CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              color: Color(0xFF9A9DA3),
+              fontSize: 11,
+            ),
+          ),
+          const SizedBox(height: 5),
+          Text(
+            value,
+            maxLines: 1,
+            overflow:
+                TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BudgetAlertSection
+    extends StatelessWidget {
   const _BudgetAlertSection({
     required this.budgets,
     required this.formatRupiah,
@@ -509,23 +717,31 @@ class _BudgetAlertSection extends StatelessWidget {
     alerts.sort(
       (a, b) {
         final aRatio =
-            a.limit <= 0 ? 0 : a.spent / a.limit;
+            a.limit <= 0
+                ? 0.0
+                : a.spent / a.limit;
+
         final bRatio =
-            b.limit <= 0 ? 0 : b.spent / b.limit;
+            b.limit <= 0
+                ? 0.0
+                : b.spent / b.limit;
 
         return bRatio.compareTo(aRatio);
       },
     );
 
     final overBudgetCount = alerts
-        .where((budget) => budget.isOverBudget)
+        .where(
+          (budget) => budget.isOverBudget,
+        )
         .length;
 
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: const Color(0xFF1C1E22),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius:
+            BorderRadius.circular(20),
       ),
       child: Column(
         crossAxisAlignment:
@@ -537,7 +753,8 @@ class _BudgetAlertSection extends StatelessWidget {
                 overBudgetCount > 0
                     ? Icons
                         .warning_amber_rounded
-                    : Icons.notifications_active_outlined,
+                    : Icons
+                        .notifications_active_outlined,
                 size: 22,
                 color: overBudgetCount > 0
                     ? Colors.redAccent
@@ -577,12 +794,14 @@ class _BudgetAlertSection extends StatelessWidget {
           const SizedBox(height: 14),
           ...alerts.take(4).map(
             (budget) => Padding(
-              padding: const EdgeInsets.only(
+              padding:
+                  const EdgeInsets.only(
                 bottom: 10,
               ),
               child: _BudgetAlertTile(
                 budget: budget,
-                formatRupiah: formatRupiah,
+                formatRupiah:
+                    formatRupiah,
               ),
             ),
           ),
@@ -601,7 +820,8 @@ class _BudgetAlertSection extends StatelessWidget {
   }
 }
 
-class _BudgetAlertTile extends StatelessWidget {
+class _BudgetAlertTile
+    extends StatelessWidget {
   const _BudgetAlertTile({
     required this.budget,
     required this.formatRupiah,
@@ -635,7 +855,8 @@ class _BudgetAlertTile extends StatelessWidget {
       padding: const EdgeInsets.all(13),
       decoration: BoxDecoration(
         color: const Color(0xFF282B30),
-        borderRadius: BorderRadius.circular(15),
+        borderRadius:
+            BorderRadius.circular(15),
       ),
       child: Row(
         children: [
@@ -643,21 +864,16 @@ class _BudgetAlertTile extends StatelessWidget {
             width: 38,
             height: 38,
             decoration: BoxDecoration(
-              color: isOver
-                  ? Colors.redAccent.withValues(
-                      alpha: 0.14,
-                    )
-                  : Colors.orangeAccent.withValues(
-                      alpha: 0.14,
-                    ),
+              color: statusColor.withValues(
+                alpha: 0.14,
+              ),
               borderRadius:
                   BorderRadius.circular(11),
             ),
             child: Icon(
               isOver
                   ? Icons.warning_rounded
-                  : Icons
-                      .priority_high_rounded,
+                  : Icons.priority_high_rounded,
               size: 19,
               color: statusColor,
             ),
@@ -712,7 +928,8 @@ class _BudgetAlertTile extends StatelessWidget {
   }
 }
 
-class _SafeBudgetCard extends StatelessWidget {
+class _SafeBudgetCard
+    extends StatelessWidget {
   const _SafeBudgetCard();
 
   @override
@@ -721,13 +938,15 @@ class _SafeBudgetCard extends StatelessWidget {
       padding: const EdgeInsets.all(17),
       decoration: BoxDecoration(
         color: const Color(0xFF1C1E22),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius:
+            BorderRadius.circular(20),
       ),
       child: const Row(
         children: [
           CircleAvatar(
             radius: 20,
-            backgroundColor: Color(0xFF34373D),
+            backgroundColor:
+                Color(0xFF34373D),
             child: Icon(
               Icons.check_circle_outline,
               size: 21,
@@ -763,7 +982,8 @@ class _SafeBudgetCard extends StatelessWidget {
   }
 }
 
-class _BalanceCard extends StatelessWidget {
+class _BalanceCard
+    extends StatelessWidget {
   const _BalanceCard({
     required this.balance,
     required this.formatRupiah,
@@ -778,7 +998,8 @@ class _BalanceCard extends StatelessWidget {
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: const Color(0xFF282B30),
-        borderRadius: BorderRadius.circular(24),
+        borderRadius:
+            BorderRadius.circular(24),
       ),
       child: Column(
         crossAxisAlignment:
@@ -814,7 +1035,8 @@ class _BalanceCard extends StatelessWidget {
   }
 }
 
-class _SummaryCard extends StatelessWidget {
+class _SummaryCard
+    extends StatelessWidget {
   const _SummaryCard({
     required this.title,
     required this.amount,
@@ -833,7 +1055,8 @@ class _SummaryCard extends StatelessWidget {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: const Color(0xFF1C1E22),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius:
+            BorderRadius.circular(20),
       ),
       child: Column(
         crossAxisAlignment:
@@ -868,7 +1091,8 @@ class _SummaryCard extends StatelessWidget {
   }
 }
 
-class _TransactionCard extends StatelessWidget {
+class _TransactionCard
+    extends StatelessWidget {
   const _TransactionCard({
     required this.transaction,
     required this.formatRupiah,
@@ -883,13 +1107,14 @@ class _TransactionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isIncome =
         transaction.type ==
-        TransactionType.income;
+            TransactionType.income;
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: const Color(0xFF1C1E22),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius:
+            BorderRadius.circular(18),
       ),
       child: Row(
         children: [
@@ -960,7 +1185,8 @@ class _EmptyTransactions
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: const Color(0xFF1C1E22),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius:
+            BorderRadius.circular(20),
       ),
       child: const Column(
         children: [
