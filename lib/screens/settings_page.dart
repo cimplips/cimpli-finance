@@ -240,7 +240,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
     Navigator.of(dialogContext).pop();
 
-    if (!mounted) {
+    if (!context.mounted) {
       return;
     }
 
@@ -365,7 +365,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
     Navigator.of(dialogContext).pop();
 
-    if (!mounted) {
+    if (!context.mounted) {
       return;
     }
 
