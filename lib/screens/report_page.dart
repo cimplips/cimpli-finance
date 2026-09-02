@@ -1,186 +1,836 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+
 import '../core/finance_scope.dart';
-import '../services/finance_store.dart';
+import '../models/transaction.dart';
 
 class ReportPage extends StatefulWidget {
-  const ReportPage({super.key});
+  const ReportPage({
+    super.key,
+  });
 
   @override
-  State<ReportPage> createState() =>
-      _ReportPageState();
+  State<ReportPage> createState() => _ReportPageState();
 }
 
-class _ReportPageState
-    extends State<ReportPage> {
-  DateTime selectedMonth =
-      DateTime(DateTime.now().year,
-          DateTime.now().month);
+class _ReportPageState extends State<ReportPage> {
+  DateTime _selectedMonth = DateTime.now();
+
+  Future<_ReportData> _loadReport() async {
+    final store = FinanceScope.of(context);
+    final account = store.activeAccount;
+
+    if (account == null) {
+      return const _ReportData(
+        transactions: <Tx>[],
+        income: 0,
+        expense: 0,
+      );
+    }
+
+    final startDate = DateTime(
+      _selectedMonth.year,
+      _selectedMonth.month,
+      1,
+    );
+
+    final endDate = DateTime(
+      _selectedMonth.year,
+      _selectedMonth.month + 1,
+      0,
+    );
+
+    final transactions = await store.getTransactions(
+      account: account,
+      startDate: startDate,
+      endDate: endDate,
+    );
+
+    double income = 0;
+    double expense = 0;
+
+    for (final transaction in transactions) {
+      if (transaction.type == TransactionType.income) {
+        income += transaction.amount;
+      } else {
+        expense += transaction.amount;
+      }
+    }
+
+    return _ReportData(
+      transactions: transactions,
+      income: income,
+      expense: expense,
+    );
+  }
+
+  Future<void> _changeMonth(int offset) async {
+    setState(() {
+      _selectedMonth = DateTime(
+        _selectedMonth.year,
+        _selectedMonth.month + offset,
+        1,
+      );
+    });
+  }
+
+  String _formatRupiah(double value) {
+    final rounded = value.round();
+    final digits = rounded.abs().toString();
+
+    final buffer = StringBuffer();
+
+    for (var i = 0; i < digits.length; i++) {
+      if (i > 0 &&
+          (digits.length - i) % 3 == 0) {
+        buffer.write('.');
+      }
+
+      buffer.write(digits[i]);
+    }
+
+    final result = buffer.toString();
+
+    if (rounded < 0) {
+      return '-Rp $result';
+    }
+
+    return 'Rp $result';
+  }
+
+  String _formatMonth(DateTime date) {
+    const months = <String>[
+      'Januari',
+      'Februari',
+      'Maret',
+      'April',
+      'Mei',
+      'Juni',
+      'Juli',
+      'Agustus',
+      'September',
+      'Oktober',
+      'November',
+      'Desember',
+    ];
+
+    return '${months[date.month - 1]} ${date.year}';
+  }
+
+  String _formatDate(DateTime date) {
+    const months = <String>[
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'Mei',
+      'Jun',
+      'Jul',
+      'Agu',
+      'Sep',
+      'Okt',
+      'Nov',
+      'Des',
+    ];
+
+    return '${date.day} ${months[date.month - 1]} ${date.year}';
+  }
+
+  Map<String, double> _groupExpensesByCategory(
+    List<Tx> transactions,
+  ) {
+    final result = <String, double>{};
+
+    for (final transaction in transactions) {
+      if (transaction.type != TransactionType.expense) {
+        continue;
+      }
+
+      result.update(
+        transaction.category,
+        (value) => value + transaction.amount,
+        ifAbsent: () => transaction.amount,
+      );
+    }
+
+    return result;
+  }
 
   @override
   Widget build(BuildContext context) {
     final store = FinanceScope.of(context);
 
-    final money = NumberFormat.currency(
-      locale: 'id_ID',
-      symbol: 'Rp ',
-      decimalDigits: 0,
-    );
-
-    final income =
-        store.incomeForMonth(selectedMonth);
-
-    final expense =
-        store.expenseForMonth(selectedMonth);
-
-    final balance = income - expense;
-
-    return SafeArea(
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text(
-            'Laporan Bulanan',
-          ),
+    return RefreshIndicator(
+      onRefresh: () async {
+        if (mounted) {
+          setState(() {});
+        }
+      },
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(
+          20,
+          12,
+          20,
+          32,
         ),
-        body: ListView(
-          padding: const EdgeInsets.all(20),
-          children: [
-            ListTile(
-              tileColor: const Color(
-                0xFF1C1E22,
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius:
-                    BorderRadius.circular(18),
-              ),
-              leading: const Icon(
-                Icons.calendar_month_outlined,
-              ),
-              title: const Text(
-                'Periode Laporan',
-              ),
-              subtitle: Text(
-                DateFormat(
-                  'MMMM yyyy',
-                  'id_ID',
-                ).format(selectedMonth),
-              ),
-              trailing: const Icon(
-                Icons.expand_more,
-              ),
-              onTap: () async {
-                final picked =
-                    await showDatePicker(
-                  context: context,
-                  initialDate: selectedMonth,
-                  firstDate:
-                      DateTime(2020),
-                  lastDate:
-                      DateTime(2100),
-                  helpText:
-                      'Pilih bulan laporan',
-                );
-
-                if (picked != null) {
-                  setState(() {
-                    selectedMonth =
-                        DateTime(
-                      picked.year,
-                      picked.month,
-                    );
-                  });
-                }
-              },
+        children: [
+          const Text(
+            'Laporan',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w800,
             ),
-            const SizedBox(height: 24),
-            _ReportCard(
-              title: 'Pemasukan',
-              value: money.format(income),
-              icon: Icons.arrow_downward,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            store.activeAccount ?? 'Belum ada akun',
+            style: const TextStyle(
+              color: Color(0xFF9A9DA3),
             ),
-            const SizedBox(height: 12),
-            _ReportCard(
-              title: 'Pengeluaran',
-              value: money.format(expense),
-              icon: Icons.arrow_upward,
-            ),
-            const SizedBox(height: 12),
-            _ReportCard(
-              title: 'Saldo Bulan Ini',
-              value: money.format(balance),
-              icon:
-                  Icons.account_balance_wallet_outlined,
-            ),
-            const SizedBox(height: 26),
-            const Text(
-              'Ringkasan',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Card(
-              child: Padding(
-                padding:
-                    const EdgeInsets.all(20),
-                child: Text(
-                  expense > income
-                      ? 'Pengeluaran bulan ini lebih besar daripada pemasukan.'
-                      : 'Kondisi keuangan bulan ini masih terkendali.',
-                  style: TextStyle(
-                    color: Colors.grey.shade300,
-                    height: 1.5,
+          ),
+          const SizedBox(height: 20),
+          _MonthSelector(
+            month: _formatMonth(_selectedMonth),
+            onPrevious: () {
+              _changeMonth(-1);
+            },
+            onNext: () {
+              _changeMonth(1);
+            },
+          ),
+          const SizedBox(height: 18),
+          FutureBuilder<_ReportData>(
+            future: _loadReport(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState ==
+                  ConnectionState.waiting) {
+                return const Padding(
+                  padding: EdgeInsets.only(top: 60),
+                  child: Center(
+                    child: CircularProgressIndicator(),
                   ),
+                );
+              }
+
+              if (snapshot.hasError) {
+                return _ReportMessage(
+                  icon: Icons.error_outline,
+                  title: 'Gagal memuat laporan',
+                  message: snapshot.error.toString(),
+                );
+              }
+
+              final data = snapshot.data ??
+                  const _ReportData(
+                    transactions: <Tx>[],
+                    income: 0,
+                    expense: 0,
+                  );
+
+              final balance =
+                  data.income - data.expense;
+
+              final categoryExpenses =
+                  _groupExpensesByCategory(
+                data.transactions,
+              );
+
+              return Column(
+                children: [
+                  _BalanceReportCard(
+                    balance: balance,
+                    income: data.income,
+                    expense: data.expense,
+                    formatRupiah: _formatRupiah,
+                  ),
+                  const SizedBox(height: 16),
+                  _ReportSummary(
+                    income: data.income,
+                    expense: data.expense,
+                    formatRupiah: _formatRupiah,
+                  ),
+                  const SizedBox(height: 24),
+                  _SectionTitle(
+                    title: 'Pengeluaran per Kategori',
+                  ),
+                  const SizedBox(height: 12),
+                  if (categoryExpenses.isEmpty)
+                    const _ReportMessage(
+                      icon: Icons.pie_chart_outline,
+                      title: 'Belum ada pengeluaran',
+                      message:
+                          'Belum ada data pengeluaran pada bulan ini.',
+                    )
+                  else
+                    _CategoryReport(
+                      categories: categoryExpenses,
+                      totalExpense: data.expense,
+                      formatRupiah: _formatRupiah,
+                    ),
+                  const SizedBox(height: 24),
+                  _SectionTitle(
+                    title: 'Aktivitas Bulan Ini',
+                  ),
+                  const SizedBox(height: 12),
+                  if (data.transactions.isEmpty)
+                    const _ReportMessage(
+                      icon: Icons.receipt_long_outlined,
+                      title: 'Belum ada transaksi',
+                      message:
+                          'Belum ada transaksi pada periode yang dipilih.',
+                    )
+                  else
+                    ...data.transactions.take(10).map(
+                      (transaction) => Padding(
+                        padding:
+                            const EdgeInsets.only(
+                          bottom: 10,
+                        ),
+                        child: _ReportTransactionItem(
+                          transaction: transaction,
+                          formatRupiah: _formatRupiah,
+                          formatDate: _formatDate,
+                        ),
+                      ),
+                    ),
+                ],
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ReportData {
+  const _ReportData({
+    required this.transactions,
+    required this.income,
+    required this.expense,
+  });
+
+  final List<Tx> transactions;
+  final double income;
+  final double expense;
+}
+
+class _MonthSelector extends StatelessWidget {
+  const _MonthSelector({
+    required this.month,
+    required this.onPrevious,
+    required this.onNext,
+  });
+
+  final String month;
+  final VoidCallback onPrevious;
+  final VoidCallback onNext;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 8,
+        vertical: 6,
+      ),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1C1E22),
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Row(
+        children: [
+          IconButton(
+            tooltip: 'Bulan sebelumnya',
+            onPressed: onPrevious,
+            icon: const Icon(
+              Icons.chevron_left,
+            ),
+          ),
+          Expanded(
+            child: Text(
+              month,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontWeight: FontWeight.w800,
+                fontSize: 16,
+              ),
+            ),
+          ),
+          IconButton(
+            tooltip: 'Bulan berikutnya',
+            onPressed: onNext,
+            icon: const Icon(
+              Icons.chevron_right,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BalanceReportCard extends StatelessWidget {
+  const _BalanceReportCard({
+    required this.balance,
+    required this.income,
+    required this.expense,
+    required this.formatRupiah,
+  });
+
+  final double balance;
+  final double income;
+  final double expense;
+  final String Function(double) formatRupiah;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(22),
+      decoration: BoxDecoration(
+        color: const Color(0xFF282B30),
+        borderRadius: BorderRadius.circular(22),
+      ),
+      child: Column(
+        crossAxisAlignment:
+            CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Arus Bersih',
+            style: TextStyle(
+              color: Color(0xFFB8BCC2),
+              fontSize: 13,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            formatRupiah(balance),
+            style: const TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 18),
+          Row(
+            children: [
+              Expanded(
+                child: _MiniAmount(
+                  label: 'Pemasukan',
+                  amount: income,
+                  formatRupiah: formatRupiah,
                 ),
               ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _MiniAmount(
+                  label: 'Pengeluaran',
+                  amount: expense,
+                  formatRupiah: formatRupiah,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MiniAmount extends StatelessWidget {
+  const _MiniAmount({
+    required this.label,
+    required this.amount,
+    required this.formatRupiah,
+  });
+
+  final String label;
+  final double amount;
+  final String Function(double) formatRupiah;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1C1E22),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment:
+            CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              color: Color(0xFF9A9DA3),
+              fontSize: 12,
             ),
-          ],
+          ),
+          const SizedBox(height: 5),
+          Text(
+            formatRupiah(amount),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ReportSummary extends StatelessWidget {
+  const _ReportSummary({
+    required this.income,
+    required this.expense,
+    required this.formatRupiah,
+  });
+
+  final double income;
+  final double expense;
+  final String Function(double) formatRupiah;
+
+  @override
+  Widget build(BuildContext context) {
+    final total = income + expense;
+
+    final incomePercentage =
+        total <= 0 ? 0.0 : income / total;
+
+    final expensePercentage =
+        total <= 0 ? 0.0 : expense / total;
+
+    return Row(
+      children: [
+        Expanded(
+          child: _ProgressCard(
+            title: 'Pemasukan',
+            amount: income,
+            percentage: incomePercentage,
+            formatRupiah: formatRupiah,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _ProgressCard(
+            title: 'Pengeluaran',
+            amount: expense,
+            percentage: expensePercentage,
+            formatRupiah: formatRupiah,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ProgressCard extends StatelessWidget {
+  const _ProgressCard({
+    required this.title,
+    required this.amount,
+    required this.percentage,
+    required this.formatRupiah,
+  });
+
+  final String title;
+  final double amount;
+  final double percentage;
+  final String Function(double) formatRupiah;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1C1E22),
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Column(
+        crossAxisAlignment:
+            CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              color: Color(0xFF9A9DA3),
+              fontSize: 12,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            formatRupiah(amount),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontWeight: FontWeight.w800,
+              fontSize: 15,
+            ),
+          ),
+          const SizedBox(height: 12),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: LinearProgressIndicator(
+              value: percentage.clamp(0.0, 1.0),
+              minHeight: 6,
+              backgroundColor:
+                  const Color(0xFF34373D),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CategoryReport extends StatelessWidget {
+  const _CategoryReport({
+    required this.categories,
+    required this.totalExpense,
+    required this.formatRupiah,
+  });
+
+  final Map<String, double> categories;
+  final double totalExpense;
+  final String Function(double) formatRupiah;
+
+  @override
+  Widget build(BuildContext context) {
+    final entries = categories.entries.toList()
+      ..sort(
+        (a, b) => b.value.compareTo(a.value),
+      );
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1C1E22),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        children: entries.map(
+          (entry) {
+            final percentage = totalExpense <= 0
+                ? 0.0
+                : entry.value / totalExpense;
+
+            return Padding(
+              padding: const EdgeInsets.only(
+                bottom: 18,
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          entry.key,
+                          maxLines: 1,
+                          overflow:
+                              TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        formatRupiah(entry.value),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ClipRRect(
+                          borderRadius:
+                              BorderRadius.circular(20),
+                          child:
+                              LinearProgressIndicator(
+                            value: percentage.clamp(
+                              0.0,
+                              1.0,
+                            ),
+                            minHeight: 7,
+                            backgroundColor:
+                                const Color(0xFF34373D),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      SizedBox(
+                        width: 42,
+                        child: Text(
+                          '${(percentage * 100).round()}%',
+                          textAlign: TextAlign.end,
+                          style: const TextStyle(
+                            color:
+                                Color(0xFF9A9DA3),
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          },
+        ).toList(),
+      ),
+    );
+  }
+}
+
+class _ReportTransactionItem extends StatelessWidget {
+  const _ReportTransactionItem({
+    required this.transaction,
+    required this.formatRupiah,
+    required this.formatDate,
+  });
+
+  final Tx transaction;
+  final String Function(double) formatRupiah;
+  final String Function(DateTime) formatDate;
+
+  @override
+  Widget build(BuildContext context) {
+    final isIncome =
+        transaction.type == TransactionType.income;
+
+    return Container(
+      padding: const EdgeInsets.all(15),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1C1E22),
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 21,
+            backgroundColor:
+                const Color(0xFF34373D),
+            child: Icon(
+              isIncome
+                  ? Icons.arrow_downward_rounded
+                  : Icons.arrow_upward_rounded,
+              size: 19,
+            ),
+          ),
+          const SizedBox(width: 13),
+          Expanded(
+            child: Column(
+              crossAxisAlignment:
+                  CrossAxisAlignment.start,
+              children: [
+                Text(
+                  transaction.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '${transaction.category} • ${formatDate(transaction.date)}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Color(0xFF9A9DA3),
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          Text(
+            '${isIncome ? '+' : '-'}${formatRupiah(transaction.amount)}',
+            style: const TextStyle(
+              fontWeight: FontWeight.w800,
+              fontSize: 13,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SectionTitle extends StatelessWidget {
+  const _SectionTitle({
+    required this.title,
+  });
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Text(
+        title,
+        style: const TextStyle(
+          fontSize: 19,
+          fontWeight: FontWeight.w800,
         ),
       ),
     );
   }
 }
 
-class _ReportCard extends StatelessWidget {
-  const _ReportCard({
-    required this.title,
-    required this.value,
+class _ReportMessage extends StatelessWidget {
+  const _ReportMessage({
     required this.icon,
+    required this.title,
+    required this.message,
   });
 
-  final String title;
-  final String value;
   final IconData icon;
+  final String title;
+  final String message;
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: ListTile(
-        contentPadding:
-            const EdgeInsets.symmetric(
-          horizontal: 20,
-          vertical: 10,
-        ),
-        leading: Container(
-          width: 46,
-          height: 46,
-          decoration: BoxDecoration(
-            color: const Color(
-              0xFF30343A,
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1C1E22),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        children: [
+          Icon(
+            icon,
+            size: 42,
+            color: const Color(0xFF777B82),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontWeight: FontWeight.w800,
+              fontSize: 16,
             ),
-            borderRadius:
-                BorderRadius.circular(14),
           ),
-          child: Icon(icon),
-        ),
-        title: Text(title),
-        trailing: Text(
-          value,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
+          const SizedBox(height: 6),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Color(0xFF9A9DA3),
+              fontSize: 13,
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
