@@ -1,16 +1,20 @@
 import 'package:flutter/material.dart';
+
 import '../core/finance_scope.dart';
 import '../services/finance_store.dart';
 
 class SettingsPage extends StatefulWidget {
-  const SettingsPage({super.key});
+  const SettingsPage({
+    super.key,
+  });
 
   @override
   State<SettingsPage> createState() => _SettingsPageState();
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-  final _controller = TextEditingController();
+  final TextEditingController _controller =
+      TextEditingController();
 
   @override
   void dispose() {
@@ -18,8 +22,8 @@ class _SettingsPageState extends State<SettingsPage> {
     super.dispose();
   }
 
-  IconData _accountIcon(String name) {
-    final lowerName = name.toLowerCase();
+  IconData _accountIcon(String? name) {
+    final lowerName = (name ?? '').toLowerCase();
 
     if (lowerName.contains('kantor') ||
         lowerName.contains('usaha') ||
@@ -50,11 +54,13 @@ class _SettingsPageState extends State<SettingsPage> {
             controller: _controller,
             autofocus: true,
             textCapitalization: TextCapitalization.words,
+            textInputAction: TextInputAction.done,
             decoration: const InputDecoration(
               labelText: 'Nama akun',
               hintText: 'Contoh: Keuangan Usaha',
-              prefixIcon:
-                  Icon(Icons.account_balance_wallet_outlined),
+              prefixIcon: Icon(
+                Icons.account_balance_wallet_outlined,
+              ),
             ),
             onSubmitted: (_) async {
               await _saveNewAccount(
@@ -92,6 +98,15 @@ class _SettingsPageState extends State<SettingsPage> {
     final name = _controller.text.trim();
 
     if (name.isEmpty) {
+      ScaffoldMessenger.of(dialogContext)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Nama akun wajib diisi.',
+            ),
+          ),
+        );
       return;
     }
 
@@ -102,13 +117,15 @@ class _SettingsPageState extends State<SettingsPage> {
     }
 
     if (!success) {
-      ScaffoldMessenger.of(dialogContext).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Akun gagal ditambahkan. Nama mungkin sudah digunakan.',
+      ScaffoldMessenger.of(dialogContext)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Akun gagal ditambahkan. Nama mungkin sudah digunakan.',
+            ),
           ),
-        ),
-      );
+        );
       return;
     }
 
@@ -118,13 +135,15 @@ class _SettingsPageState extends State<SettingsPage> {
       return;
     }
 
-    ScaffoldMessenger.of(this.context).showSnackBar(
-      SnackBar(
-        content: Text(
-          '$name berhasil ditambahkan.',
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            '$name berhasil ditambahkan.',
+          ),
         ),
-      ),
-    );
+      );
   }
 
   Future<void> _showRenameAccountDialog(
@@ -147,9 +166,12 @@ class _SettingsPageState extends State<SettingsPage> {
             controller: _controller,
             autofocus: true,
             textCapitalization: TextCapitalization.words,
+            textInputAction: TextInputAction.done,
             decoration: const InputDecoration(
               labelText: 'Nama akun',
-              prefixIcon: Icon(Icons.edit_outlined),
+              prefixIcon: Icon(
+                Icons.edit_outlined,
+              ),
             ),
             onSubmitted: (_) async {
               await _saveRenamedAccount(
@@ -190,12 +212,26 @@ class _SettingsPageState extends State<SettingsPage> {
     final newName = _controller.text.trim();
 
     if (newName.isEmpty) {
+      ScaffoldMessenger.of(dialogContext)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Nama akun wajib diisi.',
+            ),
+          ),
+        );
+      return;
+    }
+
+    if (newName == oldName) {
+      Navigator.of(dialogContext).pop();
       return;
     }
 
     final success = await store.renameAccount(
-      oldName: oldName,
-      newName: newName,
+      oldName,
+      newName,
     );
 
     if (!dialogContext.mounted) {
@@ -203,13 +239,15 @@ class _SettingsPageState extends State<SettingsPage> {
     }
 
     if (!success) {
-      ScaffoldMessenger.of(this.context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Nama akun tidak dapat digunakan atau sudah ada.',
+      ScaffoldMessenger.of(dialogContext)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Nama akun tidak dapat digunakan atau sudah ada.',
+            ),
           ),
-        ),
-      );
+        );
       return;
     }
 
@@ -219,13 +257,15 @@ class _SettingsPageState extends State<SettingsPage> {
       return;
     }
 
-    ScaffoldMessenger.of(this.context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Nama akun berhasil diperbarui.',
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Nama akun berhasil diperbarui.',
+          ),
         ),
-      ),
-    );
+      );
   }
 
   Future<void> _showDeleteAccountDialog(
@@ -233,10 +273,16 @@ class _SettingsPageState extends State<SettingsPage> {
     FinanceStore store,
     String name,
   ) async {
-    final transactionCount =
-        await store.transactionCountForAccount(name);
-
-    if (!context.mounted) {
+    if (store.accounts.length <= 1) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Minimal harus ada satu akun keuangan.',
+            ),
+          ),
+        );
       return;
     }
 
@@ -246,10 +292,8 @@ class _SettingsPageState extends State<SettingsPage> {
         return AlertDialog(
           title: const Text('Hapus Akun?'),
           content: Text(
-            transactionCount > 0
-                ? 'Akun "$name" memiliki $transactionCount transaksi. '
-                    'Semua transaksi pada akun ini juga akan dihapus secara permanen.'
-                : 'Akun "$name" akan dihapus secara permanen.',
+            'Akun "$name" beserta seluruh transaksi di dalamnya '
+            'akan dihapus secara permanen.',
           ),
           actions: [
             TextButton(
@@ -279,44 +323,45 @@ class _SettingsPageState extends State<SettingsPage> {
       return;
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          success
-              ? 'Akun berhasil dihapus.'
-              : 'Akun tidak dapat dihapus. Minimal harus ada satu akun.',
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            success
+                ? 'Akun berhasil dihapus.'
+                : 'Akun tidak dapat dihapus.',
+          ),
         ),
-      ),
-    );
+      );
   }
 
-  Future<void> _selectAccount(
+  void _selectAccount(
     BuildContext context,
     FinanceStore store,
     String name,
-  ) async {
+  ) {
     if (name == store.activeAccount) {
       return;
     }
 
-    await store.selectAccount(name);
+    store.setActiveAccount(name);
 
-    if (!context.mounted) {
-      return;
-    }
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          '$name sekarang menjadi akun aktif.',
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            '$name sekarang menjadi akun aktif.',
+          ),
         ),
-      ),
-    );
+      );
   }
 
   @override
   Widget build(BuildContext context) {
     final store = FinanceScope.of(context);
+    final activeAccount = store.activeAccount;
 
     return SafeArea(
       child: Scaffold(
@@ -330,18 +375,19 @@ class _SettingsPageState extends State<SettingsPage> {
               'Akun Keuangan',
               style: TextStyle(
                 fontSize: 22,
-                fontWeight: FontWeight.bold,
+                fontWeight: FontWeight.w800,
               ),
             ),
             const SizedBox(height: 6),
-            Text(
+            const Text(
               'Pilih akun aktif dan kelola seluruh keuangan Anda.',
               style: TextStyle(
-                color: Colors.grey.shade400,
+                color: Color(0xFF9A9DA3),
               ),
             ),
             const SizedBox(height: 20),
 
+            // Akun aktif
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(18),
@@ -356,7 +402,7 @@ class _SettingsPageState extends State<SettingsPage> {
                             BorderRadius.circular(16),
                       ),
                       child: Icon(
-                        _accountIcon(store.activeAccount),
+                        _accountIcon(activeAccount),
                       ),
                     ),
                     const SizedBox(width: 14),
@@ -368,16 +414,19 @@ class _SettingsPageState extends State<SettingsPage> {
                           const Text(
                             'Akun Aktif',
                             style: TextStyle(
+                              color: Color(0xFF9A9DA3),
                               fontSize: 12,
                             ),
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            store.activeAccount,
+                            activeAccount ?? 'Belum ada akun',
+                            maxLines: 1,
+                            overflow:
+                                TextOverflow.ellipsis,
                             style: const TextStyle(
                               fontSize: 17,
-                              fontWeight:
-                                  FontWeight.bold,
+                              fontWeight: FontWeight.w800,
                             ),
                           ),
                         ],
@@ -393,178 +442,184 @@ class _SettingsPageState extends State<SettingsPage> {
 
             const SizedBox(height: 24),
 
-            ...store.accounts.map(
-              (name) {
-                final isActive =
-                    name == store.activeAccount;
+            // Daftar akun
+            if (store.accounts.isEmpty)
+              const Card(
+                child: Padding(
+                  padding: EdgeInsets.all(20),
+                  child: Text(
+                    'Belum ada akun keuangan.',
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              )
+            else
+              ...store.accounts.map(
+                (name) {
+                  final isActive =
+                      name == store.activeAccount;
 
-                return Padding(
-                  padding:
-                      const EdgeInsets.only(bottom: 12),
-                  child: Card(
-                    child: InkWell(
-                      borderRadius:
-                          BorderRadius.circular(22),
-                      onTap: () async {
-                        await _selectAccount(
-                          context,
-                          store,
-                          name,
-                        );
-                      },
-                      child: Padding(
-                        padding:
-                            const EdgeInsets.all(16),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 48,
-                              height: 48,
-                              decoration: BoxDecoration(
-                                color: const Color(
-                                  0xFF30343A,
+                  return Padding(
+                    padding:
+                        const EdgeInsets.only(bottom: 12),
+                    child: Card(
+                      child: InkWell(
+                        borderRadius:
+                            BorderRadius.circular(22),
+                        onTap: () {
+                          _selectAccount(
+                            context,
+                            store,
+                            name,
+                          );
+                        },
+                        child: Padding(
+                          padding:
+                              const EdgeInsets.all(16),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 48,
+                                height: 48,
+                                decoration:
+                                    BoxDecoration(
+                                  color: const Color(
+                                    0xFF30343A,
+                                  ),
+                                  borderRadius:
+                                      BorderRadius.circular(
+                                    15,
+                                  ),
                                 ),
-                                borderRadius:
-                                    BorderRadius.circular(
-                                  15,
+                                child: Icon(
+                                  _accountIcon(name),
                                 ),
                               ),
-                              child: Icon(
-                                _accountIcon(name),
-                              ),
-                            ),
-                            const SizedBox(width: 14),
-
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment:
-                                    CrossAxisAlignment
-                                        .start,
-                                children: [
-                                  Text(
-                                    name,
-                                    style:
-                                        const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight:
-                                          FontWeight.bold,
+                              const SizedBox(width: 14),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment
+                                          .start,
+                                  children: [
+                                    Text(
+                                      name,
+                                      maxLines: 1,
+                                      overflow:
+                                          TextOverflow
+                                              .ellipsis,
+                                      style:
+                                          const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight:
+                                            FontWeight.w800,
+                                      ),
                                     ),
-                                  ),
-                                  const SizedBox(
-                                    height: 4,
-                                  ),
-                                  Text(
-                                    isActive
-                                        ? 'Sedang digunakan'
-                                        : 'Tap untuk menggunakan akun ini',
-                                    style: TextStyle(
-                                      color: isActive
-                                          ? Colors
-                                              .greenAccent
-                                              .shade200
-                                          : Colors
-                                              .grey
-                                              .shade400,
-                                      fontSize: 12,
+                                    const SizedBox(
+                                      height: 4,
                                     ),
-                                  ),
-                                ],
+                                    Text(
+                                      isActive
+                                          ? 'Sedang digunakan'
+                                          : 'Tap untuk menggunakan akun ini',
+                                      style: TextStyle(
+                                        color: isActive
+                                            ? const Color(
+                                                0xFFB8BCC2,
+                                              )
+                                            : const Color(
+                                                0xFF777B82,
+                                              ),
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ),
-
-                            PopupMenuButton<String>(
-                              tooltip: 'Menu akun',
-                              onSelected: (value) async {
-                                if (value == 'select') {
-                                  await _selectAccount(
-                                    context,
-                                    store,
-                                    name,
-                                  );
-                                }
-
-                                if (value ==
-                                    'rename') {
-                                  await _showRenameAccountDialog(
-                                    context,
-                                    store,
-                                    name,
-                                  );
-                                }
-
-                                if (value == 'delete') {
-                                  await _showDeleteAccountDialog(
-                                    context,
-                                    store,
-                                    name,
-                                  );
-                                }
-}
-                              },
-                              itemBuilder: (_) => [
-                                if (!isActive)
-                                  const PopupMenuItem(
-                                    value: 'select',
+                              PopupMenuButton<String>(
+                                tooltip: 'Menu akun',
+                                onSelected:
+                                    (value) async {
+                                  if (value == 'select') {
+                                    _selectAccount(
+                                      context,
+                                      store,
+                                      name,
+                                    );
+                                  } else if (value ==
+                                      'rename') {
+                                    await _showRenameAccountDialog(
+                                      context,
+                                      store,
+                                      name,
+                                    );
+                                  } else if (value ==
+                                      'delete') {
+                                    await _showDeleteAccountDialog(
+                                      context,
+                                      store,
+                                      name,
+                                    );
+                                  }
+                                },
+                                itemBuilder: (_) => [
+                                  if (!isActive)
+                                    const PopupMenuItem<
+                                        String>(
+                                      value: 'select',
+                                      child: Row(
+                                        children: [
+                                          Icon(
+                                            Icons
+                                                .check_circle_outline,
+                                          ),
+                                          SizedBox(width: 10),
+                                          Text('Gunakan'),
+                                        ],
+                                      ),
+                                    ),
+                                  const PopupMenuItem<String>(
+                                    value: 'rename',
                                     child: Row(
                                       children: [
                                         Icon(
-                                          Icons
-                                              .check_circle_outline,
+                                          Icons.edit_outlined,
                                         ),
-                                        SizedBox(
-                                          width: 10,
-                                        ),
-                                        Text(
-                                          'Gunakan',
-                                        ),
+                                        SizedBox(width: 10),
+                                        Text('Edit nama'),
                                       ],
                                     ),
                                   ),
-                                const PopupMenuItem(
-                                  value: 'rename',
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                        Icons.edit_outlined,
+                                  if (store.accounts.length >
+                                      1)
+                                    const PopupMenuItem<
+                                        String>(
+                                      value: 'delete',
+                                      child: Row(
+                                        children: [
+                                          Icon(
+                                            Icons
+                                                .delete_outline,
+                                          ),
+                                          SizedBox(width: 10),
+                                          Text('Hapus'),
+                                        ],
                                       ),
-                                      SizedBox(
-                                        width: 10,
-                                      ),
-                                      Text(
-                                        'Edit nama',
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const PopupMenuItem(
-                                  value: 'delete',
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                        Icons.delete_outline,
-                                      ),
-                                      SizedBox(
-                                        width: 10,
-                                      ),
-                                      Text(
-                                        'Hapus',
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
+                                    ),
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                );
-              },
-            ),
+                  );
+                },
+              ),
 
             const SizedBox(height: 8),
 
+            // Tambah akun
             OutlinedButton.icon(
               onPressed: () async {
                 await _showAddAccountDialog(
@@ -585,12 +640,33 @@ class _SettingsPageState extends State<SettingsPage> {
 
             const SizedBox(height: 30),
 
-            Text(
-              'Catatan: menghapus akun akan menghapus seluruh transaksi yang tersimpan pada akun tersebut.',
-              style: TextStyle(
-                color: Colors.grey.shade500,
-                fontSize: 12,
-                height: 1.4,
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1C1E22),
+                borderRadius: BorderRadius.circular(18),
+              ),
+              child: const Row(
+                crossAxisAlignment:
+                    CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    Icons.info_outline,
+                    size: 20,
+                    color: Color(0xFF9A9DA3),
+                  ),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Menghapus akun juga akan menghapus seluruh transaksi yang tersimpan pada akun tersebut.',
+                      style: TextStyle(
+                        color: Color(0xFF9A9DA3),
+                        fontSize: 12,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
 
@@ -600,3 +676,4 @@ class _SettingsPageState extends State<SettingsPage> {
       ),
     );
   }
+}
