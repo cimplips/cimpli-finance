@@ -1,60 +1,52 @@
 import 'package:flutter/material.dart';
+
+import '../core/finance_scope.dart';
 import 'dashboard_page.dart';
-import 'add_transaction_page.dart';
 import 'history_page.dart';
 import 'report_page.dart';
 import 'settings_page.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  const HomePage({
+    super.key,
+  });
 
   @override
   State<HomePage> createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
-  int tab = 0;
+  int _currentIndex = 0;
+
+  static const List<Widget> _pages = <Widget>[
+    DashboardPage(),
+    HistoryPage(),
+    ReportPage(),
+    SettingsPage(),
+  ];
 
   @override
   Widget build(BuildContext context) {
-    final pages = [
-      DashboardPage(
-        onOpenHistory: () {
-          setState(() {
-            tab = 1;
-          });
-        },
-      ),
-      const HistoryPage(),
-      const ReportPage(),
-      const SettingsPage(),
-    ];
+    final store = FinanceScope.of(context);
 
     return Scaffold(
-      body: pages[tab],
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => const AddTransactionPage(),
-            ),
-          );
-        },
-        child: const Icon(Icons.add),
+      body: SafeArea(
+        child: _pages[_currentIndex],
       ),
-      floatingActionButtonLocation:
-          FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: NavigationBar(
-        selectedIndex: tab,
-        onDestinationSelected: (value) {
+        selectedIndex: _currentIndex,
+        onDestinationSelected: (index) {
           setState(() {
-            tab = value;
+            _currentIndex = index;
           });
         },
-        destinations: const [
+        backgroundColor: const Color(0xFF1C1E22),
+        surfaceTintColor: Colors.transparent,
+        indicatorColor: const Color(0xFF34373D),
+        destinations: const <NavigationDestination>[
           NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home),
+            icon: Icon(Icons.dashboard_outlined),
+            selectedIcon: Icon(Icons.dashboard),
             label: 'Beranda',
           ),
           NavigationDestination(
