@@ -216,6 +216,8 @@ class FinanceStore extends ChangeNotifier {
       return;
     }
 
+    _activeAccount ??= _accounts.first;
+
     if (!_accounts.contains(_activeAccount)) {
       _activeAccount = _accounts.first;
     }
