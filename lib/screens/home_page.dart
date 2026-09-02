@@ -26,12 +26,30 @@ class _HomePageState extends State<HomePage> {
     SettingsPage(),
   ];
 
+  Future<void> _openRecurringTransactions() async {
+    await Navigator.pushNamed(
+      context,
+      '/recurring-transactions',
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
         child: _pages[_currentIndex],
       ),
+      floatingActionButton: _currentIndex == 4
+          ? FloatingActionButton.extended(
+              onPressed: _openRecurringTransactions,
+              icon: const Icon(
+                Icons.repeat_rounded,
+              ),
+              label: const Text(
+                'Transaksi Berulang',
+              ),
+            )
+          : null,
       bottomNavigationBar: NavigationBar(
         selectedIndex: _currentIndex,
         onDestinationSelected: (index) {
@@ -54,7 +72,9 @@ class _HomePageState extends State<HomePage> {
             label: 'Riwayat',
           ),
           NavigationDestination(
-            icon: Icon(Icons.account_balance_wallet_outlined),
+            icon: Icon(
+              Icons.account_balance_wallet_outlined,
+            ),
             selectedIcon: Icon(
               Icons.account_balance_wallet,
             ),
