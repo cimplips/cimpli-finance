@@ -154,7 +154,7 @@ class _ReportPageState extends State<ReportPage> {
     final buffer = StringBuffer();
 
     buffer.writeln(
-      '${_csvEscape('Laporan Keuangan Prima')}',
+      _csvEscape('Laporan Keuangan Prima'),
     );
     buffer.writeln(
       '${_csvEscape('Akun')},${_csvEscape(account)}',
