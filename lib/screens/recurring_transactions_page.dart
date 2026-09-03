@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../core/finance_scope.dart';
+import '../core/nominal_input_formatter.dart';
 import '../models/recurring_transaction.dart';
 import '../models/transaction.dart';
 import '../services/finance_store.dart';
@@ -188,7 +190,7 @@ class _RecurringTransactionsPageState
     final amountController = TextEditingController(
       text: recurring == null
           ? ''
-          : recurring.amount.round().toString(),
+          : formatNominalInput(recurring.amount),
     );
 
     final formKey = GlobalKey<FormState>();
@@ -286,6 +288,9 @@ class _RecurringTransactionsPageState
                               const TextInputType.numberWithOptions(
                             decimal: true,
                           ),
+                          inputFormatters: const <TextInputFormatter>[
+                            NominalInputFormatter(),
+                          ],
                           textInputAction:
                               TextInputAction.next,
                           decoration:
@@ -304,19 +309,8 @@ class _RecurringTransactionsPageState
                               return 'Nominal wajib diisi.';
                             }
 
-                            final normalized =
-                                text.replaceAll(
-                              '.',
-                              '',
-                            ).replaceAll(
-                              ',',
-                              '.',
-                            );
-
                             final amount =
-                                double.tryParse(
-                              normalized,
-                            );
+                                parseNominalInput(text);
 
                             if (amount == null ||
                                 amount <= 0) {
@@ -555,21 +549,9 @@ class _RecurringTransactionsPageState
                         return;
                       }
 
-                      final normalized =
-                          amountController.text
-                              .trim()
-                              .replaceAll(
-                                '.',
-                                '',
-                              )
-                              .replaceAll(
-                                ',',
-                                '.',
-                              );
-
                       final amount =
-                          double.tryParse(
-                        normalized,
+                          parseNominalInput(
+                        amountController.text,
                       );
 
                       if (amount == null ||
