@@ -1379,15 +1379,7 @@ class _SettingsPageState extends State<SettingsPage> {
               title: 'Kategori Transaksi',
               subtitle: activeAccount == null
                   ? 'Pilih akun untuk mengelola kategori.'
-                  : 'Kategori khusus untuk akun \"$activeAccount\".',
-            ),
-            Text(
-              activeAccount == null
-                  ? 'Pilih akun untuk mengelola kategori.'
                   : 'Kategori khusus untuk akun "$activeAccount".',
-              style: TextStyle(
-                color: colorScheme.onSurfaceVariant,
-              ),
             ),
             const SizedBox(height: 20),
             if (activeAccount == null)
