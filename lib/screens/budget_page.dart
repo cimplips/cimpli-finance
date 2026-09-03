@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../core/finance_scope.dart';
+import '../core/nominal_input_formatter.dart';
 import '../services/budget_store.dart';
 import '../services/finance_store.dart';
 
@@ -224,7 +226,7 @@ class _BudgetPageState extends State<BudgetPage> {
     final controller = TextEditingController(
       text: budget == null
           ? ''
-          : budget.limit.round().toString(),
+          : formatNominalInput(budget.limit),
     );
 
     String? selectedCategory = budget?.category;
@@ -320,10 +322,13 @@ class _BudgetPageState extends State<BudgetPage> {
                           const TextInputType.numberWithOptions(
                         decimal: true,
                       ),
+                      inputFormatters: const <TextInputFormatter>[
+                        NominalInputFormatter(),
+                      ],
                       decoration:
                           const InputDecoration(
                         labelText: 'Batas anggaran',
-                        hintText: 'Contoh: 1000000',
+                        hintText: 'Contoh: 1.000.000',
                         prefixIcon: Icon(
                           Icons
                               .account_balance_wallet_outlined,
@@ -338,12 +343,8 @@ class _BudgetPageState extends State<BudgetPage> {
                           return 'Nominal wajib diisi.';
                         }
 
-                        final normalized = text
-                            .replaceAll('.', '')
-                            .replaceAll(',', '.');
-
                         final amount =
-                            double.tryParse(normalized);
+                            parseNominalInput(text);
 
                         if (amount == null ||
                             amount <= 0) {
@@ -370,13 +371,8 @@ class _BudgetPageState extends State<BudgetPage> {
                       return;
                     }
 
-                    final normalized = controller.text
-                        .trim()
-                        .replaceAll('.', '')
-                        .replaceAll(',', '.');
-
                     final amount =
-                        double.tryParse(normalized);
+                        parseNominalInput(controller.text);
 
                     if (amount == null ||
                         amount <= 0) {
