@@ -37,6 +37,18 @@ class _BudgetPageState extends State<BudgetPage> {
     super.dispose();
   }
 
+  Color get _textSecondary => Theme.of(context).colorScheme.onSurfaceVariant;
+  Color get _surfaceSoft => Theme.of(context).colorScheme.surfaceContainerLow;
+  Color get _successColor => Theme.of(context).brightness == Brightness.dark
+      ? const Color(0xFF86CBBB)
+      : const Color(0xFF4F8A68);
+  Color get _warningColor => Theme.of(context).brightness == Brightness.dark
+      ? const Color(0xFFE1B47A)
+      : const Color(0xFFB07A3A);
+  Color get _dangerColor => Theme.of(context).brightness == Brightness.dark
+      ? const Color(0xFFE39A9A)
+      : const Color(0xFFB85C5C);
+
   Future<_BudgetPageData> _loadData({
     required String account,
     required FinanceStore financeStore,
@@ -575,23 +587,21 @@ class _BudgetPageState extends State<BudgetPage> {
 
   Color _statusColor(Budget budget) {
     if (budget.isOverBudget) {
-      return const Color(0xFFB85C5C);
+      return _dangerColor;
     }
 
     if (budget.limit > 0 &&
         budget.spent / budget.limit >= 0.8) {
-      return const Color(0xFFB07A3A);
+      return _warningColor;
     }
 
-    return const Color(0xFF4F8A68);
+    return _successColor;
   }
 
   Widget _buildBudgetCard({
     required Budget budget,
     required String account,
   }) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     final percentage = budget.limit <= 0
         ? 0.0
         : budget.spent / budget.limit;
@@ -622,7 +632,7 @@ class _BudgetPageState extends State<BudgetPage> {
                   width: 46,
                   height: 46,
                   decoration: BoxDecoration(
-                    color: colorScheme.surfaceContainerHighest,
+                    color: _surfaceSoft,
                     borderRadius:
                         BorderRadius.circular(14),
                   ),
@@ -777,7 +787,7 @@ class _BudgetPageState extends State<BudgetPage> {
               child: LinearProgressIndicator(
                 value: progress,
                 minHeight: 10,
-                backgroundColor: colorScheme.surfaceContainerHighest,
+                backgroundColor: _surfaceSoft,
                 valueColor:
                     AlwaysStoppedAnimation<Color>(
                   statusColor,
@@ -824,8 +834,6 @@ class _BudgetPageState extends State<BudgetPage> {
     required double totalBudget,
     required double totalSpent,
   }) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     final remaining =
         totalBudget - totalSpent;
 
@@ -843,12 +851,12 @@ class _BudgetPageState extends State<BudgetPage> {
         totalBudget > 0;
 
     final statusColor = !hasBudget
-        ? const Color(0xFF555A62)
+        ? _textSecondary
         : isOver
-            ? const Color(0xFFB85C5C)
+            ? _dangerColor
             : percentage >= 0.8
-                ? const Color(0xFFB07A3A)
-                : const Color(0xFF4F8A68);
+                ? _warningColor
+                : _successColor;
 
     String statusTitle;
 
@@ -865,6 +873,7 @@ class _BudgetPageState extends State<BudgetPage> {
     }
 
     return Card(
+      clipBehavior: Clip.antiAlias,
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -961,7 +970,7 @@ class _BudgetPageState extends State<BudgetPage> {
                         ? progress
                         : 0,
                 minHeight: 10,
-                backgroundColor: colorScheme.surfaceContainerHighest,
+                backgroundColor: _surfaceSoft,
                 valueColor:
                     AlwaysStoppedAnimation<
                         Color>(
@@ -1001,8 +1010,8 @@ class _BudgetPageState extends State<BudgetPage> {
       children: [
         Text(
           label,
-          style: const TextStyle(
-            color: Color(0xFF9A9DA3),
+          style: TextStyle(
+            color: _textSecondary,
             fontSize: 11,
           ),
         ),
@@ -1147,8 +1156,8 @@ class _BudgetPageState extends State<BudgetPage> {
               '${_monthName(_selectedMonth.month)} '
               '${_selectedMonth.year}.',
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: Color(0xFF9A9DA3),
+              style: TextStyle(
+                color: _textSecondary,
                 fontSize: 13,
                 height: 1.4,
               ),
@@ -1397,7 +1406,7 @@ class _BudgetPageState extends State<BudgetPage> {
                     ),
                     decoration:
                         BoxDecoration(
-                      color: colorScheme.surfaceContainerLow,
+                      color: _surfaceSoft,
                       borderRadius:
                           BorderRadius.circular(
                         18,
