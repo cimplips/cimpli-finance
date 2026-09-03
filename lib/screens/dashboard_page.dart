@@ -9,52 +9,61 @@ import 'add_transaction_page.dart';
 import 'recurring_transactions_page.dart';
 
 class _DashboardTheme {
-  const _DashboardTheme(this.context);
+  const _DashboardTheme(this.isDark);
 
-  final BuildContext context;
+  final bool isDark;
 
-  ThemeData get theme => Theme.of(context);
-
-  bool get isDark => theme.brightness == Brightness.dark;
-
-  Color get background =>
-      isDark ? const Color(0xFF0D1117) : const Color(0xFFF6F8FB);
-
+  // Selaras dengan tema global Cimpli Finance di main.dart.
+  // Dashboard hanya mengatur peran warna, bukan mengganti fungsi bisnis.
   Color get card =>
-      isDark ? const Color(0xFF161B22) : Colors.white;
+      isDark ? const Color(0xFF36393F) : const Color(0xFFFFFFFF);
 
-  Color get cardElevated =>
-      isDark ? const Color(0xFF1C232D) : const Color(0xFFF9FAFC);
+  Color get elevatedCard =>
+      isDark ? const Color(0xFF40434A) : const Color(0xFFF1F4FA);
 
-  Color get soft =>
-      isDark ? const Color(0xFF202833) : const Color(0xFFF1F4F8);
+  Color get softCard =>
+      isDark ? const Color(0xFF484B52) : const Color(0xFFE9EDF5);
 
   Color get primaryText =>
-      isDark ? const Color(0xFFEAF2FF) : const Color(0xFF172033);
+      isDark ? const Color(0xFFF1F3F6) : const Color(0xFF202735);
 
   Color get secondaryText =>
-      isDark ? const Color(0xFF9DA9B8) : const Color(0xFF5D6878);
+      isDark ? const Color(0xFFB8BDC6) : const Color(0xFF687386);
 
   Color get tertiaryText =>
-      isDark ? const Color(0xFF718096) : const Color(0xFF8792A2);
+      isDark ? const Color(0xFF8E949E) : const Color(0xFF98A2B3);
 
   Color get divider =>
-      isDark ? const Color(0xFF2B3440) : const Color(0xFFE3E8EF);
+      isDark ? const Color(0xFF50535A) : const Color(0xFFE1E6EF);
+
+  Color get selectedAccount =>
+      isDark ? const Color(0xFF46506A) : const Color(0xFFE8EEFF);
+
+  Color get selectedAccountIcon =>
+      isDark ? const Color(0xFF9CB3F4) : const Color(0xFF6F8FEA);
+
+  Color get income =>
+      isDark ? const Color(0xFF86CBBB) : const Color(0xFF61B9A7);
+
+  Color get incomeSoft =>
+      isDark ? const Color(0xFF435B56) : const Color(0xFFE7F6F2);
+
+  Color get expense =>
+      isDark ? const Color(0xFFE39A9A) : const Color(0xFFD87979);
+
+  Color get expenseSoft =>
+      isDark ? const Color(0xFF5B4141) : const Color(0xFFFFECEC);
 
   Color get accent =>
-      isDark ? const Color(0xFF7C9CFF) : const Color(0xFF536DCE);
+      isDark ? const Color(0xFF9CB3F4) : const Color(0xFF6F8FEA);
 
-  Color get positive => const Color(0xFF22A06B);
-
-  Color get negative => const Color(0xFFE35D6A);
-
-  Color get warning => const Color(0xFFE09B3D);
-
-  Color get info => const Color(0xFF5B7FDB);
+  Color get warning =>
+      isDark ? const Color(0xFFE6B486) : const Color(0xFFE6A66E);
 
   Color get shadow =>
-      isDark ? Colors.transparent : const Color(0x12000000);
+      isDark ? Colors.transparent : const Color(0x0A202735);
 }
+
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({
@@ -74,6 +83,7 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   void initState() {
     super.initState();
+
     _budgetStore = BudgetStore();
   }
 
@@ -222,7 +232,9 @@ class _DashboardPageState extends State<DashboardPage> {
 
   void _showAccountSelector() {
     final store = FinanceScope.of(context);
-    final dashboardTheme = _DashboardTheme(context);
+    final dashboardTheme = _DashboardTheme(
+      Theme.of(context).brightness == Brightness.dark,
+    );
 
     if (store.accounts.isEmpty) {
       return;
@@ -232,15 +244,12 @@ class _DashboardPageState extends State<DashboardPage> {
       context: context,
       backgroundColor: dashboardTheme.card,
       showDragHandle: true,
-      isScrollControlled: true,
       builder: (sheetContext) {
-        final sheetTheme = _DashboardTheme(sheetContext);
-
         return SafeArea(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(
               20,
-              4,
+              8,
               20,
               24,
             ),
@@ -248,113 +257,40 @@ class _DashboardPageState extends State<DashboardPage> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                const Text(
                   'Pilih akun',
                   style: TextStyle(
-                    color: sheetTheme.primaryText,
-                    fontSize: 21,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.4,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
-                const SizedBox(height: 6),
-                Text(
-                  'Pilih akun yang ingin ditampilkan di dashboard.',
-                  style: TextStyle(
-                    color: sheetTheme.secondaryText,
-                    fontSize: 13,
-                  ),
-                ),
-                const SizedBox(height: 18),
+                const SizedBox(height: 16),
                 ...store.accounts.map(
                   (account) {
                     final selected =
                         account == store.activeAccount;
 
-                    return Padding(
-                      padding: const EdgeInsets.only(
-                        bottom: 8,
-                      ),
-                      child: Material(
-                        color: selected
-                            ? sheetTheme.accent.withValues(
-                                alpha: sheetTheme.isDark
-                                    ? 0.16
-                                    : 0.08,
-                              )
-                            : sheetTheme.soft,
-                        borderRadius:
-                            BorderRadius.circular(17),
-                        child: InkWell(
-                          borderRadius:
-                              BorderRadius.circular(17),
-                          onTap: () {
-                            store.setActiveAccount(account);
-                            Navigator.of(sheetContext).pop();
-                          },
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 12,
-                            ),
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 42,
-                                  height: 42,
-                                  decoration: BoxDecoration(
-                                    color: selected
-                                        ? sheetTheme.accent
-                                            .withValues(
-                                            alpha: 0.14,
-                                          )
-                                        : sheetTheme.card,
-                                    borderRadius:
-                                        BorderRadius.circular(13),
-                                  ),
-                                  child: Icon(
-                                    Icons
-                                        .account_balance_wallet_outlined,
-                                    size: 21,
-                                    color: selected
-                                        ? sheetTheme.accent
-                                        : sheetTheme.secondaryText,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Text(
-                                    account,
-                                    maxLines: 1,
-                                    overflow:
-                                        TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      color:
-                                          sheetTheme.primaryText,
-                                      fontWeight:
-                                          FontWeight.w700,
-                                    ),
-                                  ),
-                                ),
-                                if (selected)
-                                  Container(
-                                    width: 30,
-                                    height: 30,
-                                    decoration: BoxDecoration(
-                                      color: sheetTheme.accent,
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: const Icon(
-                                      Icons.check_rounded,
-                                      size: 18,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          ),
+                    return ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: CircleAvatar(
+                        backgroundColor: selected
+                            ? dashboardTheme.selectedAccount
+                            : dashboardTheme.softCard,
+                        child: Icon(
+                          Icons.account_balance_wallet_outlined,
+                          color: selected
+                              ? dashboardTheme.selectedAccountIcon
+                              : dashboardTheme.primaryText,
                         ),
                       ),
+                      title: Text(account),
+                      trailing: selected
+                          ? const Icon(Icons.check)
+                          : null,
+                      onTap: () {
+                        store.setActiveAccount(account);
+                        Navigator.of(sheetContext).pop();
+                      },
                     );
                   },
                 ),
@@ -373,7 +309,8 @@ class _DashboardPageState extends State<DashboardPage> {
     final buffer = StringBuffer();
 
     for (var i = 0; i < digits.length; i++) {
-      if (i > 0 && (digits.length - i) % 3 == 0) {
+      if (i > 0 &&
+          (digits.length - i) % 3 == 0) {
         buffer.write('.');
       }
 
@@ -408,31 +345,12 @@ class _DashboardPageState extends State<DashboardPage> {
     return '${date.day} ${months[date.month - 1]} ${date.year}';
   }
 
-  String _monthName() {
-    const months = <String>[
-      'Januari',
-      'Februari',
-      'Maret',
-      'April',
-      'Mei',
-      'Juni',
-      'Juli',
-      'Agustus',
-      'September',
-      'Oktober',
-      'November',
-      'Desember',
-    ];
-
-    final now = DateTime.now();
-
-    return '${months[now.month - 1]} ${now.year}';
-  }
-
   @override
   Widget build(BuildContext context) {
     final store = FinanceScope.of(context);
-    final dashboardTheme = _DashboardTheme(context);
+    final dashboardTheme = _DashboardTheme(
+      Theme.of(context).brightness == Brightness.dark,
+    );
 
     if (store.isLoading) {
       return const Center(
@@ -493,33 +411,57 @@ class _DashboardPageState extends State<DashboardPage> {
                 const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.fromLTRB(
               20,
-              16,
+              12,
               20,
-              40,
+              32,
             ),
             children: [
-              _DashboardHeader(
-                account: account,
-                month: _monthName(),
-                onAccountTap: _showAccountSelector,
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment:
+                          CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          account,
+                          maxLines: 1,
+                          overflow:
+                              TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: 'Pilih akun',
+                    onPressed:
+                        _showAccountSelector,
+                    icon: const Icon(
+                      Icons
+                          .account_balance_wallet_outlined,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 18),
+              const SizedBox(height: 24),
               _BalanceCard(
                 balance: data.balance,
-                income: data.income,
-                expense: data.expense,
                 formatRupiah: _formatRupiah,
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 16),
               Row(
                 children: [
                   Expanded(
                     child: _SummaryCard(
                       title: 'Pemasukan',
                       amount: data.income,
-                      icon: Icons.south_west_rounded,
+                      icon: Icons
+                          .arrow_downward_rounded,
                       formatRupiah: _formatRupiah,
-                      accentColor: dashboardTheme.positive,
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -527,66 +469,93 @@ class _DashboardPageState extends State<DashboardPage> {
                     child: _SummaryCard(
                       title: 'Pengeluaran',
                       amount: data.expense,
-                      icon: Icons.north_east_rounded,
+                      icon: Icons
+                          .arrow_upward_rounded,
                       formatRupiah: _formatRupiah,
-                      accentColor: dashboardTheme.negative,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 16),
               _FinancialHealthCard(
                 income: data.income,
                 expense: data.expense,
                 formatRupiah: _formatRupiah,
               ),
-              const SizedBox(height: 22),
-              _SectionHeader(
-                title: 'Anggaran',
-                subtitle: 'Pantau penggunaan bulan ini',
-              ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 20),
               _BudgetAlertSection(
                 budgets: data.budgets,
                 formatRupiah: _formatRupiah,
               ),
-              const SizedBox(height: 22),
-              _SectionHeader(
-                title: 'Transaksi Berulang',
-                subtitle: 'Jadwal otomatis Anda',
-                actionLabel: 'Kelola',
-                onAction: _openRecurringTransactions,
-              ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 20),
               _RecurringSummaryCard(
                 recurringTransactions:
                     data.recurringTransactions,
                 formatRupiah: _formatRupiah,
-                onOpen: _openRecurringTransactions,
+                onOpen:
+                    _openRecurringTransactions,
               ),
-              const SizedBox(height: 22),
-              _AddTransactionButton(
-                onPressed: _openAddTransaction,
+              const SizedBox(height: 24),
+              SizedBox(
+                height: 56,
+                child: FilledButton.icon(
+                  onPressed:
+                      _openAddTransaction,
+                  icon: const Icon(Icons.add),
+                  label: const Text(
+                    'Tambah Transaksi',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Theme.of(context).brightness ==
+                            Brightness.light
+                        ? dashboardTheme.incomeSoft
+                        : dashboardTheme.selectedAccount,
+                    foregroundColor: Theme.of(context).brightness ==
+                            Brightness.light
+                        ? dashboardTheme.selectedAccountIcon
+                        : dashboardTheme.selectedAccountIcon,
+                  ),
+                ),
               ),
               const SizedBox(height: 28),
-              _SectionHeader(
-                title: 'Transaksi Terbaru',
-                subtitle: data.recentTransactions.isEmpty
-                    ? 'Belum ada aktivitas'
-                    : '${data.recentTransactions.length} transaksi terakhir',
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Transaksi Terbaru',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                  if (data.recentTransactions
+                      .isNotEmpty)
+                    Text(
+                      '${data.recentTransactions.length} transaksi',
+                      style: TextStyle(
+                        color: dashboardTheme.secondaryText,
+                      ),
+                    ),
+                ],
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
               if (data.recentTransactions.isEmpty)
                 const _EmptyTransactions()
               else
                 ...data.recentTransactions.map(
                   (transaction) => Padding(
-                    padding: const EdgeInsets.only(
-                      bottom: 9,
+                    padding:
+                        const EdgeInsets.only(
+                      bottom: 10,
                     ),
                     child: _TransactionCard(
                       transaction: transaction,
-                      formatRupiah: _formatRupiah,
+                      formatRupiah:
+                          _formatRupiah,
                       formatDate: _formatDate,
                     ),
                   ),
@@ -617,206 +586,113 @@ class _DashboardData {
   final List<RecurringTransaction> recurringTransactions;
 }
 
-class _DashboardHeader extends StatelessWidget {
-  const _DashboardHeader({
-    required this.account,
-    required this.month,
-    required this.onAccountTap,
-  });
-
-  final String account;
-  final String month;
-  final VoidCallback onAccountTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final t = _DashboardTheme(context);
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment:
-                CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Ringkasan Keuangan',
-                style: TextStyle(
-                  color: t.secondaryText,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0.2,
-                ),
-              ),
-              const SizedBox(height: 5),
-              Text(
-                account,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: t.primaryText,
-                  fontSize: 25,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.7,
-                ),
-              ),
-              const SizedBox(height: 3),
-              Text(
-                month,
-                style: TextStyle(
-                  color: t.tertiaryText,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-        ),
-        Material(
-          color: t.card,
-          borderRadius: BorderRadius.circular(15),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(15),
-            onTap: onAccountTap,
-            child: Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                borderRadius:
-                    BorderRadius.circular(15),
-                border: Border.all(
-                  color: t.divider,
-                ),
-              ),
-              child: Icon(
-                Icons
-                    .account_balance_wallet_outlined,
-                size: 21,
-                color: t.secondaryText,
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _SectionHeader extends StatelessWidget {
-  const _SectionHeader({
-    required this.title,
-    required this.subtitle,
-    this.actionLabel,
-    this.onAction,
-  });
-
-  final String title;
-  final String subtitle;
-  final String? actionLabel;
-  final VoidCallback? onAction;
-
-  @override
-  Widget build(BuildContext context) {
-    final t = _DashboardTheme(context);
-
-    return Row(
-      crossAxisAlignment:
-          CrossAxisAlignment.end,
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment:
-                CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: TextStyle(
-                  color: t.primaryText,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.3,
-                ),
-              ),
-              const SizedBox(height: 3),
-              Text(
-                subtitle,
-                style: TextStyle(
-                  color: t.secondaryText,
-                  fontSize: 11,
-                ),
-              ),
-            ],
-          ),
-        ),
-        if (actionLabel != null && onAction != null)
-          TextButton(
-            onPressed: onAction,
-            style: TextButton.styleFrom(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 8,
-                vertical: 4,
-              ),
-              minimumSize: Size.zero,
-              tapTargetSize:
-                  MaterialTapTargetSize.shrinkWrap,
-            ),
-            child: Text(
-              actionLabel!,
-              style: TextStyle(
-                color: t.accent,
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-}
-
-class _BalanceCard extends StatelessWidget {
-  const _BalanceCard({
-    required this.balance,
-    required this.income,
-    required this.expense,
+class _RecurringSummaryCard
+    extends StatelessWidget {
+  const _RecurringSummaryCard({
+    required this.recurringTransactions,
     required this.formatRupiah,
+    required this.onOpen,
   });
 
-  final double balance;
-  final double income;
-  final double expense;
+  final List<RecurringTransaction> recurringTransactions;
   final String Function(double) formatRupiah;
+  final VoidCallback onOpen;
 
   @override
   Widget build(BuildContext context) {
-    final t = _DashboardTheme(context);
+    final dashboardTheme = _DashboardTheme(
+      Theme.of(context).brightness == Brightness.dark,
+    );
 
-    final net = income - expense;
-    final hasActivity =
-        income > 0 || expense > 0;
+    final active = recurringTransactions
+        .where((item) => item.isActive)
+        .toList();
+
+    final activeIncome = active
+        .where((item) => item.isIncome)
+        .fold<double>(
+          0,
+          (total, item) => total + item.amount,
+        );
+
+    final activeExpense = active
+        .where((item) => !item.isIncome)
+        .fold<double>(
+          0,
+          (total, item) => total + item.amount,
+        );
+
+    if (recurringTransactions.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: dashboardTheme.card,
+          borderRadius:
+              BorderRadius.circular(20),
+        ),
+        child: Row(
+          children: [
+            CircleAvatar(
+              radius: 21,
+              backgroundColor:
+                  dashboardTheme.softCard,
+              child: Icon(
+                Icons.repeat_rounded,
+                size: 22,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment:
+                    CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Transaksi Berulang',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    'Belum ada jadwal transaksi berulang.',
+                    style: TextStyle(
+                      color: dashboardTheme.secondaryText,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            IconButton(
+              tooltip: 'Kelola transaksi berulang',
+              onPressed: onOpen,
+              icon: const Icon(
+                Icons.chevron_right_rounded,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(
-        21,
-        20,
-        21,
-        18,
-      ),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: t.card,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: t.divider,
-        ),
-        boxShadow: [
-          if (!t.isDark)
-            BoxShadow(
-              color: t.shadow,
-              blurRadius: 20,
-              offset: const Offset(0, 8),
-            ),
-        ],
+        color: dashboardTheme.card,
+        borderRadius:
+            BorderRadius.circular(20),
+        border: Border.all(color: dashboardTheme.divider),
+        boxShadow: dashboardTheme.isDark
+            ? null
+            : [
+                BoxShadow(
+                  color: dashboardTheme.shadow,
+                  blurRadius: 18,
+                  offset: const Offset(0, 5),
+                ),
+              ],
       ),
       child: Column(
         crossAxisAlignment:
@@ -824,82 +700,134 @@ class _BalanceCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Container(
-                width: 38,
-                height: 38,
-                decoration: BoxDecoration(
-                  color: t.accent.withValues(
-                    alpha: t.isDark ? 0.14 : 0.08,
-                  ),
-                  borderRadius:
-                      BorderRadius.circular(12),
-                ),
+              CircleAvatar(
+                radius: 21,
+                backgroundColor:
+                    dashboardTheme.softCard,
                 child: Icon(
-                  Icons.account_balance_wallet_rounded,
-                  size: 19,
-                  color: t.accent,
+                  Icons.repeat_rounded,
+                  size: 22,
                 ),
               ),
-              const SizedBox(width: 11),
+              const SizedBox(width: 12),
               Expanded(
-                child: Text(
-                  'Saldo saat ini',
-                  style: TextStyle(
-                    color: t.secondaryText,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                  ),
+                child: Column(
+                  crossAxisAlignment:
+                      CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Transaksi Berulang',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    SizedBox(height: 3),
+                    Text(
+                      'Ringkasan jadwal aktif',
+                      style: TextStyle(
+                        color: dashboardTheme.secondaryText,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              if (hasActivity)
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(
-                    horizontal: 9,
-                    vertical: 5,
-                  ),
-                  decoration: BoxDecoration(
-                    color: net >= 0
-                        ? t.positive.withValues(
-                            alpha: 0.10,
-                          )
-                        : t.negative.withValues(
-                            alpha: 0.10,
-                          ),
-                    borderRadius:
-                        BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    net >= 0 ? 'Surplus' : 'Defisit',
-                    style: TextStyle(
-                      color: net >= 0
-                          ? t.positive
-                          : t.negative,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ),
+              TextButton(
+                onPressed: onOpen,
+                child: const Text('Kelola'),
+              ),
             ],
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: _RecurringValue(
+                  label: 'Total jadwal',
+                  value:
+                      '${recurringTransactions.length}',
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _RecurringValue(
+                  label: 'Aktif',
+                  value: '${active.length}',
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: _RecurringAmount(
+                  label: 'Pemasukan aktif',
+                  amount: activeIncome,
+                  formatRupiah: formatRupiah,
+                  icon:
+                      Icons.arrow_downward_rounded,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _RecurringAmount(
+                  label: 'Pengeluaran aktif',
+                  amount: activeExpense,
+                  formatRupiah: formatRupiah,
+                  icon:
+                      Icons.arrow_upward_rounded,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RecurringValue
+    extends StatelessWidget {
+  const _RecurringValue({
+    required this.label,
+    required this.value,
+  });
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final dashboardTheme = _DashboardTheme(
+      Theme.of(context).brightness == Brightness.dark,
+    );
+
+    return Container(
+      padding: const EdgeInsets.all(13),
+      decoration: BoxDecoration(
+        color: dashboardTheme.elevatedCard,
+        borderRadius:
+            BorderRadius.circular(15),
+      ),
+      child: Column(
+        crossAxisAlignment:
+            CrossAxisAlignment.start,
+        children: [
           Text(
-            formatRupiah(balance),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+            label,
             style: TextStyle(
-              color: t.primaryText,
-              fontSize: 31,
-              fontWeight: FontWeight.w800,
-              letterSpacing: -1.1,
+              color: dashboardTheme.secondaryText,
+              fontSize: 11,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 5),
           Text(
-            'Saldo seluruh transaksi pada akun aktif',
-            style: TextStyle(
-              color: t.tertiaryText,
-              fontSize: 11,
+            value,
+            style: const TextStyle(
+              fontSize: 19,
+              fontWeight: FontWeight.w800,
             ),
           ),
         ],
@@ -908,81 +836,69 @@ class _BalanceCard extends StatelessWidget {
   }
 }
 
-class _SummaryCard extends StatelessWidget {
-  const _SummaryCard({
-    required this.title,
+class _RecurringAmount
+    extends StatelessWidget {
+  const _RecurringAmount({
+    required this.label,
     required this.amount,
-    required this.icon,
     required this.formatRupiah,
-    required this.accentColor,
+    required this.icon,
   });
 
-  final String title;
+  final String label;
   final double amount;
-  final IconData icon;
   final String Function(double) formatRupiah;
-  final Color accentColor;
+  final IconData icon;
 
   @override
   Widget build(BuildContext context) {
-    final t = _DashboardTheme(context);
+    final dashboardTheme = _DashboardTheme(
+      Theme.of(context).brightness == Brightness.dark,
+    );
 
     return Container(
-      padding: const EdgeInsets.all(17),
+      padding: const EdgeInsets.all(13),
       decoration: BoxDecoration(
-        color: t.card,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: t.divider,
-        ),
-        boxShadow: [
-          if (!t.isDark)
-            BoxShadow(
-              color: t.shadow,
-              blurRadius: 16,
-              offset: const Offset(0, 6),
-            ),
-        ],
+        color: dashboardTheme.elevatedCard,
+        borderRadius:
+            BorderRadius.circular(15),
       ),
-      child: Column(
+      child: Row(
         crossAxisAlignment:
             CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: accentColor.withValues(
-                alpha: t.isDark ? 0.12 : 0.09,
-              ),
-              borderRadius:
-                  BorderRadius.circular(12),
-            ),
-            child: Icon(
-              icon,
-              size: 20,
-              color: accentColor,
-            ),
+          Icon(
+            icon,
+            size: 18,
           ),
-          const SizedBox(height: 13),
-          Text(
-            title,
-            style: TextStyle(
-              color: t.secondaryText,
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 5),
-          Text(
-            formatRupiah(amount),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: t.primaryText,
-              fontSize: 16,
-              fontWeight: FontWeight.w800,
-              letterSpacing: -0.3,
+          const SizedBox(width: 9),
+          Expanded(
+            child: Column(
+              crossAxisAlignment:
+                  CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  maxLines: 1,
+                  overflow:
+                      TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: dashboardTheme.secondaryText,
+                    fontSize: 10,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  formatRupiah(amount),
+                  maxLines: 1,
+                  overflow:
+                      TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -1005,55 +921,55 @@ class _FinancialHealthCard
 
   @override
   Widget build(BuildContext context) {
-    final t = _DashboardTheme(context);
+    final dashboardTheme = _DashboardTheme(
+      Theme.of(context).brightness == Brightness.dark,
+    );
 
     final surplus = income - expense;
+
     final hasIncome = income > 0;
+
     final ratio = hasIncome
-        ? (expense / income).clamp(0.0, 1.0)
+        ? (expense / income)
+            .clamp(0.0, 1.0)
         : 0.0;
-    final percentage = (ratio * 100).round();
+
+    final percentage =
+        (ratio * 100).round();
+
     final isSurplus = surplus >= 0;
 
     String title;
     String description;
     IconData icon;
-    Color statusColor;
 
     if (!hasIncome && expense <= 0) {
-      title = 'Belum ada aktivitas';
+      title = 'Belum ada aktivitas bulan ini';
       description =
-          'Tambahkan transaksi untuk mulai melihat kondisi keuangan bulan ini.';
+          'Tambahkan transaksi untuk melihat kesehatan keuangan.';
       icon = Icons.insights_outlined;
-      statusColor = t.accent;
     } else if (!hasIncome && expense > 0) {
       title = 'Belum ada pemasukan';
       description =
-          'Pengeluaran sudah tercatat, tetapi belum ada pemasukan pada periode ini.';
-      icon = Icons.info_outline_rounded;
-      statusColor = t.warning;
+          'Pengeluaran bulan ini sudah tercatat, tetapi belum ada pemasukan.';
+      icon = Icons.warning_amber_rounded;
     } else if (isSurplus) {
-      title = 'Keuangan berjalan positif';
+      title = 'Keuangan bulan ini surplus';
       description =
-          'Pemasukan masih lebih besar daripada pengeluaran bulan ini.';
+          'Pemasukan masih lebih besar daripada pengeluaran.';
       icon = Icons.trending_up_rounded;
-      statusColor = t.positive;
     } else {
-      title = 'Perlu perhatian';
+      title = 'Pengeluaran melebihi pemasukan';
       description =
-          'Pengeluaran saat ini lebih besar daripada pemasukan bulan ini.';
+          'Perlu diperhatikan agar pengeluaran tidak terus bertambah.';
       icon = Icons.trending_down_rounded;
-      statusColor = t.negative;
     }
 
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: t.cardElevated,
+        color: dashboardTheme.card,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: t.divider,
-        ),
       ),
       child: Column(
         crossAxisAlignment:
@@ -1061,23 +977,16 @@ class _FinancialHealthCard
         children: [
           Row(
             children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: statusColor.withValues(
-                    alpha: t.isDark ? 0.13 : 0.09,
-                  ),
-                  borderRadius:
-                      BorderRadius.circular(12),
-                ),
+              CircleAvatar(
+                radius: 20,
+                backgroundColor:
+                    dashboardTheme.softCard,
                 child: Icon(
                   icon,
-                  size: 20,
-                  color: statusColor,
+                  size: 21,
                 ),
               ),
-              const SizedBox(width: 11),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment:
@@ -1086,17 +995,15 @@ class _FinancialHealthCard
                     Text(
                       'Kesehatan Keuangan',
                       style: TextStyle(
-                        color: t.secondaryText,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600,
+                        color: dashboardTheme.secondaryText,
+                        fontSize: 12,
                       ),
                     ),
                     const SizedBox(height: 3),
                     Text(
                       title,
                       style: TextStyle(
-                        color: t.primaryText,
-                        fontSize: 14,
+                        fontSize: 15,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
@@ -1106,51 +1013,50 @@ class _FinancialHealthCard
             ],
           ),
           const SizedBox(height: 16),
-          if (hasIncome) ...[
-            Row(
+          Container(
+            padding:
+                const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: dashboardTheme.elevatedCard,
+              borderRadius:
+                  BorderRadius.circular(15),
+            ),
+            child: Row(
               children: [
                 Expanded(
-                  child: _HealthMetric(
-                    label: 'Penggunaan pemasukan',
-                    value: '$percentage%',
-                    color: statusColor,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _HealthMetric(
+                  child: _HealthValue(
                     label: isSurplus
                         ? 'Surplus'
                         : 'Defisit',
                     value:
-                        formatRupiah(surplus.abs()),
-                    color: statusColor,
+                        formatRupiah(
+                      surplus.abs(),
+                    ),
+                  ),
+                ),
+                Container(
+                  width: 1,
+                  height: 38,
+                  color: dashboardTheme.divider,
+                ),
+                Expanded(
+                  child: _HealthValue(
+                    label: 'Rasio Pengeluaran',
+                    value: hasIncome
+                        ? '$percentage%'
+                        : '-',
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 13),
-            ClipRRect(
-              borderRadius:
-                  BorderRadius.circular(20),
-              child: LinearProgressIndicator(
-                minHeight: 7,
-                value: ratio,
-                backgroundColor: t.soft,
-                valueColor:
-                    AlwaysStoppedAnimation<Color>(
-                  statusColor,
-                ),
-              ),
-            ),
-          ],
+          ),
           const SizedBox(height: 12),
           Text(
             description,
             style: TextStyle(
-              color: t.secondaryText,
-              fontSize: 11,
-              height: 1.45,
+              color: dashboardTheme.secondaryText,
+              fontSize: 12,
+              height: 1.4,
             ),
           ),
         ],
@@ -1159,46 +1065,51 @@ class _FinancialHealthCard
   }
 }
 
-class _HealthMetric extends StatelessWidget {
-  const _HealthMetric({
+class _HealthValue
+    extends StatelessWidget {
+  const _HealthValue({
     required this.label,
     required this.value,
-    required this.color,
   });
 
   final String label;
   final String value;
-  final Color color;
 
   @override
   Widget build(BuildContext context) {
-    final t = _DashboardTheme(context);
+    final dashboardTheme = _DashboardTheme(
+      Theme.of(context).brightness == Brightness.dark,
+    );
 
-    return Column(
-      crossAxisAlignment:
-          CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            color: t.secondaryText,
-            fontSize: 10,
+    return Padding(
+      padding:
+          const EdgeInsets.symmetric(
+        horizontal: 8,
+      ),
+      child: Column(
+        crossAxisAlignment:
+            CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              color: dashboardTheme.secondaryText,
+              fontSize: 11,
+            ),
           ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            color: color,
-            fontSize: 15,
-            fontWeight: FontWeight.w800,
+          const SizedBox(height: 5),
+          Text(
+            value,
+            maxLines: 1,
+            overflow:
+                TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -1215,7 +1126,9 @@ class _BudgetAlertSection
 
   @override
   Widget build(BuildContext context) {
-    final t = _DashboardTheme(context);
+    final dashboardTheme = _DashboardTheme(
+      Theme.of(context).brightness == Brightness.dark,
+    );
 
     final alerts = budgets.where(
       (budget) {
@@ -1235,10 +1148,14 @@ class _BudgetAlertSection
     alerts.sort(
       (a, b) {
         final aRatio =
-            a.limit <= 0 ? 0.0 : a.spent / a.limit;
+            a.limit <= 0
+                ? 0.0
+                : a.spent / a.limit;
 
         final bRatio =
-            b.limit <= 0 ? 0.0 : b.spent / b.limit;
+            b.limit <= 0
+                ? 0.0
+                : b.spent / b.limit;
 
         return bRatio.compareTo(aRatio);
       },
@@ -1251,21 +1168,21 @@ class _BudgetAlertSection
         .length;
 
     return Container(
-      padding: const EdgeInsets.all(17),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: t.card,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: t.divider,
-        ),
-        boxShadow: [
-          if (!t.isDark)
-            BoxShadow(
-              color: t.shadow,
-              blurRadius: 16,
-              offset: const Offset(0, 6),
-            ),
-        ],
+        color: dashboardTheme.card,
+        borderRadius:
+            BorderRadius.circular(20),
+        border: Border.all(color: dashboardTheme.divider),
+        boxShadow: dashboardTheme.isDark
+            ? null
+            : [
+                BoxShadow(
+                  color: dashboardTheme.shadow,
+                  blurRadius: 18,
+                  offset: const Offset(0, 5),
+                ),
+              ],
       ),
       child: Column(
         crossAxisAlignment:
@@ -1273,100 +1190,71 @@ class _BudgetAlertSection
         children: [
           Row(
             children: [
-              Container(
-                width: 38,
-                height: 38,
-                decoration: BoxDecoration(
-                  color: (overBudgetCount > 0
-                          ? t.negative
-                          : t.warning)
-                      .withValues(
-                    alpha: t.isDark ? 0.13 : 0.09,
-                  ),
-                  borderRadius:
-                      BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  overBudgetCount > 0
-                      ? Icons.warning_amber_rounded
-                      : Icons.notifications_active_outlined,
-                  size: 19,
-                  color: overBudgetCount > 0
-                      ? t.negative
-                      : t.warning,
-                ),
+              Icon(
+                overBudgetCount > 0
+                    ? Icons
+                        .warning_amber_rounded
+                    : Icons
+                        .notifications_active_outlined,
+                size: 22,
+                color: overBudgetCount > 0
+                    ? dashboardTheme.expense
+                    : dashboardTheme.warning,
               ),
-              const SizedBox(width: 11),
+              const SizedBox(width: 10),
               Expanded(
-                child: Column(
-                  crossAxisAlignment:
-                      CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Perlu diperhatikan',
-                      style: TextStyle(
-                        color: t.primaryText,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      overBudgetCount > 0
-                          ? '$overBudgetCount anggaran telah melewati batas.'
-                          : 'Beberapa anggaran mulai mendekati batas.',
-                      style: TextStyle(
-                        color: t.secondaryText,
-                        fontSize: 10,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(
-                  horizontal: 9,
-                  vertical: 5,
-                ),
-                decoration: BoxDecoration(
-                  color: t.soft,
-                  borderRadius:
-                      BorderRadius.circular(20),
-                ),
                 child: Text(
-                  '${alerts.length}',
+                  'Peringatan Anggaran',
                   style: TextStyle(
-                    color: t.primaryText,
-                    fontSize: 11,
+                    fontSize: 16,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
               ),
+              Text(
+                '${alerts.length}',
+                style: TextStyle(
+                  color: dashboardTheme.secondaryText,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
             ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            overBudgetCount > 0
+                ? '$overBudgetCount kategori sudah melewati batas.'
+                : 'Beberapa kategori mulai mendekati batas.',
+            style: TextStyle(
+              color: dashboardTheme.secondaryText,
+              fontSize: 12,
+              height: 1.4,
+            ),
           ),
           const SizedBox(height: 14),
           ...alerts.take(4).map(
             (budget) => Padding(
               padding:
-                  const EdgeInsets.only(bottom: 8),
+                  const EdgeInsets.only(
+                bottom: 10,
+              ),
               child: _BudgetAlertTile(
                 budget: budget,
-                formatRupiah: formatRupiah,
+                formatRupiah:
+                    formatRupiah,
               ),
             ),
           ),
-          if (alerts.length > 4) ...[
-            const SizedBox(height: 2),
+          if (alerts.length > 4)
             Text(
-              '+${alerts.length - 4} peringatan lainnya dapat dilihat di menu Anggaran.',
+              '+${alerts.length - 4} peringatan lainnya '
+              'dapat dilihat di menu Anggaran.',
               style: TextStyle(
-                color: t.secondaryText,
-                fontSize: 10,
-                height: 1.4,
+                color: dashboardTheme.secondaryText,
+                fontSize: 11,
               ),
             ),
-          ],
         ],
       ),
     );
@@ -1385,50 +1273,57 @@ class _BudgetAlertTile
 
   @override
   Widget build(BuildContext context) {
-    final t = _DashboardTheme(context);
+    final dashboardTheme = _DashboardTheme(
+      Theme.of(context).brightness == Brightness.dark,
+    );
 
     final ratio = budget.limit <= 0
         ? 0.0
         : budget.spent / budget.limit;
 
-    final percentage = (ratio * 100).round();
+    final percentage =
+        (ratio * 100).round();
+
     final isOver = budget.isOverBudget;
+
     final remaining = budget.remaining;
 
-    final statusColor =
-        isOver ? t.negative : t.warning;
+    final statusColor = isOver
+        ? dashboardTheme.expense
+        : dashboardTheme.warning;
 
     final statusText = isOver
         ? 'Terlampaui'
         : '$percentage% terpakai';
 
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(13),
       decoration: BoxDecoration(
-        color: t.cardElevated,
-        borderRadius: BorderRadius.circular(15),
+        color: dashboardTheme.elevatedCard,
+        borderRadius:
+            BorderRadius.circular(15),
       ),
       child: Row(
         children: [
           Container(
-            width: 36,
-            height: 36,
+            width: 38,
+            height: 38,
             decoration: BoxDecoration(
               color: statusColor.withValues(
-                alpha: t.isDark ? 0.13 : 0.09,
+                alpha: 0.14,
               ),
               borderRadius:
-                  BorderRadius.circular(10),
+                  BorderRadius.circular(11),
             ),
             child: Icon(
               isOver
                   ? Icons.warning_rounded
                   : Icons.priority_high_rounded,
-              size: 17,
+              size: 19,
               color: statusColor,
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 11),
           Expanded(
             child: Column(
               crossAxisAlignment:
@@ -1437,10 +1332,9 @@ class _BudgetAlertTile
                 Text(
                   budget.category,
                   maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: t.primaryText,
-                    fontSize: 12,
+                  overflow:
+                      TextOverflow.ellipsis,
+                  style: const TextStyle(
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -1448,12 +1342,14 @@ class _BudgetAlertTile
                 Text(
                   isOver
                       ? 'Melebihi ${formatRupiah(-remaining)}'
-                      : '$statusText dari ${formatRupiah(budget.limit)}',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                      : '$statusText dari '
+                          '${formatRupiah(budget.limit)}',
+                  maxLines: 2,
+                  overflow:
+                      TextOverflow.ellipsis,
                   style: TextStyle(
                     color: statusColor,
-                    fontSize: 10,
+                    fontSize: 11,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -1464,10 +1360,10 @@ class _BudgetAlertTile
           Text(
             formatRupiah(budget.spent),
             maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: t.primaryText,
-              fontSize: 11,
+            overflow:
+                TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 12,
               fontWeight: FontWeight.w800,
             ),
           ),
@@ -1483,44 +1379,39 @@ class _SafeBudgetCard
 
   @override
   Widget build(BuildContext context) {
-    final t = _DashboardTheme(context);
+    final dashboardTheme = _DashboardTheme(
+      Theme.of(context).brightness == Brightness.dark,
+    );
 
     return Container(
       padding: const EdgeInsets.all(17),
       decoration: BoxDecoration(
-        color: t.card,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: t.divider,
-        ),
-        boxShadow: [
-          if (!t.isDark)
-            BoxShadow(
-              color: t.shadow,
-              blurRadius: 16,
-              offset: const Offset(0, 6),
-            ),
-        ],
+        color: dashboardTheme.card,
+        borderRadius:
+            BorderRadius.circular(20),
+        border: Border.all(color: dashboardTheme.divider),
+        boxShadow: dashboardTheme.isDark
+            ? null
+            : [
+                BoxShadow(
+                  color: dashboardTheme.shadow,
+                  blurRadius: 18,
+                  offset: const Offset(0, 5),
+                ),
+              ],
       ),
       child: Row(
         children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: t.positive.withValues(
-                alpha: t.isDark ? 0.13 : 0.09,
-              ),
-              borderRadius:
-                  BorderRadius.circular(12),
-            ),
+          CircleAvatar(
+            radius: 20,
+            backgroundColor:
+                dashboardTheme.softCard,
             child: Icon(
-              Icons.check_circle_outline_rounded,
-              size: 20,
-              color: t.positive,
+              Icons.check_circle_outline,
+              size: 21,
             ),
           ),
-          const SizedBox(width: 11),
+          SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment:
@@ -1529,17 +1420,15 @@ class _SafeBudgetCard
                 Text(
                   'Anggaran aman',
                   style: TextStyle(
-                    color: t.primaryText,
-                    fontSize: 13,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
-                const SizedBox(height: 3),
+                SizedBox(height: 3),
                 Text(
                   'Belum ada kategori yang mencapai 80% anggaran.',
                   style: TextStyle(
-                    color: t.secondaryText,
-                    fontSize: 10,
+                    color: dashboardTheme.secondaryText,
+                    fontSize: 11,
                     height: 1.35,
                   ),
                 ),
@@ -1552,198 +1441,66 @@ class _SafeBudgetCard
   }
 }
 
-class _RecurringSummaryCard
+class _BalanceCard
     extends StatelessWidget {
-  const _RecurringSummaryCard({
-    required this.recurringTransactions,
+  const _BalanceCard({
+    required this.balance,
     required this.formatRupiah,
-    required this.onOpen,
   });
 
-  final List<RecurringTransaction> recurringTransactions;
+  final double balance;
   final String Function(double) formatRupiah;
-  final VoidCallback onOpen;
 
   @override
   Widget build(BuildContext context) {
-    final t = _DashboardTheme(context);
-
-    final active = recurringTransactions
-        .where((item) => item.isActive)
-        .toList();
-
-    final activeIncome = active
-        .where((item) => item.isIncome)
-        .fold<double>(
-          0,
-          (total, item) => total + item.amount,
-        );
-
-    final activeExpense = active
-        .where((item) => !item.isIncome)
-        .fold<double>(
-          0,
-          (total, item) => total + item.amount,
-        );
-
-    if (recurringTransactions.isEmpty) {
-      return Container(
-        padding: const EdgeInsets.all(17),
-        decoration: BoxDecoration(
-          color: t.card,
-          borderRadius:
-              BorderRadius.circular(21),
-          border: Border.all(
-            color: t.divider,
-          ),
-          boxShadow: [
-            if (!t.isDark)
-              BoxShadow(
-                color: t.shadow,
-                blurRadius: 16,
-                offset: const Offset(0, 6),
-              ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 42,
-              height: 42,
-              decoration: BoxDecoration(
-                color: t.soft,
-                borderRadius:
-                    BorderRadius.circular(13),
-              ),
-              child: Icon(
-                Icons.repeat_rounded,
-                size: 21,
-                color: t.secondaryText,
-              ),
-            ),
-            const SizedBox(width: 11),
-            Expanded(
-              child: Column(
-                crossAxisAlignment:
-                    CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Belum ada transaksi berulang',
-                    style: TextStyle(
-                      color: t.primaryText,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    'Buat jadwal untuk transaksi otomatis.',
-                    style: TextStyle(
-                      color: t.secondaryText,
-                      fontSize: 10,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            _SmallArrowButton(
-              onPressed: onOpen,
-            ),
-          ],
-        ),
-      );
-    }
+    final dashboardTheme = _DashboardTheme(
+      Theme.of(context).brightness == Brightness.dark,
+    );
 
     return Container(
-      padding: const EdgeInsets.all(17),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: t.card,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: t.divider,
-        ),
-        boxShadow: [
-          if (!t.isDark)
-            BoxShadow(
-              color: t.shadow,
-              blurRadius: 16,
-              offset: const Offset(0, 6),
-            ),
-        ],
+        color: dashboardTheme.elevatedCard,
+        borderRadius:
+            BorderRadius.circular(24),
+        border: Border.all(color: dashboardTheme.divider),
+        boxShadow: dashboardTheme.isDark
+            ? null
+            : [
+                BoxShadow(
+                  color: dashboardTheme.shadow,
+                  blurRadius: 18,
+                  offset: const Offset(0, 5),
+                ),
+              ],
       ),
       child: Column(
+        crossAxisAlignment:
+            CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Container(
-                width: 42,
-                height: 42,
-                decoration: BoxDecoration(
-                  color: t.accent.withValues(
-                    alpha: t.isDark ? 0.13 : 0.08,
-                  ),
-                  borderRadius:
-                      BorderRadius.circular(13),
-                ),
-                child: Icon(
-                  Icons.repeat_rounded,
-                  size: 21,
-                  color: t.accent,
-                ),
-              ),
-              const SizedBox(width: 11),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment:
-                      CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Jadwal aktif',
-                      style: TextStyle(
-                        color: t.primaryText,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      '${active.length} dari ${recurringTransactions.length} jadwal aktif',
-                      style: TextStyle(
-                        color: t.secondaryText,
-                        fontSize: 10,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              _SmallArrowButton(
-                onPressed: onOpen,
-              ),
-            ],
+          Text(
+            'Saldo',
+            style: TextStyle(
+              color: dashboardTheme.secondaryText,
+              fontSize: 14,
+            ),
           ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              Expanded(
-                child: _RecurringMetric(
-                  label: 'Pemasukan aktif',
-                  value:
-                      formatRupiah(activeIncome),
-                  icon: Icons.south_west_rounded,
-                  color: t.positive,
-                ),
-              ),
-              const SizedBox(width: 9),
-              Expanded(
-                child: _RecurringMetric(
-                  label: 'Pengeluaran aktif',
-                  value:
-                      formatRupiah(activeExpense),
-                  icon: Icons.north_east_rounded,
-                  color: t.negative,
-                ),
-              ),
-            ],
+          const SizedBox(height: 10),
+          Text(
+            formatRupiah(balance),
+            style: TextStyle(
+              fontSize: 30,
+              fontWeight: FontWeight.w800,
+              letterSpacing: -0.8,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Saldo seluruh transaksi akun aktif',
+            style: TextStyle(
+              color: dashboardTheme.secondaryText,
+              fontSize: 12,
+            ),
           ),
         ],
       ),
@@ -1751,181 +1508,96 @@ class _RecurringSummaryCard
   }
 }
 
-class _RecurringMetric
+class _SummaryCard
     extends StatelessWidget {
-  const _RecurringMetric({
-    required this.label,
-    required this.value,
+  const _SummaryCard({
+    required this.title,
+    required this.amount,
     required this.icon,
-    required this.color,
+    required this.formatRupiah,
   });
 
-  final String label;
-  final String value;
+  final String title;
+  final double amount;
   final IconData icon;
-  final Color color;
+  final String Function(double) formatRupiah;
 
   @override
   Widget build(BuildContext context) {
-    final t = _DashboardTheme(context);
+    final dashboardTheme = _DashboardTheme(
+      Theme.of(context).brightness == Brightness.dark,
+    );
+    final isIncome = title == 'Pemasukan';
+    final accentColor = isIncome
+        ? dashboardTheme.income
+        : dashboardTheme.expense;
+    final lightCardColor = isIncome
+        ? dashboardTheme.incomeSoft
+        : dashboardTheme.expenseSoft;
 
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: t.cardElevated,
+        color: dashboardTheme.isDark
+            ? dashboardTheme.card
+            : lightCardColor,
         borderRadius:
-            BorderRadius.circular(15),
+            BorderRadius.circular(20),
+        border: Border.all(color: dashboardTheme.divider),
+        boxShadow: dashboardTheme.isDark
+            ? null
+            : [
+                BoxShadow(
+                  color: dashboardTheme.shadow,
+                  blurRadius: 18,
+                  offset: const Offset(0, 5),
+                ),
+              ],
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment:
+            CrossAxisAlignment.start,
         children: [
           Container(
-            width: 29,
-            height: 29,
+            width: 44,
+            height: 44,
             decoration: BoxDecoration(
-              color: color.withValues(
-                alpha: t.isDark ? 0.12 : 0.08,
-              ),
-              borderRadius:
-                  BorderRadius.circular(9),
+              color: dashboardTheme.isDark
+                  ? dashboardTheme.softCard
+                  : accentColor.withValues(alpha: 0.10),
+              shape: BoxShape.circle,
             ),
             child: Icon(
               icon,
-              size: 14,
-              color: color,
+              size: 22,
+              color: dashboardTheme.isDark
+                  ? dashboardTheme.primaryText
+                  : accentColor,
             ),
           ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Column(
-              crossAxisAlignment:
-                  CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  maxLines: 1,
-                  overflow:
-                      TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: t.secondaryText,
-                    fontSize: 9,
-                  ),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  value,
-                  maxLines: 1,
-                  overflow:
-                      TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: t.primaryText,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ],
+          const SizedBox(height: 12),
+          Text(
+            title,
+            style: TextStyle(
+              color: dashboardTheme.secondaryText,
+              fontSize: 13,
+            ),
+          ),
+          const SizedBox(height: 5),
+          Text(
+            formatRupiah(amount),
+            maxLines: 1,
+            overflow:
+                TextOverflow.ellipsis,
+            style: TextStyle(
+              color: dashboardTheme.isDark
+                  ? dashboardTheme.primaryText
+                  : accentColor,
+              fontSize: 17,
+              fontWeight: FontWeight.w800,
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _SmallArrowButton
-    extends StatelessWidget {
-  const _SmallArrowButton({
-    required this.onPressed,
-  });
-
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    final t = _DashboardTheme(context);
-
-    return Material(
-      color: t.soft,
-      borderRadius: BorderRadius.circular(11),
-      child: InkWell(
-        onTap: onPressed,
-        borderRadius: BorderRadius.circular(11),
-        child: SizedBox(
-          width: 36,
-          height: 36,
-          child: Icon(
-            Icons.chevron_right_rounded,
-            size: 20,
-            color: t.secondaryText,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _AddTransactionButton
-    extends StatelessWidget {
-  const _AddTransactionButton({
-    required this.onPressed,
-  });
-
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    final t = _DashboardTheme(context);
-
-    return Material(
-      color: t.accent,
-      borderRadius: BorderRadius.circular(18),
-      elevation: t.isDark ? 0 : 2,
-      shadowColor: t.accent.withValues(
-        alpha: 0.22,
-      ),
-      child: InkWell(
-        onTap: onPressed,
-        borderRadius: BorderRadius.circular(18),
-        child: Container(
-          height: 55,
-          padding: const EdgeInsets.symmetric(
-            horizontal: 18,
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 34,
-                height: 34,
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(
-                    alpha: 0.16,
-                  ),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.add_rounded,
-                  size: 20,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(width: 11),
-              const Expanded(
-                child: Text(
-                  'Tambah Transaksi',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-              const Icon(
-                Icons.arrow_forward_rounded,
-                size: 19,
-                color: Colors.white,
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
@@ -1945,52 +1617,51 @@ class _TransactionCard
 
   @override
   Widget build(BuildContext context) {
-    final t = _DashboardTheme(context);
+    final dashboardTheme = _DashboardTheme(
+      Theme.of(context).brightness == Brightness.dark,
+    );
 
     final isIncome =
-        transaction.type == TransactionType.income;
-
-    final accent =
-        isIncome ? t.positive : t.negative;
+        transaction.type ==
+            TransactionType.income;
 
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: t.card,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: t.divider,
-        ),
-        boxShadow: [
-          if (!t.isDark)
-            BoxShadow(
-              color: t.shadow,
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-        ],
+        color: dashboardTheme.card,
+        borderRadius:
+            BorderRadius.circular(18),
+        border: Border.all(color: dashboardTheme.divider),
+        boxShadow: dashboardTheme.isDark
+            ? null
+            : [
+                BoxShadow(
+                  color: dashboardTheme.shadow,
+                  blurRadius: 16,
+                  offset: const Offset(0, 4),
+                ),
+              ],
       ),
       child: Row(
         children: [
-          Container(
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(
-              color: accent.withValues(
-                alpha: t.isDark ? 0.12 : 0.08,
-              ),
-              borderRadius:
-                  BorderRadius.circular(13),
-            ),
+          CircleAvatar(
+            radius: 22,
+            backgroundColor: isIncome
+                ? dashboardTheme.incomeSoft
+                : dashboardTheme.expenseSoft,
             child: Icon(
               isIncome
-                  ? Icons.south_west_rounded
-                  : Icons.north_east_rounded,
+                  ? Icons
+                      .arrow_downward_rounded
+                  : Icons
+                      .arrow_upward_rounded,
               size: 20,
-              color: accent,
+              color: isIncome
+                  ? dashboardTheme.income
+                  : dashboardTheme.expense,
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment:
@@ -1999,52 +1670,37 @@ class _TransactionCard
                 Text(
                   transaction.title,
                   maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                  overflow:
+                      TextOverflow.ellipsis,
                   style: TextStyle(
-                    color: t.primaryText,
-                    fontSize: 12,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '${transaction.category} • ${formatDate(transaction.date)}',
+                  '${transaction.category} • '
+                  '${formatDate(transaction.date)}',
                   maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                  overflow:
+                      TextOverflow.ellipsis,
                   style: TextStyle(
-                    color: t.secondaryText,
-                    fontSize: 10,
+                    color: dashboardTheme.secondaryText,
+                    fontSize: 12,
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 10),
-          Column(
-            crossAxisAlignment:
-                CrossAxisAlignment.end,
-            children: [
-              Text(
-                '${isIncome ? '+' : '-'}${formatRupiah(transaction.amount)}',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: accent,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                isIncome
-                    ? 'Pemasukan'
-                    : 'Pengeluaran',
-                style: TextStyle(
-                  color: t.tertiaryText,
-                  fontSize: 9,
-                ),
-              ),
-            ],
+          const SizedBox(width: 12),
+          Text(
+            '${isIncome ? '+' : '-'}'
+            '${formatRupiah(transaction.amount)}',
+            style: TextStyle(
+              fontWeight: FontWeight.w800,
+              color: isIncome
+                  ? dashboardTheme.income
+                  : dashboardTheme.expense,
+            ),
           ),
         ],
       ),
@@ -2058,52 +1714,49 @@ class _EmptyTransactions
 
   @override
   Widget build(BuildContext context) {
-    final t = _DashboardTheme(context);
+    final dashboardTheme = _DashboardTheme(
+      Theme.of(context).brightness == Brightness.dark,
+    );
 
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 22,
-        vertical: 26,
-      ),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: t.card,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: t.divider,
-        ),
+        color: dashboardTheme.card,
+        borderRadius:
+            BorderRadius.circular(20),
+        border: Border.all(color: dashboardTheme.divider),
+        boxShadow: dashboardTheme.isDark
+            ? null
+            : [
+                BoxShadow(
+                  color: dashboardTheme.shadow,
+                  blurRadius: 18,
+                  offset: const Offset(0, 5),
+                ),
+              ],
       ),
       child: Column(
         children: [
-          Container(
-            width: 52,
-            height: 52,
-            decoration: BoxDecoration(
-              color: t.soft,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              Icons.receipt_long_outlined,
-              size: 25,
-              color: t.tertiaryText,
-            ),
+          Icon(
+            Icons.receipt_long_outlined,
+            size: 42,
+            color: dashboardTheme.tertiaryText,
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           Text(
             'Belum ada transaksi',
             style: TextStyle(
-              color: t.primaryText,
-              fontSize: 14,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w700,
+              fontSize: 16,
             ),
           ),
-          const SizedBox(height: 5),
+          SizedBox(height: 5),
           Text(
             'Tambahkan pemasukan atau pengeluaran pertama Anda.',
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: t.secondaryText,
-              fontSize: 11,
-              height: 1.4,
+              color: dashboardTheme.secondaryText,
+              fontSize: 13,
             ),
           ),
         ],
@@ -2124,70 +1777,48 @@ class _ErrorView
 
   @override
   Widget build(BuildContext context) {
-    final t = _DashboardTheme(context);
+    final dashboardTheme = _DashboardTheme(
+      Theme.of(context).brightness == Brightness.dark,
+    );
 
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
-        child: Container(
-          padding: const EdgeInsets.all(22),
-          decoration: BoxDecoration(
-            color: t.card,
-            borderRadius:
-                BorderRadius.circular(22),
-            border: Border.all(
-              color: t.divider,
+        child: Column(
+          mainAxisSize:
+              MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.error_outline,
+              size: 48,
             ),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 52,
-                height: 52,
-                decoration: BoxDecoration(
-                  color: t.negative.withValues(
-                    alpha: 0.10,
-                  ),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.error_outline_rounded,
-                  size: 27,
-                  color: t.negative,
-                ),
+            const SizedBox(height: 12),
+            const Text(
+              'Terjadi kesalahan',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
               ),
-              const SizedBox(height: 13),
-              Text(
-                'Terjadi kesalahan',
-                style: TextStyle(
-                  color: t.primaryText,
-                  fontSize: 17,
-                  fontWeight: FontWeight.w800,
-                ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              maxLines: 4,
+              overflow:
+                  TextOverflow.ellipsis,
+              style: TextStyle(
+                color: dashboardTheme.secondaryText,
               ),
-              const SizedBox(height: 7),
-              Text(
-                message,
-                textAlign: TextAlign.center,
-                maxLines: 4,
-                overflow:
-                    TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: t.secondaryText,
-                  fontSize: 11,
-                  height: 1.4,
-                ),
+            ),
+            const SizedBox(height: 18),
+            OutlinedButton(
+              onPressed: onRetry,
+              child: const Text(
+                'Coba Lagi',
               ),
-              const SizedBox(height: 17),
-              OutlinedButton(
-                onPressed: onRetry,
-                child: const Text(
-                  'Coba Lagi',
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
