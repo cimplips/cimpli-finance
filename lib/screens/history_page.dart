@@ -212,10 +212,6 @@ class _HistoryPageState extends State<HistoryPage> {
                 color: t.divider,
               ),
             ),
-            contentTextStyle: TextStyle(
-              color: t.primaryText,
-              fontWeight: FontWeight.w600,
-            ),
           ),
         );
     } else {
@@ -233,10 +229,6 @@ class _HistoryPageState extends State<HistoryPage> {
               side: BorderSide(
                 color: t.divider,
               ),
-            ),
-            contentTextStyle: TextStyle(
-              color: t.primaryText,
-              fontWeight: FontWeight.w600,
             ),
           ),
         );
