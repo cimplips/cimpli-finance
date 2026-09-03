@@ -73,10 +73,28 @@ class _AddTransactionPageState
 
   String _formatAmountForInput(double amount) {
     if (amount == amount.roundToDouble()) {
-      return amount.toInt().toString();
+      return _formatThousands(amount.toInt().toString());
     }
 
     return amount.toString();
+  }
+
+  String _formatThousands(String digits) {
+    if (digits.isEmpty) {
+      return '';
+    }
+
+    final buffer = StringBuffer();
+
+    for (var i = 0; i < digits.length; i++) {
+      if (i > 0 && (digits.length - i) % 3 == 0) {
+        buffer.write('.');
+      }
+
+      buffer.write(digits[i]);
+    }
+
+    return buffer.toString();
   }
 
   double? _parseAmount(String value) {
@@ -86,37 +104,23 @@ class _AddTransactionPageState
       return null;
     }
 
-    text = text.replaceAll(RegExp(r'[^0-9,.]'), '');
+    text = text.replaceAll('.', '');
+    text = text.replaceAll(RegExp(r'[^0-9,]'), '');
 
     if (text.isEmpty) {
       return null;
     }
 
-    final lastComma = text.lastIndexOf(',');
-    final lastDot = text.lastIndexOf('.');
-
-    if (lastComma >= 0 && lastDot >= 0) {
-      if (lastComma > lastDot) {
-        text = text.replaceAll('.', '');
-        text = text.replaceAll(',', '.');
-      } else {
-        text = text.replaceAll(',', '');
-      }
-    } else if (lastComma >= 0) {
+    if (text.contains(',')) {
+      final lastComma = text.lastIndexOf(',');
       final digitsAfterComma =
           text.length - lastComma - 1;
 
-      if (digitsAfterComma == 3) {
-        text = text.replaceAll(',', '');
+      if (digitsAfterComma > 0 &&
+          digitsAfterComma <= 2) {
+        text = text.replaceFirst(',', '.');
       } else {
-        text = text.replaceAll(',', '.');
-      }
-    } else if (lastDot >= 0) {
-      final digitsAfterDot =
-          text.length - lastDot - 1;
-
-      if (digitsAfterDot == 3) {
-        text = text.replaceAll('.', '');
+        text = text.replaceAll(',', '');
       }
     }
 
@@ -127,18 +131,7 @@ class _AddTransactionPageState
     final rounded = value.round();
     final digits = rounded.abs().toString();
 
-    final buffer = StringBuffer();
-
-    for (var i = 0; i < digits.length; i++) {
-      if (i > 0 &&
-          (digits.length - i) % 3 == 0) {
-        buffer.write('.');
-      }
-
-      buffer.write(digits[i]);
-    }
-
-    final result = buffer.toString();
+    final result = _formatThousands(digits);
 
     if (rounded < 0) {
       return '-Rp $result';
@@ -387,7 +380,8 @@ class _AddTransactionPageState
       await showDialog<void>(
         context: context,
         builder: (dialogContext) {
-          final colorScheme = Theme.of(dialogContext).colorScheme;
+          final colorScheme =
+              Theme.of(dialogContext).colorScheme;
 
           return AlertDialog(
             icon: Icon(
@@ -549,13 +543,12 @@ class _AddTransactionPageState
               controller: _amountController,
               keyboardType:
                   const TextInputType.numberWithOptions(
-                decimal: true,
+                decimal: false,
               ),
               inputFormatters: <TextInputFormatter>[
-                FilteringTextInputFormatter.allow(
-                  RegExp(r'[0-9.,]'),
-                ),
+                _RupiahInputFormatter(),
               ],
+              textInputAction: TextInputAction.next,
               decoration: const InputDecoration(
                 labelText: 'Nominal',
                 hintText: 'Contoh: 1.500.000',
@@ -686,38 +679,37 @@ class _AddTransactionPageState
               ),
             ),
             const SizedBox(height: 28),
-            if (_amountController.text.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(
-                  bottom: 14,
-                ),
-                child: ValueListenableBuilder<
-                    TextEditingValue>(
-                  valueListenable: _amountController,
-                  builder: (
-                    context,
-                    value,
-                    child,
-                  ) {
-                    final amount =
-                        _parseAmount(value.text);
+            ValueListenableBuilder<TextEditingValue>(
+              valueListenable: _amountController,
+              builder: (
+                context,
+                value,
+                child,
+              ) {
+                final amount =
+                    _parseAmount(value.text);
 
-                    if (amount == null ||
-                        amount <= 0) {
-                      return const SizedBox.shrink();
-                    }
+                if (amount == null || amount <= 0) {
+                  return const SizedBox.shrink();
+                }
 
-                    return Text(
-                      _formatRupiah(amount),
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: Color(0xFF9A9DA3),
-                        fontSize: 13,
-                      ),
-                    );
-                  },
-                ),
-              ),
+                return Padding(
+                  padding: const EdgeInsets.only(
+                    bottom: 14,
+                  ),
+                  child: Text(
+                    _formatRupiah(amount),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onSurfaceVariant,
+                      fontSize: 13,
+                    ),
+                  ),
+                );
+              },
+            ),
             SizedBox(
               height: 56,
               child: FilledButton(
@@ -745,6 +737,101 @@ class _AddTransactionPageState
         ),
       ),
     );
+  }
+}
+
+class _RupiahInputFormatter
+    extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final digitsBeforeCursor =
+        _countDigitsBeforeCursor(newValue);
+
+    final digits =
+        newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
+
+    if (digits.isEmpty) {
+      return const TextEditingValue(
+        text: '',
+        selection: TextSelection.collapsed(
+          offset: 0,
+        ),
+      );
+    }
+
+    final formatted = _formatDigits(digits);
+
+    final cursorPosition =
+        _cursorPositionForDigitCount(
+      formatted,
+      digitsBeforeCursor,
+    );
+
+    return TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(
+        offset: cursorPosition,
+      ),
+    );
+  }
+
+  int _countDigitsBeforeCursor(
+    TextEditingValue value,
+  ) {
+    final cursor = value.selection.baseOffset;
+
+    if (cursor <= 0) {
+      return 0;
+    }
+
+    final end = cursor > value.text.length
+        ? value.text.length
+        : cursor;
+
+    return value.text
+        .substring(0, end)
+        .replaceAll(RegExp(r'[^0-9]'), '')
+        .length;
+  }
+
+  int _cursorPositionForDigitCount(
+    String text,
+    int digitCount,
+  ) {
+    if (digitCount <= 0) {
+      return 0;
+    }
+
+    var digitsSeen = 0;
+
+    for (var i = 0; i < text.length; i++) {
+      if (RegExp(r'[0-9]').hasMatch(text[i])) {
+        digitsSeen++;
+
+        if (digitsSeen >= digitCount) {
+          return i + 1;
+        }
+      }
+    }
+
+    return text.length;
+  }
+
+  String _formatDigits(String digits) {
+    final buffer = StringBuffer();
+
+    for (var i = 0; i < digits.length; i++) {
+      if (i > 0 && (digits.length - i) % 3 == 0) {
+        buffer.write('.');
+      }
+
+      buffer.write(digits[i]);
+    }
+
+    return buffer.toString();
   }
 }
 
@@ -804,7 +891,8 @@ class _TypeButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final colorScheme =
+        Theme.of(context).colorScheme;
 
     final backgroundColor = selected
         ? colorScheme.secondaryContainer
