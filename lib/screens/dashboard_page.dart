@@ -2003,7 +2003,7 @@ class _TransactionCard
                   style: TextStyle(
                     color: t.primaryText,
                     fontSize: 12,
-                    fontWeight: FontWeight.w750,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
                 const SizedBox(height: 4),
