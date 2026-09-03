@@ -79,7 +79,7 @@ class _HomePageState extends State<HomePage> {
         backgroundColor: _surface,
         surfaceTintColor: Colors.transparent,
         indicatorColor: Theme.of(context).colorScheme.primaryContainer,
-        overlayColor: MaterialStatePropertyAll(_surface),
+        overlayColor: WidgetStatePropertyAll(_surface),
         destinations: const <NavigationDestination>[
           NavigationDestination(
             icon: Icon(Icons.dashboard_outlined),
