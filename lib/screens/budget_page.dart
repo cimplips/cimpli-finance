@@ -586,76 +586,102 @@ class _BudgetPageState extends State<BudgetPage> {
     return const Color(0xFF4F8A68);
   }
 
+  Color _statusColor(Budget budget) {
+    if (budget.isOverBudget) return const Color(0xFFE06A78);
+    if (budget.limit > 0 && budget.spent / budget.limit >= 0.8) {
+      return const Color(0xFFD39A4A);
+    }
+    return const Color(0xFF35B47A);
+  }
+
+  String _statusText(Budget budget) {
+    if (budget.isOverBudget) return 'Terlampaui';
+    if (budget.limit > 0 && budget.spent / budget.limit >= 0.8) {
+      return 'Hampir habis';
+    }
+    return 'Aman';
+  }
+
+  IconData _statusIcon(Budget budget) {
+    if (budget.isOverBudget) return Icons.warning_amber_rounded;
+    if (budget.limit > 0 && budget.spent / budget.limit >= 0.8) {
+      return Icons.info_outline_rounded;
+    }
+    return Icons.check_circle_outline_rounded;
+  }
+
   Widget _buildBudgetCard({
     required Budget budget,
     required String account,
   }) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    final percentage = budget.limit <= 0
-        ? 0.0
-        : budget.spent / budget.limit;
-
-    final progress =
-        percentage.clamp(0.0, 1.0);
-
-    final statusColor =
-        _statusColor(budget);
-
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final percentage = budget.limit <= 0 ? 0.0 : budget.spent / budget.limit;
+    final progress = percentage.clamp(0.0, 1.0);
+    final statusColor = _statusColor(budget);
     final remaining = budget.remaining;
 
-    final percentageText =
-        '${(percentage * 100).round()}%';
-
-    return Card(
-      margin:
-          const EdgeInsets.only(bottom: 12),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: scheme.surface,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+          color: scheme.outlineVariant.withValues(alpha: isDark ? 0.55 : 0.75),
+        ),
+        boxShadow: isDark
+            ? null
+            : const [
+                BoxShadow(
+                  color: Color(0x10000000),
+                  blurRadius: 18,
+                  offset: Offset(0, 7),
+                ),
+              ],
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(18),
+        padding: const EdgeInsets.fromLTRB(16, 16, 12, 15),
         child: Column(
-          crossAxisAlignment:
-              CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
                 Container(
-                  width: 46,
-                  height: 46,
+                  width: 48,
+                  height: 48,
                   decoration: BoxDecoration(
-                    color: colorScheme.surfaceContainerHighest,
-                    borderRadius:
-                        BorderRadius.circular(14),
+                    color: scheme.primaryContainer.withValues(alpha: isDark ? 0.5 : 0.7),
+                    borderRadius: BorderRadius.circular(15),
                   ),
-                  child: const Icon(
-                    Icons.category_outlined,
+                  child: Icon(
+                    Icons.category_rounded,
+                    color: scheme.onPrimaryContainer,
+                    size: 21,
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
-                    crossAxisAlignment:
-                        CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         budget.category,
                         maxLines: 1,
-                        overflow:
-                            TextOverflow.ellipsis,
-                        style:
-                            const TextStyle(
-                          fontSize: 16,
-                          fontWeight:
-                              FontWeight.w800,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.2,
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         'Batas ${_formatRupiah(budget.limit)}',
-                        style:
-                            const TextStyle(
-                          color:
-                              Color(0xFF9A9DA3),
-                          fontSize: 12,
+                        style: TextStyle(
+                          color: scheme.onSurfaceVariant,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
                     ],
@@ -663,18 +689,11 @@ class _BudgetPageState extends State<BudgetPage> {
                 ),
                 PopupMenuButton<String>(
                   tooltip: 'Menu anggaran',
-                  onSelected:
-                      (value) async {
+                  onSelected: (value) async {
                     if (value == 'edit') {
-                      await _showBudgetDialog(
-                        account: account,
-                        budget: budget,
-                      );
-                    } else if (
-                        value == 'delete') {
-                      await _showDeleteBudgetDialog(
-                        budget,
-                      );
+                      await _showBudgetDialog(account: account, budget: budget);
+                    } else if (value == 'delete') {
+                      await _showDeleteBudgetDialog(budget);
                     }
                   },
                   itemBuilder: (_) => const [
@@ -682,9 +701,7 @@ class _BudgetPageState extends State<BudgetPage> {
                       value: 'edit',
                       child: Row(
                         children: [
-                          Icon(
-                            Icons.edit_outlined,
-                          ),
+                          Icon(Icons.edit_outlined, size: 19),
                           SizedBox(width: 10),
                           Text('Edit'),
                         ],
@@ -694,9 +711,7 @@ class _BudgetPageState extends State<BudgetPage> {
                       value: 'delete',
                       child: Row(
                         children: [
-                          Icon(
-                            Icons.delete_outline,
-                          ),
+                          Icon(Icons.delete_outline_rounded, size: 19),
                           SizedBox(width: 10),
                           Text('Hapus'),
                         ],
@@ -706,110 +721,55 @@ class _BudgetPageState extends State<BudgetPage> {
                 ),
               ],
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 19),
             Row(
-              crossAxisAlignment:
-                  CrossAxisAlignment.end,
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment:
-                        CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Terpakai',
-                        style: TextStyle(
-                          color:
-                              Color(0xFF9A9DA3),
-                          fontSize: 12,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        _formatRupiah(
-                          budget.spent,
-                        ),
-                        style:
-                            const TextStyle(
-                          fontSize: 20,
-                          fontWeight:
-                              FontWeight.w800,
-                        ),
-                      ),
-                    ],
+                  child: _metric(
+                    'Terpakai',
+                    _formatRupiah(budget.spent),
                   ),
                 ),
-                Column(
-                  crossAxisAlignment:
-                      CrossAxisAlignment.end,
-                  children: [
-                    const Text(
-                      'Sisa',
-                      style: TextStyle(
-                        color:
-                            Color(0xFF9A9DA3),
-                        fontSize: 12,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      _formatRupiah(
-                        remaining,
-                      ),
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight:
-                            FontWeight.w800,
-                        color:
-                            budget.isOverBudget
-                                ? const Color(0xFFB85C5C)
-                                : null,
-                      ),
-                    ),
-                  ],
+                const SizedBox(width: 12),
+                _metric(
+                  'Sisa',
+                  _formatRupiah(remaining),
+                  valueColor: budget.isOverBudget ? statusColor : null,
+                  alignEnd: true,
                 ),
               ],
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 15),
             ClipRRect(
-              borderRadius:
-                  BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(99),
               child: LinearProgressIndicator(
                 value: progress,
-                minHeight: 10,
-                backgroundColor: colorScheme.surfaceContainerHighest,
-                valueColor:
-                    AlwaysStoppedAnimation<Color>(
-                  statusColor,
-                ),
+                minHeight: 9,
+                backgroundColor: scheme.surfaceContainerHighest,
+                valueColor: AlwaysStoppedAnimation<Color>(statusColor),
               ),
             ),
             const SizedBox(height: 10),
             Row(
               children: [
-                Icon(
-                  _statusIcon(budget),
-                  size: 17,
-                  color: statusColor,
-                ),
+                Icon(_statusIcon(budget), size: 16, color: statusColor),
                 const SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    _statusText(budget),
-                    style: TextStyle(
-                      color: statusColor,
-                      fontSize: 12,
-                      fontWeight:
-                          FontWeight.w700,
-                    ),
+                Text(
+                  _statusText(budget),
+                  style: TextStyle(
+                    color: statusColor,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
+                const Spacer(),
                 Text(
-                  percentageText,
-                  style: const TextStyle(
-                    fontWeight:
-                        FontWeight.w800,
-                    fontSize: 12,
+                  '${(percentage * 100).round()}%',
+                  style: TextStyle(
+                    color: scheme.onSurface,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
               ],
@@ -817,6 +777,38 @@ class _BudgetPageState extends State<BudgetPage> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _metric(
+    String label,
+    String value, {
+    Color? valueColor,
+    bool alignEnd = false,
+  }) {
+    final scheme = Theme.of(context).colorScheme;
+    return Column(
+      crossAxisAlignment: alignEnd ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            color: scheme.onSurfaceVariant,
+            fontSize: 10,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: TextStyle(
+            color: valueColor ?? scheme.onSurface,
+            fontSize: 16,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.2,
+          ),
+        ),
+      ],
     );
   }
 
@@ -824,392 +816,283 @@ class _BudgetPageState extends State<BudgetPage> {
     required double totalBudget,
     required double totalSpent,
   }) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    final remaining =
-        totalBudget - totalSpent;
-
-    final percentage = totalBudget <= 0
-        ? 0.0
-        : totalSpent / totalBudget;
-
-    final progress =
-        percentage.clamp(0.0, 1.0);
-
-    final isOver =
-        totalSpent > totalBudget;
-
-    final hasBudget =
-        totalBudget > 0;
-
+    final scheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final remaining = totalBudget - totalSpent;
+    final hasBudget = totalBudget > 0;
+    final percentage = hasBudget ? totalSpent / totalBudget : 0.0;
+    final progress = percentage.clamp(0.0, 1.0);
+    final isOver = totalSpent > totalBudget;
     final statusColor = !hasBudget
-        ? const Color(0xFF555A62)
+        ? scheme.onSurfaceVariant
         : isOver
-            ? const Color(0xFFB85C5C)
+            ? const Color(0xFFE06A78)
             : percentage >= 0.8
-                ? const Color(0xFFB07A3A)
-                : const Color(0xFF4F8A68);
+                ? const Color(0xFFD39A4A)
+                : const Color(0xFF35B47A);
 
-    String statusTitle;
+    final status = !hasBudget
+        ? 'Belum ada anggaran'
+        : isOver
+            ? 'Melewati batas'
+            : percentage >= 0.8
+                ? 'Perlu diperhatikan'
+                : 'Masih aman';
 
-    if (!hasBudget) {
-      statusTitle = 'Belum ada anggaran';
-    } else if (isOver) {
-      statusTitle =
-          'Anggaran sudah terlampaui';
-    } else if (percentage >= 0.8) {
-      statusTitle =
-          'Anggaran mulai menipis';
-    } else {
-      statusTitle = 'Anggaran masih aman';
-    }
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment:
-              CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Expanded(
-                  child: Text(
-                    'Ringkasan Bulan Ini',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight:
-                          FontWeight.w800,
-                    ),
-                  ),
-                ),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 6,
-                  ),
-                  decoration:
-                      BoxDecoration(
-                    color: statusColor.withValues(
-                      alpha: 0.12,
-                    ),
-                    borderRadius:
-                        BorderRadius.circular(
-                      20,
-                    ),
-                  ),
-                  child: Text(
-                    statusTitle,
-                    style: TextStyle(
-                      color: statusColor,
-                      fontSize: 11,
-                      fontWeight:
-                          FontWeight.w800,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 18),
-            Row(
-              children: [
-                Expanded(
-                  child: _summaryItem(
-                    label: 'Anggaran',
-                    value:
-                        _formatRupiah(
-                      totalBudget,
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: _summaryItem(
-                    label: 'Terpakai',
-                    value:
-                        _formatRupiah(
-                      totalSpent,
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: _summaryItem(
-                    label: 'Sisa',
-                    value:
-                        _formatRupiah(
-                      remaining,
-                    ),
-                    valueColor:
-                        !hasBudget
-                            ? null
-                            : isOver
-                                ? Colors
-                                    .redAccent
-                                : null,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 18),
-            ClipRRect(
-              borderRadius:
-                  BorderRadius.circular(10),
-              child:
-                  LinearProgressIndicator(
-                value:
-                    hasBudget
-                        ? progress
-                        : 0,
-                minHeight: 10,
-                backgroundColor: colorScheme.surfaceContainerHighest,
-                valueColor:
-                    AlwaysStoppedAnimation<
-                        Color>(
-                  statusColor,
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              !hasBudget
-                  ? 'Belum ada anggaran bulan ini.'
-                  : isOver
-                      ? 'Pengeluaran sudah melebihi total anggaran.'
-                      : percentage >= 0.8
-                          ? 'Penggunaan anggaran sudah mendekati batas.'
-                          : '${(percentage * 100).round()}% dari total anggaran telah digunakan.',
-              style: TextStyle(
-                color: statusColor,
-                fontSize: 12,
-                height: 1.35,
-              ),
-            ),
-          ],
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: isDark
+              ? [scheme.surfaceContainerHighest, scheme.surface]
+              : [scheme.primaryContainer, scheme.surface],
+        ),
+        borderRadius: BorderRadius.circular(23),
+        border: Border.all(
+          color: scheme.outlineVariant.withValues(alpha: 0.65),
         ),
       ),
-    );
-  }
-
-  Widget _summaryItem({
-    required String label,
-    required String value,
-    Color? valueColor,
-  }) {
-    return Column(
-      crossAxisAlignment:
-          CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            color: Color(0xFF9A9DA3),
-            fontSize: 11,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Ringkasan Bulan Ini',
+                      style: TextStyle(
+                        color: scheme.onSurface,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.2,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Pantau penggunaan seluruh anggaranmu.',
+                      style: TextStyle(
+                        color: scheme.onSurfaceVariant,
+                        fontSize: 10,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+                decoration: BoxDecoration(
+                  color: statusColor.withValues(alpha: 0.13),
+                  borderRadius: BorderRadius.circular(99),
+                ),
+                child: Text(
+                  status,
+                  style: TextStyle(
+                    color: statusColor,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ],
           ),
-        ),
-        const SizedBox(height: 5),
-        Text(
-          value,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w800,
-            color: valueColor,
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              Expanded(child: _metric('Anggaran', _formatRupiah(totalBudget))),
+              Expanded(child: _metric('Terpakai', _formatRupiah(totalSpent))),
+              Expanded(
+                child: _metric(
+                  'Sisa',
+                  _formatRupiah(remaining),
+                  valueColor: isOver ? statusColor : null,
+                  alignEnd: true,
+                ),
+              ),
+            ],
           ),
-        ),
-      ],
+          const SizedBox(height: 17),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(99),
+            child: LinearProgressIndicator(
+              value: hasBudget ? progress : 0,
+              minHeight: 10,
+              backgroundColor: scheme.surfaceContainerHighest,
+              valueColor: AlwaysStoppedAnimation<Color>(statusColor),
+            ),
+          ),
+          const SizedBox(height: 9),
+          Text(
+            !hasBudget
+                ? 'Belum ada anggaran pada bulan ini.'
+                : isOver
+                    ? 'Pengeluaran sudah melebihi total anggaran.'
+                    : '${(percentage * 100).round()}% dari total anggaran telah digunakan.',
+            style: TextStyle(
+              color: statusColor,
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildMonthSelector() {
+    final scheme = Theme.of(context).colorScheme;
     final now = DateTime.now();
+    final isCurrentMonth = _selectedMonth.year == now.year && _selectedMonth.month == now.month;
 
-    final isCurrentMonth =
-        _selectedMonth.year == now.year &&
-        _selectedMonth.month == now.month;
-
-    return Card(
-      child: Padding(
-        padding:
-            const EdgeInsets.symmetric(
-          horizontal: 10,
-          vertical: 8,
-        ),
-        child: Row(
-          children: [
-            IconButton(
-              tooltip:
-                  'Bulan sebelumnya',
-              onPressed: () {
-                _changeMonth(-1);
-              },
-              icon: const Icon(
-                Icons.chevron_left,
-              ),
-            ),
-            Expanded(
-              child: InkWell(
-                borderRadius:
-                    BorderRadius.circular(14),
-                onTap: _pickMonth,
-                child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(
-                    vertical: 10,
-                  ),
-                  child: Column(
-                    children: [
-                      const Text(
-                        'Periode',
-                        style: TextStyle(
-                          color:
-                              Color(0xFF9A9DA3),
-                          fontSize: 11,
-                        ),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 7),
+      decoration: BoxDecoration(
+        color: scheme.surface,
+        borderRadius: BorderRadius.circular(19),
+        border: Border.all(color: scheme.outlineVariant.withValues(alpha: 0.7)),
+      ),
+      child: Row(
+        children: [
+          IconButton(
+            tooltip: 'Bulan sebelumnya',
+            onPressed: () => _changeMonth(-1),
+            icon: const Icon(Icons.chevron_left_rounded),
+          ),
+          Expanded(
+            child: InkWell(
+              borderRadius: BorderRadius.circular(14),
+              onTap: _pickMonth,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Column(
+                  children: [
+                    Text(
+                      'PERIODE',
+                      style: TextStyle(
+                        color: scheme.onSurfaceVariant,
+                        fontSize: 8,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 1.1,
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${_monthName(_selectedMonth.month)} '
-                        '${_selectedMonth.year}',
-                        textAlign:
-                            TextAlign.center,
-                        style:
-                            const TextStyle(
-                          fontSize: 17,
-                          fontWeight:
-                              FontWeight.w800,
-                        ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${_monthName(_selectedMonth.month)} ${_selectedMonth.year}',
+                      style: TextStyle(
+                        color: scheme.onSurface,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
                       ),
-                      if (isCurrentMonth)
-                        const Padding(
-                          padding:
-                              EdgeInsets.only(
-                            top: 3,
-                          ),
-                          child: Text(
-                            'Bulan ini',
-                            style:
-                                TextStyle(
-                              color: Color(
-                                0xFF9A9DA3,
-                              ),
-                              fontSize: 10,
-                            ),
+                    ),
+                    if (isCurrentMonth)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 3),
+                        child: Text(
+                          'Bulan ini',
+                          style: TextStyle(
+                            color: scheme.primary,
+                            fontSize: 9,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
-                    ],
-                  ),
+                      ),
+                  ],
                 ),
               ),
             ),
-            IconButton(
-              tooltip:
-                  'Bulan berikutnya',
-              onPressed: () {
-                _changeMonth(1);
-              },
-              icon: const Icon(
-                Icons.chevron_right,
-              ),
-            ),
-          ],
-        ),
+          ),
+          IconButton(
+            tooltip: 'Bulan berikutnya',
+            onPressed: () => _changeMonth(1),
+            icon: const Icon(Icons.chevron_right_rounded),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildEmptyState(
-    String account,
-  ) {
-    return Card(
-      child: Padding(
-        padding:
-            const EdgeInsets.all(24),
-        child: Column(
-          children: [
-            const Icon(
-              Icons
-                  .account_balance_wallet_outlined,
-              size: 46,
+  Widget _buildEmptyState(String account) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(22, 30, 22, 26),
+      decoration: BoxDecoration(
+        color: scheme.surface,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: scheme.outlineVariant.withValues(alpha: 0.7)),
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: 62,
+            height: 62,
+            decoration: BoxDecoration(
+              color: scheme.primaryContainer,
+              shape: BoxShape.circle,
             ),
-            const SizedBox(height: 14),
-            const Text(
-              'Belum ada anggaran',
-              style: TextStyle(
-                fontSize: 17,
-                fontWeight:
-                    FontWeight.w800,
-              ),
+            child: Icon(
+              Icons.account_balance_wallet_outlined,
+              color: scheme.onPrimaryContainer,
+              size: 28,
             ),
-            const SizedBox(height: 6),
-            Text(
-              'Buat batas pengeluaran untuk kategori pada '
-              '${_monthName(_selectedMonth.month)} '
-              '${_selectedMonth.year}.',
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: Color(0xFF9A9DA3),
-                fontSize: 13,
-                height: 1.4,
-              ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Belum ada anggaran',
+            style: TextStyle(
+              color: scheme.onSurface,
+              fontSize: 17,
+              fontWeight: FontWeight.w800,
             ),
-            const SizedBox(height: 18),
-            OutlinedButton.icon(
-              onPressed: () {
-                _showAddBudgetDialog(
-                  account,
-                );
-              },
-              icon:
-                  const Icon(Icons.add),
-              label: const Text(
-                'Tambah Anggaran',
-              ),
+          ),
+          const SizedBox(height: 7),
+          Text(
+            'Buat batas pengeluaran untuk kategori pada ${_monthName(_selectedMonth.month)} ${_selectedMonth.year}.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: scheme.onSurfaceVariant,
+              fontSize: 11,
+              height: 1.45,
             ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 18),
+          FilledButton.icon(
+            onPressed: () => _showAddBudgetDialog(account),
+            icon: const Icon(Icons.add_rounded, size: 18),
+            label: const Text('Tambah Anggaran'),
+          ),
+        ],
       ),
     );
   }
 
   void _showMessage(String message) {
-    if (!mounted) {
-      return;
-    }
-
+    if (!mounted) return;
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(message),
-        ),
-      );
+      ..showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final financeStore =
-        FinanceScope.of(context);
-
-    final account =
-        financeStore.activeAccount;
+    final scheme = Theme.of(context).colorScheme;
+    final financeStore = FinanceScope.of(context);
+    final account = financeStore.activeAccount;
 
     if (account == null) {
       return SafeArea(
         child: Scaffold(
-          appBar: AppBar(
-            title:
-                const Text('Anggaran'),
-          ),
-          body: const Center(
+          appBar: AppBar(title: const Text('Anggaran')),
+          body: Center(
             child: Padding(
-              padding:
-                  EdgeInsets.all(24),
+              padding: const EdgeInsets.all(24),
               child: Text(
                 'Belum ada akun keuangan aktif.',
-                textAlign:
-                    TextAlign.center,
+                textAlign: TextAlign.center,
+                style: TextStyle(color: scheme.onSurfaceVariant),
               ),
             ),
           ),
@@ -1217,91 +1100,55 @@ class _BudgetPageState extends State<BudgetPage> {
       );
     }
 
-    _ensureFuture(
-      account: account,
-      financeStore: financeStore,
-    );
+    _ensureFuture(account: account, financeStore: financeStore);
 
     return SafeArea(
       child: Scaffold(
+        backgroundColor: scheme.surface,
         appBar: AppBar(
           title: const Text(
             'Anggaran',
+            style: TextStyle(fontWeight: FontWeight.w800),
           ),
           actions: [
             IconButton(
               tooltip: 'Muat ulang',
               onPressed: _refresh,
-              icon: const Icon(
-                Icons.refresh,
-              ),
+              icon: const Icon(Icons.refresh_rounded),
             ),
+            const SizedBox(width: 6),
           ],
         ),
-        floatingActionButton:
-            FloatingActionButton.extended(
-          onPressed: () {
-            _showAddBudgetDialog(
-              account,
-            );
-          },
-          icon:
-              const Icon(Icons.add),
-          label:
-              const Text('Anggaran'),
+        floatingActionButton: FloatingActionButton.extended(
+          onPressed: () => _showAddBudgetDialog(account),
+          icon: const Icon(Icons.add_rounded),
+          label: const Text('Anggaran'),
         ),
-        body:
-            FutureBuilder<_BudgetPageData>(
+        body: FutureBuilder<_BudgetPageData>(
           future: _dataFuture,
-          builder: (
-            context,
-            snapshot,
-          ) {
-            if (snapshot.connectionState ==
-                ConnectionState.waiting) {
-              return const Center(
-                child:
-                    CircularProgressIndicator(),
-              );
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
             }
 
-            if (snapshot.hasError ||
-                !snapshot.hasData) {
+            if (snapshot.hasError || !snapshot.hasData) {
               return Center(
                 child: Padding(
-                  padding:
-                      const EdgeInsets.all(
-                    24,
-                  ),
+                  padding: const EdgeInsets.all(24),
                   child: Column(
-                    mainAxisSize:
-                        MainAxisSize.min,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(
-                        Icons.error_outline,
-                        size: 42,
-                      ),
-                      const SizedBox(
-                        height: 12,
-                      ),
+                      Icon(Icons.error_outline_rounded, size: 42, color: scheme.error),
+                      const SizedBox(height: 12),
                       Text(
-                        'Gagal memuat data anggaran.'
-                        '${snapshot.error == null ? '' : '\n${snapshot.error}'}',
-                        textAlign:
-                            TextAlign.center,
+                        'Gagal memuat data anggaran.${snapshot.error == null ? '' : '\n${snapshot.error}'}',
+                        textAlign: TextAlign.center,
                       ),
-                      const SizedBox(
-                        height: 16,
-                      ),
+                      const SizedBox(height: 16),
                       OutlinedButton.icon(
                         onPressed: _refresh,
-                        icon: const Icon(
-                          Icons.refresh,
-                        ),
-                        label:
-                            const Text(
-                          'Coba Lagi',
-                        ),
+                        icon: const Icon(Icons.refresh_rounded),
+                        label: const Text('Coba Lagi'),
                       ),
                     ],
                   ),
@@ -1309,128 +1156,95 @@ class _BudgetPageState extends State<BudgetPage> {
               );
             }
 
-            final data =
-                snapshot.data!;
-
-            final budgets =
-                data.budgets;
+            final data = snapshot.data!;
+            final budgets = data.budgets;
 
             return RefreshIndicator(
               onRefresh: () async {
                 _refresh();
-
-                await Future<void>.delayed(
-                  const Duration(
-                    milliseconds: 300,
-                  ),
-                );
+                await Future<void>.delayed(const Duration(milliseconds: 300));
               },
               child: ListView(
-                physics:
-                    const AlwaysScrollableScrollPhysics(),
-                padding:
-                    const EdgeInsets.fromLTRB(
-                  20,
-                  12,
-                  20,
-                  120,
-                ),
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(18, 10, 18, 120),
                 children: [
                   _buildMonthSelector(),
-                  const SizedBox(
-                    height: 14,
-                  ),
-                  _buildSummary(
-                    totalBudget:
-                        data.totalBudget,
-                    totalSpent:
-                        data.totalSpent,
-                  ),
-                  const SizedBox(
-                    height: 24,
-                  ),
+                  const SizedBox(height: 12),
+                  _buildSummary(totalBudget: data.totalBudget, totalSpent: data.totalSpent),
+                  const SizedBox(height: 24),
                   Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      const Expanded(
-                        child: Text(
-                          'Anggaran per Kategori',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight:
-                                FontWeight.w800,
-                          ),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Anggaran per Kategori',
+                              style: TextStyle(
+                                color: scheme.onSurface,
+                                fontSize: 18,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: -0.3,
+                              ),
+                            ),
+                            const SizedBox(height: 3),
+                            Text(
+                              'Atur batas dan pantau pengeluaran.',
+                              style: TextStyle(
+                                color: scheme.onSurfaceVariant,
+                                fontSize: 10,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      Text(
-                        '${budgets.length} kategori',
-                        style:
-                            const TextStyle(
-                          color:
-                              Color(0xFF9A9DA3),
-                          fontSize: 12,
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: scheme.surfaceContainerHighest,
+                          borderRadius: BorderRadius.circular(99),
+                        ),
+                        child: Text(
+                          '${budgets.length} kategori',
+                          style: TextStyle(
+                            color: scheme.onSurfaceVariant,
+                            fontSize: 9,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(
-                    height: 12,
-                  ),
+                  const SizedBox(height: 12),
                   if (budgets.isEmpty)
-                    _buildEmptyState(
-                      account,
-                    )
+                    _buildEmptyState(account)
                   else
                     ...budgets.map(
-                      (budget) =>
-                          _buildBudgetCard(
+                      (budget) => _buildBudgetCard(
                         budget: budget,
                         account: account,
                       ),
                     ),
-                  const SizedBox(
-                    height: 18,
-                  ),
+                  const SizedBox(height: 8),
                   Container(
-                    padding:
-                        const EdgeInsets.all(
-                      16,
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: scheme.surfaceContainerLow,
+                      borderRadius: BorderRadius.circular(17),
                     ),
-                    decoration:
-                        BoxDecoration(
-                      color: colorScheme.surfaceContainerLow,
-                      borderRadius:
-                          BorderRadius.circular(
-                        18,
-                      ),
-                    ),
-                    child: const Row(
-                      crossAxisAlignment:
-                          CrossAxisAlignment
-                              .start,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(
-                          Icons.info_outline,
-                          size: 20,
-                          color: Color(
-                            0xFF9A9DA3,
-                          ),
-                        ),
-                        SizedBox(
-                          width: 12,
-                        ),
+                        Icon(Icons.info_outline_rounded, size: 18, color: scheme.onSurfaceVariant),
+                        const SizedBox(width: 10),
                         Expanded(
                           child: Text(
-                            'Pengeluaran pada ringkasan dihitung dari '
-                            'seluruh transaksi berjenis Pengeluaran '
-                            'pada akun dan bulan yang sedang dipilih. '
-                            'Nilai Terpakai pada setiap kartu hanya '
-                            'menghitung kategori tersebut.',
+                            'Pengeluaran ringkasan dihitung dari seluruh transaksi Pengeluaran pada akun dan bulan yang dipilih. Nilai Terpakai pada kartu mengikuti kategorinya.',
                             style: TextStyle(
-                              color: Color(
-                                0xFF9A9DA3,
-                              ),
-                              fontSize: 12,
-                              height: 1.4,
+                              color: scheme.onSurfaceVariant,
+                              fontSize: 10,
+                              height: 1.45,
                             ),
                           ),
                         ),
@@ -1445,7 +1259,6 @@ class _BudgetPageState extends State<BudgetPage> {
       ),
     );
   }
-}
 
 class _BudgetPageData {
   const _BudgetPageData({
