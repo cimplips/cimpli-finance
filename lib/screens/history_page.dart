@@ -4,50 +4,6 @@ import '../core/finance_scope.dart';
 import '../models/transaction.dart';
 import 'add_transaction_page.dart';
 
-class _HistoryTheme {
-  const _HistoryTheme(this.context);
-
-  final BuildContext context;
-
-  ThemeData get theme => Theme.of(context);
-
-  bool get isDark => theme.brightness == Brightness.dark;
-
-  Color get background =>
-      isDark ? const Color(0xFF0D1117) : const Color(0xFFF6F8FB);
-
-  Color get card =>
-      isDark ? const Color(0xFF161B22) : Colors.white;
-
-  Color get elevated =>
-      isDark ? const Color(0xFF1C232D) : const Color(0xFFF9FAFC);
-
-  Color get input =>
-      isDark ? const Color(0xFF202833) : const Color(0xFFF1F4F8);
-
-  Color get primaryText =>
-      isDark ? const Color(0xFFEAF2FF) : const Color(0xFF172033);
-
-  Color get secondaryText =>
-      isDark ? const Color(0xFF9DA9B8) : const Color(0xFF5D6878);
-
-  Color get tertiaryText =>
-      isDark ? const Color(0xFF718096) : const Color(0xFF8792A2);
-
-  Color get divider =>
-      isDark ? const Color(0xFF2B3440) : const Color(0xFFE3E8EF);
-
-  Color get accent =>
-      isDark ? const Color(0xFF7C9CFF) : const Color(0xFF536DCE);
-
-  Color get positive => const Color(0xFF22A06B);
-
-  Color get negative => const Color(0xFFE35D6A);
-
-  Color get shadow =>
-      isDark ? Colors.transparent : const Color(0x12000000);
-}
-
 class HistoryPage extends StatefulWidget {
   const HistoryPage({
     super.key,
@@ -141,23 +97,13 @@ class _HistoryPageState extends State<HistoryPage> {
   }
 
   Future<void> _deleteTransaction(Tx transaction) async {
-    final t = _HistoryTheme(context);
-
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) {
-        final dialogTheme = _HistoryTheme(dialogContext);
-
         return AlertDialog(
           title: const Text('Hapus transaksi?'),
           content: Text(
             'Transaksi "${transaction.title}" akan dihapus secara permanen.',
-          ),
-          actionsPadding: const EdgeInsets.fromLTRB(
-            20,
-            0,
-            20,
-            18,
           ),
           actions: [
             TextButton(
@@ -167,9 +113,6 @@ class _HistoryPageState extends State<HistoryPage> {
               child: const Text('Batal'),
             ),
             FilledButton(
-              style: FilledButton.styleFrom(
-                backgroundColor: dialogTheme.negative,
-              ),
               onPressed: () {
                 Navigator.of(dialogContext).pop(true);
               },
@@ -185,7 +128,6 @@ class _HistoryPageState extends State<HistoryPage> {
     }
 
     final store = FinanceScope.of(context);
-
     final success = await store.deleteTransaction(
       transaction.id!,
     );
@@ -200,36 +142,16 @@ class _HistoryPageState extends State<HistoryPage> {
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
         ..showSnackBar(
-          SnackBar(
-            content: const Text(
-              'Transaksi berhasil dihapus.',
-            ),
-            backgroundColor: t.card,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(15),
-              side: BorderSide(
-                color: t.divider,
-              ),
-            ),
+          const SnackBar(
+            content: Text('Transaksi berhasil dihapus.'),
           ),
         );
     } else {
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
         ..showSnackBar(
-          SnackBar(
-            content: const Text(
-              'Transaksi gagal dihapus.',
-            ),
-            backgroundColor: t.card,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(15),
-              side: BorderSide(
-                color: t.divider,
-              ),
-            ),
+          const SnackBar(
+            content: Text('Transaksi gagal dihapus.'),
           ),
         );
     }
@@ -244,7 +166,6 @@ class _HistoryPageState extends State<HistoryPage> {
     final initialEnd = _endDate ?? now;
 
     final firstDate = DateTime(2000);
-
     final lastDate = DateTime(
       now.year + 10,
       now.month,
@@ -407,23 +328,24 @@ class _HistoryPageState extends State<HistoryPage> {
   }
 
   void _showFilterSheet() {
-    final t = _HistoryTheme(context);
+    final colorScheme = Theme.of(context).colorScheme;
 
     showModalBottomSheet<void>(
       context: context,
-      backgroundColor: t.card,
+      backgroundColor: colorScheme.surface,
       showDragHandle: true,
       isScrollControlled: true,
       builder: (sheetContext) {
         return StatefulBuilder(
           builder: (context, setSheetState) {
-            final sheetTheme = _HistoryTheme(context);
+            final sheetColorScheme =
+                Theme.of(context).colorScheme;
 
             return SafeArea(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(
                   20,
-                  2,
+                  8,
                   20,
                   24,
                 ),
@@ -433,60 +355,20 @@ class _HistoryPageState extends State<HistoryPage> {
                     crossAxisAlignment:
                         CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: [
-                          Container(
-                            width: 42,
-                            height: 42,
-                            decoration: BoxDecoration(
-                              color: sheetTheme.accent.withValues(
-                                alpha: sheetTheme.isDark
-                                    ? 0.14
-                                    : 0.08,
-                              ),
-                              borderRadius:
-                                  BorderRadius.circular(13),
-                            ),
-                            child: Icon(
-                              Icons.tune_rounded,
-                              color: sheetTheme.accent,
-                              size: 21,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment:
-                                  CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Filter transaksi',
-                                  style: TextStyle(
-                                    color:
-                                        sheetTheme.primaryText,
-                                    fontSize: 20,
-                                    fontWeight:
-                                        FontWeight.w800,
-                                    letterSpacing: -0.4,
-                                  ),
-                                ),
-                                const SizedBox(height: 3),
-                                Text(
-                                  'Persempit daftar transaksi yang ingin dilihat.',
-                                  style: TextStyle(
-                                    color:
-                                        sheetTheme.secondaryText,
-                                    fontSize: 11,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
+                      const Text(
+                        'Filter transaksi',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
-                      const SizedBox(height: 22),
-                      _FilterLabel(
-                        label: 'Periode',
+                      const SizedBox(height: 20),
+                      Text(
+                        'Periode',
+                        style: TextStyle(
+                          color: sheetColorScheme.onSurfaceVariant,
+                          fontSize: 13,
+                        ),
                       ),
                       const SizedBox(height: 8),
                       DropdownButtonFormField<String>(
@@ -494,9 +376,6 @@ class _HistoryPageState extends State<HistoryPage> {
                         isExpanded: true,
                         decoration: const InputDecoration(
                           labelText: 'Periode tanggal',
-                          prefixIcon: Icon(
-                            Icons.calendar_month_outlined,
-                          ),
                         ),
                         items: const [
                           DropdownMenuItem<String>(
@@ -509,9 +388,7 @@ class _HistoryPageState extends State<HistoryPage> {
                           ),
                           DropdownMenuItem<String>(
                             value: '7 hari terakhir',
-                            child: Text(
-                              '7 hari terakhir',
-                            ),
+                            child: Text('7 hari terakhir'),
                           ),
                           DropdownMenuItem<String>(
                             value: 'Bulan ini',
@@ -523,9 +400,7 @@ class _HistoryPageState extends State<HistoryPage> {
                           ),
                           DropdownMenuItem<String>(
                             value: 'Rentang tanggal',
-                            child: Text(
-                              'Rentang tanggal',
-                            ),
+                            child: Text('Rentang tanggal'),
                           ),
                         ],
                         onChanged: (value) async {
@@ -533,8 +408,7 @@ class _HistoryPageState extends State<HistoryPage> {
                             return;
                           }
 
-                          if (value ==
-                              'Rentang tanggal') {
+                          if (value == 'Rentang tanggal') {
                             await _selectCustomDateRange(
                               sheetContext,
                             );
@@ -542,7 +416,6 @@ class _HistoryPageState extends State<HistoryPage> {
                             if (mounted) {
                               setSheetState(() {});
                             }
-
                             return;
                           }
 
@@ -555,57 +428,33 @@ class _HistoryPageState extends State<HistoryPage> {
                           _startDate != null &&
                           _endDate != null) ...[
                         const SizedBox(height: 8),
-                        Container(
-                          width: double.infinity,
-                          padding:
-                              const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: sheetTheme.elevated,
-                            borderRadius:
-                                BorderRadius.circular(13),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.date_range_outlined,
-                                size: 17,
-                                color:
-                                    sheetTheme.secondaryText,
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  _periodLabel(),
-                                  style: TextStyle(
-                                    color:
-                                        sheetTheme.primaryText,
-                                    fontSize: 12,
-                                    fontWeight:
-                                        FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                            ],
+                        Text(
+                          _periodLabel(),
+                          style: TextStyle(
+                            color:
+                                sheetColorScheme.onSurfaceVariant,
+                            fontSize: 13,
                           ),
                         ),
                       ],
-                      const SizedBox(height: 18),
-                      _FilterLabel(
-                        label: 'Jenis transaksi',
+                      const SizedBox(height: 16),
+                      Text(
+                        'Jenis transaksi',
+                        style: TextStyle(
+                          color: sheetColorScheme.onSurfaceVariant,
+                          fontSize: 13,
+                        ),
                       ),
                       const SizedBox(height: 8),
                       DropdownButtonFormField<TransactionType?>(
                         initialValue: _selectedType,
                         decoration: const InputDecoration(
                           labelText: 'Jenis',
-                          prefixIcon: Icon(
-                            Icons.swap_vert_rounded,
-                          ),
                         ),
                         items: const [
                           DropdownMenuItem<TransactionType?>(
                             value: null,
-                            child: Text('Semua jenis'),
+                            child: Text('Semua'),
                           ),
                           DropdownMenuItem<TransactionType?>(
                             value: TransactionType.income,
@@ -622,9 +471,13 @@ class _HistoryPageState extends State<HistoryPage> {
                           });
                         },
                       ),
-                      const SizedBox(height: 18),
-                      _FilterLabel(
-                        label: 'Kategori',
+                      const SizedBox(height: 16),
+                      Text(
+                        'Kategori',
+                        style: TextStyle(
+                          color: sheetColorScheme.onSurfaceVariant,
+                          fontSize: 13,
+                        ),
                       ),
                       const SizedBox(height: 8),
                       FutureBuilder<List<String>>(
@@ -647,9 +500,6 @@ class _HistoryPageState extends State<HistoryPage> {
                             decoration:
                                 const InputDecoration(
                               labelText: 'Kategori',
-                              prefixIcon: Icon(
-                                Icons.category_outlined,
-                              ),
                             ),
                             items: categories
                                 .map(
@@ -679,41 +529,25 @@ class _HistoryPageState extends State<HistoryPage> {
                       Row(
                         children: [
                           Expanded(
-                            child: OutlinedButton.icon(
+                            child: OutlinedButton(
                               onPressed: () {
                                 _resetFilters();
-
-                                Navigator.of(
-                                  sheetContext,
-                                ).pop();
+                                Navigator.of(sheetContext).pop();
                               },
-                              icon: const Icon(
-                                Icons.restart_alt_rounded,
-                                size: 18,
-                              ),
-                              label:
-                                  const Text('Reset'),
+                              child: const Text('Reset'),
                             ),
                           ),
-                          const SizedBox(width: 10),
+                          const SizedBox(width: 12),
                           Expanded(
-                            child: FilledButton.icon(
+                            child: FilledButton(
                               onPressed: () {
-                                Navigator.of(
-                                  sheetContext,
-                                ).pop();
+                                Navigator.of(sheetContext).pop();
 
                                 if (mounted) {
                                   setState(() {});
                                 }
                               },
-                              icon: const Icon(
-                                Icons.check_rounded,
-                                size: 18,
-                              ),
-                              label: const Text(
-                                'Terapkan',
-                              ),
+                              child: const Text('Terapkan'),
                             ),
                           ),
                         ],
@@ -783,29 +617,11 @@ class _HistoryPageState extends State<HistoryPage> {
     return 'Semua jenis';
   }
 
-  int _countActiveFilters() {
-    var count = 0;
-
-    if (_selectedPeriod != 'Semua') {
-      count++;
-    }
-
-    if (_selectedType != null) {
-      count++;
-    }
-
-    if (_selectedCategory != null) {
-      count++;
-    }
-
-    return count;
-  }
-
   @override
   Widget build(BuildContext context) {
     final store = FinanceScope.of(context);
     final account = store.activeAccount;
-    final t = _HistoryTheme(context);
+    final colorScheme = Theme.of(context).colorScheme;
 
     return RefreshIndicator(
       onRefresh: () async {
@@ -814,73 +630,157 @@ class _HistoryPageState extends State<HistoryPage> {
         }
       },
       child: ListView(
-        physics:
-            const AlwaysScrollableScrollPhysics(),
+        physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(
-          18,
-          14,
-          18,
-          34,
+          20,
+          12,
+          20,
+          32,
         ),
         children: [
-          _HistoryHeader(
-            account: account,
-            hasFilter: _hasActiveFilter,
-            filterCount: _countActiveFilters(),
-            onFilter: _showFilterSheet,
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Riwayat Transaksi',
+                      style: TextStyle(
+                        color: colorScheme.onSurface,
+                        fontSize: 25,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.6,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      account ?? 'Belum ada akun',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: colorScheme.onSurfaceVariant,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 10),
+              Material(
+                color: _hasActiveFilter
+                    ? colorScheme.primary.withValues(alpha: 0.12)
+                    : colorScheme.surfaceContainerLow,
+                borderRadius: BorderRadius.circular(14),
+                child: InkWell(
+                  onTap: _showFilterSheet,
+                  borderRadius: BorderRadius.circular(14),
+                  child: Container(
+                    width: 46,
+                    height: 46,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: colorScheme.outlineVariant.withValues(alpha: 0.55),
+                      ),
+                    ),
+                    child: Icon(
+                      _hasActiveFilter
+                          ? Icons.filter_alt_rounded
+                          : Icons.filter_alt_outlined,
+                      color: _hasActiveFilter
+                          ? colorScheme.primary
+                          : colorScheme.onSurfaceVariant,
+                      size: 20,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 19),
-          _SearchField(
-            value: _searchQuery,
+          const SizedBox(height: 18),
+          TextField(
             onChanged: (value) {
               setState(() {
                 _searchQuery = value;
               });
             },
-            onClear: () {
-              setState(() {
-                _searchQuery = '';
-              });
-            },
+            textInputAction: TextInputAction.search,
+            decoration: InputDecoration(
+              hintText: 'Cari transaksi atau kategori',
+              prefixIcon: const Icon(Icons.search_rounded),
+              suffixIcon: _searchQuery.isNotEmpty
+                  ? IconButton(
+                      tooltip: 'Hapus pencarian',
+                      onPressed: () {
+                        setState(() {
+                          _searchQuery = '';
+                        });
+                      },
+                      icon: const Icon(Icons.clear),
+                    )
+                  : null,
+            ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           if (_hasActiveFilter)
-            _ActiveFilterBar(
-              period: _selectedPeriod,
-              periodLabel: _periodLabel(),
-              type: _selectedType,
-              category: _selectedCategory,
-              typeLabel: _typeLabel,
-              onClearPeriod: () {
-                setState(() {
-                  _selectedPeriod = 'Semua';
-                  _startDate = null;
-                  _endDate = null;
-                });
-              },
-              onClearType: () {
-                setState(() {
-                  _selectedType = null;
-                });
-              },
-              onClearCategory: () {
-                setState(() {
-                  _selectedCategory = null;
-                });
-              },
-              onReset: _resetFilters,
+            Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                if (_selectedPeriod != 'Semua')
+                  Chip(
+                    avatar: const Icon(
+                      Icons.date_range_outlined,
+                      size: 18,
+                    ),
+                    label: Text(
+                      _periodLabel(),
+                    ),
+                    onDeleted: () {
+                      setState(() {
+                        _selectedPeriod = 'Semua';
+                        _startDate = null;
+                        _endDate = null;
+                      });
+                    },
+                  ),
+                if (_selectedType != null)
+                  Chip(
+                    label: Text(
+                      _typeLabel(_selectedType),
+                    ),
+                    onDeleted: () {
+                      setState(() {
+                        _selectedType = null;
+                      });
+                    },
+                  ),
+                if (_selectedCategory != null)
+                  Chip(
+                    label: Text(_selectedCategory!),
+                    onDeleted: () {
+                      setState(() {
+                        _selectedCategory = null;
+                      });
+                    },
+                  ),
+                ],
+              ),
             ),
           if (_hasActiveFilter)
-            const SizedBox(height: 17),
+            const SizedBox(height: 12),
           FutureBuilder<List<Tx>>(
             future: _loadTransactions(),
             builder: (context, snapshot) {
               if (snapshot.connectionState ==
                   ConnectionState.waiting) {
                 return const Padding(
-                  padding: EdgeInsets.only(
-                    top: 75,
-                  ),
+                  padding: EdgeInsets.only(top: 60),
                   child: Center(
                     child: CircularProgressIndicator(),
                   ),
@@ -889,7 +789,7 @@ class _HistoryPageState extends State<HistoryPage> {
 
               if (snapshot.hasError) {
                 return _HistoryMessage(
-                  icon: Icons.error_outline_rounded,
+                  icon: Icons.error_outline,
                   title: 'Gagal memuat transaksi',
                   message: snapshot.error.toString(),
                 );
@@ -904,7 +804,7 @@ class _HistoryPageState extends State<HistoryPage> {
 
                 return _HistoryMessage(
                   icon: hasSearch || _hasActiveFilter
-                      ? Icons.search_off_rounded
+                      ? Icons.search_off_outlined
                       : Icons.receipt_long_outlined,
                   title: hasSearch || _hasActiveFilter
                       ? 'Transaksi tidak ditemukan'
@@ -916,70 +816,26 @@ class _HistoryPageState extends State<HistoryPage> {
               }
 
               return Column(
-                crossAxisAlignment:
-                    CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text(
-                        'Aktivitas',
-                        style: TextStyle(
-                          color: t.primaryText,
-                          fontSize: 17,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: -0.2,
-                        ),
+                children: transactions.map(
+                  (transaction) {
+                    return Padding(
+                      padding: const EdgeInsets.only(
+                        bottom: 10,
                       ),
-                      const SizedBox(width: 8),
-                      Container(
-                        padding:
-                            const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: t.input,
-                          borderRadius:
-                              BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          '${transactions.length}',
-                          style: TextStyle(
-                            color: t.secondaryText,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
+                      child: _TransactionItem(
+                        transaction: transaction,
+                        formatRupiah: _formatRupiah,
+                        formatDate: _formatDate,
+                        onEdit: () {
+                          _editTransaction(transaction);
+                        },
+                        onDelete: () {
+                          _deleteTransaction(transaction);
+                        },
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  ...transactions.map(
-                    (transaction) {
-                      return Padding(
-                        padding:
-                            const EdgeInsets.only(
-                          bottom: 9,
-                        ),
-                        child: _TransactionItem(
-                          transaction: transaction,
-                          formatRupiah: _formatRupiah,
-                          formatDate: _formatDate,
-                          onEdit: () {
-                            _editTransaction(
-                              transaction,
-                            );
-                          },
-                          onDelete: () {
-                            _deleteTransaction(
-                              transaction,
-                            );
-                          },
-                        ),
-                      );
-                    },
-                  ),
-                ],
+                    );
+                  },
+                ).toList(),
               );
             },
           ),
@@ -989,426 +845,7 @@ class _HistoryPageState extends State<HistoryPage> {
   }
 }
 
-class _HistoryHeader extends StatelessWidget {
-  const _HistoryHeader({
-    required this.account,
-    required this.hasFilter,
-    required this.filterCount,
-    required this.onFilter,
-  });
-
-  final String? account;
-  final bool hasFilter;
-  final int filterCount;
-  final VoidCallback onFilter;
-
-  @override
-  Widget build(BuildContext context) {
-    final t = _HistoryTheme(context);
-
-    return Row(
-      crossAxisAlignment:
-          CrossAxisAlignment.center,
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment:
-                CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Riwayat Transaksi',
-                style: TextStyle(
-                  color: t.primaryText,
-                  fontSize: 25,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.7,
-                ),
-              ),
-              const SizedBox(height: 5),
-              Row(
-                children: [
-                  Icon(
-                    Icons.account_balance_wallet_outlined,
-                    size: 13,
-                    color: t.tertiaryText,
-                  ),
-                  const SizedBox(width: 5),
-                  Flexible(
-                    child: Text(
-                      account ?? 'Belum ada akun',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: t.secondaryText,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(width: 12),
-        Material(
-          color: t.card,
-          borderRadius: BorderRadius.circular(15),
-          child: InkWell(
-            onTap: onFilter,
-            borderRadius: BorderRadius.circular(15),
-            child: Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                borderRadius:
-                    BorderRadius.circular(15),
-                border: Border.all(
-                  color: hasFilter
-                      ? t.accent.withValues(
-                          alpha: 0.65,
-                        )
-                      : t.divider,
-                ),
-              ),
-              child: Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  Center(
-                    child: Icon(
-                      hasFilter
-                          ? Icons.filter_alt_rounded
-                          : Icons.tune_rounded,
-                      size: 20,
-                      color: hasFilter
-                          ? t.accent
-                          : t.secondaryText,
-                    ),
-                  ),
-                  if (hasFilter)
-                    Positioned(
-                      right: -2,
-                      top: -3,
-                      child: Container(
-                        constraints:
-                            const BoxConstraints(
-                          minWidth: 18,
-                          minHeight: 18,
-                        ),
-                        padding:
-                            const EdgeInsets.symmetric(
-                          horizontal: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: t.accent,
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: t.card,
-                            width: 2,
-                          ),
-                        ),
-                        child: Center(
-                          child: Text(
-                            '$filterCount',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 8,
-                              fontWeight:
-                                  FontWeight.w800,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _SearchField extends StatelessWidget {
-  const _SearchField({
-    required this.value,
-    required this.onChanged,
-    required this.onClear,
-  });
-
-  final String value;
-  final ValueChanged<String> onChanged;
-  final VoidCallback onClear;
-
-  @override
-  Widget build(BuildContext context) {
-    final t = _HistoryTheme(context);
-
-    return Container(
-      decoration: BoxDecoration(
-        color: t.input,
-        borderRadius: BorderRadius.circular(17),
-        border: Border.all(
-          color: t.divider.withValues(
-            alpha: t.isDark ? 0.7 : 0.8,
-          ),
-        ),
-      ),
-      child: TextField(
-        onChanged: onChanged,
-        textInputAction: TextInputAction.search,
-        style: TextStyle(
-          color: t.primaryText,
-          fontSize: 13,
-          fontWeight: FontWeight.w500,
-        ),
-        decoration: InputDecoration(
-          hintText: 'Cari transaksi atau kategori',
-          hintStyle: TextStyle(
-            color: t.tertiaryText,
-            fontSize: 12,
-          ),
-          prefixIcon: Icon(
-            Icons.search_rounded,
-            color: t.secondaryText,
-            size: 21,
-          ),
-          suffixIcon: value.isNotEmpty
-              ? IconButton(
-                  tooltip: 'Hapus pencarian',
-                  onPressed: onClear,
-                  icon: Icon(
-                    Icons.close_rounded,
-                    color: t.secondaryText,
-                    size: 19,
-                  ),
-                )
-              : null,
-          border: InputBorder.none,
-          enabledBorder: InputBorder.none,
-          focusedBorder: InputBorder.none,
-          filled: false,
-          contentPadding:
-              const EdgeInsets.symmetric(
-            horizontal: 5,
-            vertical: 16,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ActiveFilterBar
-    extends StatelessWidget {
-  const _ActiveFilterBar({
-    required this.period,
-    required this.periodLabel,
-    required this.type,
-    required this.category,
-    required this.typeLabel,
-    required this.onClearPeriod,
-    required this.onClearType,
-    required this.onClearCategory,
-    required this.onReset,
-  });
-
-  final String period;
-  final String periodLabel;
-  final TransactionType? type;
-  final String? category;
-  final String Function(TransactionType?) typeLabel;
-  final VoidCallback onClearPeriod;
-  final VoidCallback onClearType;
-  final VoidCallback onClearCategory;
-  final VoidCallback onReset;
-
-  @override
-  Widget build(BuildContext context) {
-    final t = _HistoryTheme(context);
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(11),
-      decoration: BoxDecoration(
-        color: t.card,
-        borderRadius: BorderRadius.circular(17),
-        border: Border.all(
-          color: t.divider,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment:
-            CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                Icons.filter_alt_outlined,
-                size: 15,
-                color: t.accent,
-              ),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Text(
-                  'Filter aktif',
-                  style: TextStyle(
-                    color: t.primaryText,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-              InkWell(
-                onTap: onReset,
-                borderRadius:
-                    BorderRadius.circular(8),
-                child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(
-                    horizontal: 5,
-                    vertical: 3,
-                  ),
-                  child: Text(
-                    'Reset semua',
-                    style: TextStyle(
-                      color: t.accent,
-                      fontSize: 9,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 9),
-          Wrap(
-            spacing: 7,
-            runSpacing: 7,
-            children: [
-              if (period != 'Semua')
-                _FilterChip(
-                  icon: Icons.date_range_outlined,
-                  label: periodLabel,
-                  onDeleted: onClearPeriod,
-                ),
-              if (type != null)
-                _FilterChip(
-                  icon: type ==
-                          TransactionType.income
-                      ? Icons.south_west_rounded
-                      : Icons.north_east_rounded,
-                  label: typeLabel(type),
-                  onDeleted: onClearType,
-                ),
-              if (category != null)
-                _FilterChip(
-                  icon: Icons.category_outlined,
-                  label: category!,
-                  onDeleted: onClearCategory,
-                ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _FilterChip extends StatelessWidget {
-  const _FilterChip({
-    required this.icon,
-    required this.label,
-    required this.onDeleted,
-  });
-
-  final IconData icon;
-  final String label;
-  final VoidCallback onDeleted;
-
-  @override
-  Widget build(BuildContext context) {
-    final t = _HistoryTheme(context);
-
-    return Container(
-      constraints: const BoxConstraints(
-        maxWidth: 250,
-      ),
-      padding: const EdgeInsets.only(
-        left: 8,
-        right: 5,
-        top: 5,
-        bottom: 5,
-      ),
-      decoration: BoxDecoration(
-        color: t.input,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            icon,
-            size: 13,
-            color: t.accent,
-          ),
-          const SizedBox(width: 5),
-          Flexible(
-            child: Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: t.primaryText,
-                fontSize: 9,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-          const SizedBox(width: 3),
-          InkWell(
-            onTap: onDeleted,
-            borderRadius: BorderRadius.circular(8),
-            child: Padding(
-              padding: const EdgeInsets.all(2),
-              child: Icon(
-                Icons.close_rounded,
-                size: 13,
-                color: t.secondaryText,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _FilterLabel extends StatelessWidget {
-  const _FilterLabel({
-    required this.label,
-  });
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final t = _HistoryTheme(context);
-
-    return Text(
-      label,
-      style: TextStyle(
-        color: t.secondaryText,
-        fontSize: 11,
-        fontWeight: FontWeight.w700,
-      ),
-    );
-  }
-}
-
-class _TransactionItem
-    extends StatelessWidget {
+class _TransactionItem extends StatelessWidget {
   const _TransactionItem({
     required this.transaction,
     required this.formatRupiah,
@@ -1425,39 +862,41 @@ class _TransactionItem
 
   @override
   Widget build(BuildContext context) {
-    final t = _HistoryTheme(context);
-
+    final colorScheme = Theme.of(context).colorScheme;
     final isIncome =
         transaction.type == TransactionType.income;
 
-    final accent =
-        isIncome ? t.positive : t.negative;
+    final incomeColor = const Color(0xFF4F8A68);
+    final expenseColor = const Color(0xFFB85C5C);
 
-    final icon = isIncome
-        ? Icons.south_west_rounded
-        : Icons.north_east_rounded;
+    final accentColor =
+        isIncome ? incomeColor : expenseColor;
+
+    final iconBackground = isIncome
+        ? const Color(0xFFEAF5EE)
+        : const Color(0xFFF9ECEC);
+
+    final darkIconBackground = isIncome
+        ? const Color(0xFF294035)
+        : const Color(0xFF493033);
+
+    final cardColor = colorScheme.surfaceContainerLow;
 
     return Container(
       padding: const EdgeInsets.fromLTRB(
-        13,
-        13,
-        7,
-        13,
+        15,
+        14,
+        8,
+        14,
       ),
       decoration: BoxDecoration(
-        color: t.card,
-        borderRadius: BorderRadius.circular(19),
+        color: cardColor,
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: t.divider,
+          color: colorScheme.outlineVariant.withValues(
+            alpha: 0.45,
+          ),
         ),
-        boxShadow: [
-          if (!t.isDark)
-            BoxShadow(
-              color: t.shadow,
-              blurRadius: 13,
-              offset: const Offset(0, 5),
-            ),
-        ],
       ),
       child: Row(
         children: [
@@ -1465,19 +904,20 @@ class _TransactionItem
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: accent.withValues(
-                alpha: t.isDark ? 0.12 : 0.08,
-              ),
-              borderRadius:
-                  BorderRadius.circular(14),
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? darkIconBackground
+                  : iconBackground,
+              borderRadius: BorderRadius.circular(14),
             ),
             child: Icon(
-              icon,
-              size: 20,
-              color: accent,
+              isIncome
+                  ? Icons.arrow_downward_rounded
+                  : Icons.arrow_upward_rounded,
+              color: accentColor,
+              size: 21,
             ),
           ),
-          const SizedBox(width: 11),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment:
@@ -1487,74 +927,34 @@ class _TransactionItem
                   transaction.title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: t.primaryText,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w800,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
                 const SizedBox(height: 4),
-                Row(
-                  children: [
-                    Flexible(
-                      child: Text(
-                        transaction.category,
-                        maxLines: 1,
-                        overflow:
-                            TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: t.secondaryText,
-                          fontSize: 9,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                    Padding(
-                      padding:
-                          const EdgeInsets.symmetric(
-                        horizontal: 5,
-                      ),
-                      child: Text(
-                        '•',
-                        style: TextStyle(
-                          color: t.tertiaryText,
-                          fontSize: 9,
-                        ),
-                      ),
-                    ),
-                    Flexible(
-                      child: Text(
-                        formatDate(transaction.date),
-                        maxLines: 1,
-                        overflow:
-                            TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: t.tertiaryText,
-                          fontSize: 9,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 7),
                 Text(
-                  '${isIncome ? '+' : '-'}${formatRupiah(transaction.amount)}',
+                  '${transaction.category} • ${formatDate(transaction.date)}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    color: accent,
+                    color: colorScheme.onSurfaceVariant,
                     fontSize: 12,
+                  ),
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  '${isIncome ? '+' : '-'}${formatRupiah(transaction.amount)}',
+                  style: TextStyle(
+                    color: accentColor,
                     fontWeight: FontWeight.w800,
+                    fontSize: 14,
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 6),
           PopupMenuButton<String>(
             tooltip: 'Menu transaksi',
-            padding: EdgeInsets.zero,
-            iconSize: 20,
             onSelected: (value) {
               if (value == 'edit') {
                 onEdit();
@@ -1562,37 +962,21 @@ class _TransactionItem
                 onDelete();
               }
             },
-            itemBuilder: (context) => [
+            itemBuilder: (context) => const [
               PopupMenuItem<String>(
                 value: 'edit',
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.edit_outlined,
-                      size: 19,
-                    ),
-                    const SizedBox(width: 10),
-                    const Text('Edit'),
-                  ],
+                child: ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Icon(Icons.edit_outlined),
+                  title: Text('Edit'),
                 ),
               ),
               PopupMenuItem<String>(
                 value: 'delete',
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.delete_outline_rounded,
-                      size: 19,
-                      color: t.negative,
-                    ),
-                    const SizedBox(width: 10),
-                    Text(
-                      'Hapus',
-                      style: TextStyle(
-                        color: t.negative,
-                      ),
-                    ),
-                  ],
+                child: ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Icon(Icons.delete_outline),
+                  title: Text('Hapus'),
                 ),
               ),
             ],
@@ -1603,8 +987,7 @@ class _TransactionItem
   }
 }
 
-class _HistoryMessage
-    extends StatelessWidget {
+class _HistoryMessage extends StatelessWidget {
   const _HistoryMessage({
     required this.icon,
     required this.title,
@@ -1617,65 +1000,38 @@ class _HistoryMessage
 
   @override
   Widget build(BuildContext context) {
-    final t = _HistoryTheme(context);
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Padding(
       padding: const EdgeInsets.only(
-        top: 58,
+        top: 70,
       ),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.fromLTRB(
-          22,
-          27,
-          22,
-          27,
-        ),
-        decoration: BoxDecoration(
-          color: t.card,
-          borderRadius: BorderRadius.circular(22),
-          border: Border.all(
-            color: t.divider,
+      child: Column(
+        children: [
+          Icon(
+            icon,
+            size: 48,
+            color: colorScheme.onSurfaceVariant,
           ),
-        ),
-        child: Column(
-          children: [
-            Container(
-              width: 58,
-              height: 58,
-              decoration: BoxDecoration(
-                color: t.input,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                icon,
-                size: 27,
-                color: t.tertiaryText,
-              ),
+          const SizedBox(height: 14),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.w800,
             ),
-            const SizedBox(height: 15),
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: t.primaryText,
-                fontSize: 16,
-                fontWeight: FontWeight.w800,
-                letterSpacing: -0.2,
-              ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: colorScheme.onSurfaceVariant,
+              fontSize: 13,
             ),
-            const SizedBox(height: 7),
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: t.secondaryText,
-                fontSize: 11,
-                height: 1.45,
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
