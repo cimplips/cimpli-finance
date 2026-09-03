@@ -33,22 +33,6 @@ class _AddTransactionPageState
       ? const Color(0xFF50535A)
       : const Color(0xFFE1E6EF);
 
-  Color get _expenseColor => _isDark
-      ? const Color(0xFFE39A9A)
-      : const Color(0xFFB85C5C);
-
-  Color get _expenseSoft => _isDark
-      ? const Color(0xFF514145)
-      : const Color(0xFFFFECEC);
-
-  Color get _incomeColor => _isDark
-      ? const Color(0xFF86CBBB)
-      : const Color(0xFF4F8A68);
-
-  Color get _incomeSoft => _isDark
-      ? const Color(0xFF40514D)
-      : const Color(0xFFE7F6F2);
-
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _amountController = TextEditingController();
@@ -750,7 +734,7 @@ class _AddTransactionPageState
                     return Text(
                       _formatRupiah(amount),
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: _textSecondary,
                         fontSize: 13,
                       ),
@@ -846,6 +830,8 @@ class _TypeButton extends StatelessWidget {
     required this.label,
     required this.icon,
     required this.selected,
+    required this.selectedColor,
+    required this.selectedBackground,
     required this.onTap,
   });
 
