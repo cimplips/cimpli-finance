@@ -76,7 +76,7 @@ class _ReportPageState extends State<ReportPage> {
     });
   }
 
-  Future<void> _exportCsv(List<Tx> transactions) async {
+  Future<void> _exportCsv(List<Tx> transactions, String accountName) async {
     if (transactions.isEmpty) {
       if (!mounted) return;
       ScaffoldMessenger.of(context)
@@ -115,7 +115,6 @@ class _ReportPageState extends State<ReportPage> {
         await directory.create(recursive: true);
       }
 
-      final accountName = FinanceScope.of(context).activeAccount ?? 'akun';
       final safeAccount = accountName.replaceAll(RegExp(r'[^a-zA-Z0-9_-]+'), '_');
       final fileName =
           'cimpli_finance_${safeAccount}_${_selectedMonth.year}_${_selectedMonth.month.toString().padLeft(2, '0')}.csv';
@@ -316,7 +315,10 @@ class _ReportPageState extends State<ReportPage> {
                   ),
                   IconButton(
                     tooltip: 'Ekspor laporan',
-                    onPressed: () => _exportCsv(monthTransactions),
+                    onPressed: () => _exportCsv(
+                        monthTransactions,
+                        store.activeAccount ?? 'akun',
+                      ),
                     icon: Icon(
                       Icons.download_outlined,
                       color: theme.primaryText,
