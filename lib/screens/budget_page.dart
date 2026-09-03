@@ -1197,7 +1197,6 @@ class _BudgetPageState extends State<BudgetPage> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
     final financeStore =
         FinanceScope.of(context);
 
