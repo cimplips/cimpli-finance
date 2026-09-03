@@ -391,13 +391,9 @@ class BudgetStore extends ChangeNotifier {
   }
 
   Future<void> close() async {
-    final db = _db;
-
-    if (db == null) {
-      return;
-    }
-
-    await db.close();
+    // BudgetStore menggunakan database yang sama dengan FinanceStore.
+    // Jangan menutup koneksi SQLite di sini karena dapat membuat
+    // FinanceStore mengalami "database_closed".
     _db = null;
   }
 
