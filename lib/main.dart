@@ -71,9 +71,10 @@ class ThemeControllerScope extends InheritedNotifier<ThemeController> {
   const ThemeControllerScope({
     super.key,
     required ThemeController controller,
-    super.child,
+    required Widget child,
   }) : super(
           notifier: controller,
+          child: child,
         );
 
   static ThemeController of(BuildContext context) {
@@ -104,87 +105,41 @@ class FinanceApp extends StatelessWidget {
     // ============================================================
     // PALET UTAMA CIMPLI FINANCE
     // ============================================================
-    //
-    // Dark:
-    // - Background: navy charcoal, tidak hitam pekat.
-    // - Surface: blue-gray gelap.
-    // - Elevated: sedikit lebih terang untuk membedakan kartu.
-    // - Primary: biru lembut seperti navigasi bawah.
-    //
-    // Light:
-    // - Background: abu-biru sangat terang.
-    // - Surface: putih.
-    // - Elevated: biru-abu tipis.
-    // - Primary: biru yang sama nadanya dengan mode gelap.
-    //
-    const darkBackground = Color(0xFF14181D);
-    const darkSurface = Color(0xFF1D232B);
-    const darkSurfaceVariant = Color(0xFF252D37);
-    const darkElevated = Color(0xFF29333F);
 
-    const darkPrimary = Color(0xFF9DBFEF);
-    const darkPrimaryContainer = Color(0xFF344D6B);
-    const darkOnPrimary = Color(0xFF102033);
+    // Aksen biru yang digunakan bersama di seluruh aplikasi.
+    const primaryBlue = Color(0xFF5B7DB1);
+    const primaryBlueDark = Color(0xFF8EACD5);
 
-    const darkPrimaryText = Color(0xFFF3F6FA);
-    const darkSecondaryText = Color(0xFFB1BBC7);
-    const darkTertiaryText = Color(0xFF8995A3);
-    const darkOutline = Color(0xFF394552);
+    // -------------------------
+    // DARK MODE
+    // -------------------------
+    const darkBackground = Color(0xFF17191D);
+    const darkSurface = Color(0xFF202227);
+    const darkSurfaceVariant = Color(0xFF30333A);
+    const darkElevated = Color(0xFF292C32);
 
-    const incomeColorDark = Color(0xFF45D38A);
-    const expenseColorDark = Color(0xFFFF7777);
-    const warningColorDark = Color(0xFFE7B35B);
-    const infoColorDark = Color(0xFF8FB9FF);
-
-    const lightBackground = Color(0xFFF3F6FA);
-    const lightSurface = Color(0xFFFFFFFF);
-    const lightSurfaceVariant = Color(0xFFE7EDF4);
-    const lightElevated = Color(0xFFF8FAFC);
-
-    const lightPrimary = Color(0xFF527EAF);
-    const lightPrimaryContainer = Color(0xFFDCE9F8);
-    const lightOnPrimary = Color(0xFFFFFFFF);
-
-    const lightPrimaryText = Color(0xFF17202B);
-    const lightSecondaryText = Color(0xFF657386);
-    const lightTertiaryText = Color(0xFF8A97A6);
-    const lightOutline = Color(0xFFD3DCE6);
-
-    const incomeColorLight = Color(0xFF218957);
-    const expenseColorLight = Color(0xFFD94B4B);
-    const warningColorLight = Color(0xFFAA711D);
-    const infoColorLight = Color(0xFF4E79B0);
-
-    // ============================================================
-    // DARK THEME
-    // ============================================================
+    const darkPrimaryText = Color(0xFFF8FAFC);
+    const darkSecondaryText = Color(0xFFA4A7AE);
+    const darkTertiaryText = Color(0xFF858991);
+    const darkDivider = Color(0xFF3A3D42);
 
     final darkTheme = ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
+
       scaffoldBackgroundColor: darkBackground,
 
       colorScheme: const ColorScheme.dark(
-        primary: darkPrimary,
-        onPrimary: darkOnPrimary,
-        primaryContainer: darkPrimaryContainer,
-        onPrimaryContainer: Color(0xFFE5EFFC),
-        secondary: Color(0xFF9BAFC6),
-        onSecondary: Color(0xFF17202A),
-        secondaryContainer: Color(0xFF304052),
-        onSecondaryContainer: Color(0xFFDCE7F4),
-        tertiary: Color(0xFFA7BBD2),
+        primary: primaryBlueDark,
+        onPrimary: Color(0xFF142033),
+        secondary: primaryBlueDark,
+        onSecondary: Color(0xFF142033),
         surface: darkSurface,
-        surfaceContainerHighest: darkSurfaceVariant,
         onSurface: darkPrimaryText,
+        surfaceContainerHighest: darkSurfaceVariant,
         onSurfaceVariant: darkSecondaryText,
-        outline: darkOutline,
-        outlineVariant: Color(0xFF303A46),
-        error: expenseColorDark,
-        onError: Color(0xFF3A0A0A),
+        outline: darkDivider,
       ),
-
-      scaffoldBackgroundColor: darkBackground,
 
       appBarTheme: const AppBarTheme(
         backgroundColor: darkBackground,
@@ -192,360 +147,156 @@ class FinanceApp extends StatelessWidget {
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         centerTitle: false,
-        titleTextStyle: TextStyle(
-          color: darkPrimaryText,
-          fontSize: 22,
-          fontWeight: FontWeight.w700,
-        ),
-        iconTheme: IconThemeData(
-          color: darkPrimaryText,
-        ),
       ),
 
       cardTheme: CardThemeData(
         color: darkSurface,
+        surfaceTintColor: Colors.transparent,
         elevation: 0,
         margin: EdgeInsets.zero,
-        surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(22),
+        ),
+      ),
+
+      dividerTheme: const DividerThemeData(
+        color: darkDivider,
+        thickness: 1,
+        space: 1,
+      ),
+
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: darkElevated,
+
+        labelStyle: const TextStyle(
+          color: darkSecondaryText,
+        ),
+
+        hintStyle: const TextStyle(
+          color: darkTertiaryText,
+        ),
+
+        prefixIconColor: darkSecondaryText,
+
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide.none,
+        ),
+
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide.none,
+        ),
+
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(
+            color: primaryBlueDark,
+            width: 1.2,
+          ),
+        ),
+      ),
+
+      navigationBarTheme: const NavigationBarThemeData(
+        backgroundColor: Color(0xFF202328),
+        surfaceTintColor: Colors.transparent,
+        indicatorColor: Color(0xFF34465F),
+        elevation: 0,
+        labelTextStyle: WidgetStatePropertyAll(
+          TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
+
+      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+        backgroundColor: Color(0xFF202328),
+        selectedItemColor: primaryBlueDark,
+        unselectedItemColor: darkSecondaryText,
+        elevation: 0,
+        type: BottomNavigationBarType.fixed,
+        selectedLabelStyle: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+        ),
+        unselectedLabelStyle: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+
+      floatingActionButtonTheme: const FloatingActionButtonThemeData(
+        backgroundColor: primaryBlueDark,
+        foregroundColor: Color(0xFF142033),
+        elevation: 0,
+      ),
+
+      snackBarTheme: SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: darkElevated,
+        contentTextStyle: const TextStyle(
+          color: darkPrimaryText,
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
         ),
       ),
 
       dialogTheme: DialogThemeData(
         backgroundColor: darkSurface,
         surfaceTintColor: Colors.transparent,
-        elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(24),
-        ),
-        titleTextStyle: const TextStyle(
-          color: darkPrimaryText,
-          fontSize: 20,
-          fontWeight: FontWeight.w800,
-        ),
-        contentTextStyle: const TextStyle(
-          color: darkSecondaryText,
-          fontSize: 14,
-          height: 1.45,
-        ),
-      ),
-
-      inputDecorationTheme: InputDecorationTheme(
-        filled: true,
-        fillColor: darkSurfaceVariant,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 15,
-        ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide.none,
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(
-            color: Colors.transparent,
-          ),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(
-            color: darkPrimary,
-            width: 1.4,
-          ),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(
-            color: expenseColorDark,
-          ),
-        ),
-        focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(
-            color: expenseColorDark,
-            width: 1.4,
-          ),
-        ),
-        labelStyle: const TextStyle(
-          color: darkSecondaryText,
-        ),
-        floatingLabelStyle: const TextStyle(
-          color: darkPrimary,
-        ),
-        hintStyle: const TextStyle(
-          color: darkTertiaryText,
-        ),
-        prefixIconColor: darkSecondaryText,
-        suffixIconColor: darkSecondaryText,
-      ),
-
-      dividerTheme: const DividerThemeData(
-        color: darkOutline,
-        thickness: 1,
-        space: 1,
-      ),
-
-      iconTheme: const IconThemeData(
-        color: darkSecondaryText,
-      ),
-
-      listTileTheme: const ListTileThemeData(
-        iconColor: darkSecondaryText,
-        textColor: darkPrimaryText,
-        tileColor: Colors.transparent,
-      ),
-
-      switchTheme: SwitchThemeData(
-        thumbColor: WidgetStateProperty.resolveWith<Color>(
-          (states) {
-            if (states.contains(WidgetState.selected)) {
-              return darkOnPrimary;
-            }
-            return darkSecondaryText;
-          },
-        ),
-        trackColor: WidgetStateProperty.resolveWith<Color>(
-          (states) {
-            if (states.contains(WidgetState.selected)) {
-              return darkPrimary;
-            }
-            return darkSurfaceVariant;
-          },
-        ),
-        trackOutlineColor: WidgetStateProperty.resolveWith<Color>(
-          (states) {
-            if (states.contains(WidgetState.selected)) {
-              return darkPrimary;
-            }
-            return darkOutline;
-          },
-        ),
-      ),
-
-      checkboxTheme: CheckboxThemeData(
-        fillColor: WidgetStateProperty.resolveWith<Color>(
-          (states) {
-            if (states.contains(WidgetState.selected)) {
-              return darkPrimary;
-            }
-            return darkSurfaceVariant;
-          },
-        ),
-        checkColor: WidgetStateProperty.all(
-          darkOnPrimary,
-        ),
-        side: const BorderSide(
-          color: darkOutline,
-        ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(5),
-        ),
-      ),
-
-      radioTheme: RadioThemeData(
-        fillColor: WidgetStateProperty.resolveWith<Color>(
-          (states) {
-            if (states.contains(WidgetState.selected)) {
-              return darkPrimary;
-            }
-            return darkSecondaryText;
-          },
-        ),
-      ),
-
-      progressIndicatorTheme: const ProgressIndicatorThemeData(
-        color: darkPrimary,
-        linearTrackColor: darkSurfaceVariant,
-      ),
-
-      snackBarTheme: SnackBarThemeData(
-        backgroundColor: darkElevated,
-        contentTextStyle: const TextStyle(
-          color: darkPrimaryText,
-          fontSize: 13,
-        ),
-        actionTextColor: darkPrimary,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-      ),
-
-      floatingActionButtonTheme: const FloatingActionButtonThemeData(
-        backgroundColor: darkPrimary,
-        foregroundColor: darkOnPrimary,
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(
-            Radius.circular(18),
-          ),
-        ),
-      ),
-
-      filledButtonTheme: FilledButtonThemeData(
-        style: FilledButton.styleFrom(
-          backgroundColor: darkPrimary,
-          foregroundColor: darkOnPrimary,
-          elevation: 0,
-          minimumSize: const Size(0, 48),
-          padding: const EdgeInsets.symmetric(
-            horizontal: 20,
-            vertical: 13,
-          ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-        ),
-      ),
-
-      outlinedButtonTheme: OutlinedButtonThemeData(
-        style: OutlinedButton.styleFrom(
-          foregroundColor: darkPrimary,
-          side: const BorderSide(
-            color: darkPrimary,
-            width: 1,
-          ),
-          minimumSize: const Size(0, 48),
-          padding: const EdgeInsets.symmetric(
-            horizontal: 20,
-            vertical: 13,
-          ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-        ),
-      ),
-
-      textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(
-          foregroundColor: darkPrimary,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      ),
-
-      navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: darkSurface,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        height: 76,
-        indicatorColor: darkPrimaryContainer,
-        indicatorShape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(18),
-        ),
-        labelTextStyle: WidgetStateProperty.resolveWith<TextStyle>(
-          (states) {
-            final selected =
-                states.contains(WidgetState.selected);
-
-            return TextStyle(
-              color: selected
-                  ? darkPrimary
-                  : darkSecondaryText,
-              fontSize: 11,
-              fontWeight:
-                  selected ? FontWeight.w700 : FontWeight.w600,
-            );
-          },
-        ),
-        iconTheme: WidgetStateProperty.resolveWith<IconThemeData>(
-          (states) {
-            final selected =
-                states.contains(WidgetState.selected);
-
-            return IconThemeData(
-              color: selected
-                  ? darkPrimary
-                  : darkSecondaryText,
-              size: 23,
-            );
-          },
         ),
       ),
 
       popupMenuTheme: PopupMenuThemeData(
-        color: darkSurface,
+        color: darkElevated,
         surfaceTintColor: Colors.transparent,
-        elevation: 4,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(18),
-        ),
-        textStyle: const TextStyle(
-          color: darkPrimaryText,
-          fontSize: 14,
-          fontWeight: FontWeight.w600,
+          borderRadius: BorderRadius.circular(16),
         ),
       ),
 
-      bottomSheetTheme: const BottomSheetThemeData(
-        backgroundColor: darkSurface,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        modalBackgroundColor: darkSurface,
-      ),
-
-      tooltipTheme: TooltipThemeData(
-        decoration: BoxDecoration(
-          color: darkElevated,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        textStyle: const TextStyle(
-          color: darkPrimaryText,
-          fontSize: 12,
-        ),
-      ),
-
-      pageTransitionsTheme: const PageTransitionsTheme(
-        builders: <TargetPlatform, PageTransitionsBuilder>{
-          TargetPlatform.android:
-              FadeForwardsPageTransitionsBuilder(),
-          TargetPlatform.iOS:
-              CupertinoPageTransitionsBuilder(),
-          TargetPlatform.linux:
-              FadeForwardsPageTransitionsBuilder(),
-          TargetPlatform.macOS:
-              FadeForwardsPageTransitionsBuilder(),
-          TargetPlatform.windows:
-              FadeForwardsPageTransitionsBuilder(),
-          TargetPlatform.fuchsia:
-              FadeForwardsPageTransitionsBuilder(),
-        },
+      progressIndicatorTheme: const ProgressIndicatorThemeData(
+        color: primaryBlueDark,
       ),
     );
 
-    // ============================================================
-    // LIGHT THEME
-    // ============================================================
+    // -------------------------
+    // LIGHT MODE
+    // -------------------------
+    const lightBackground = Color(0xFFF5F6F8);
+    const lightSurface = Color(0xFFFFFFFF);
+    const lightSurfaceVariant = Color(0xFFE8EBF0);
+    const lightElevated = Color(0xFFF1F3F6);
+
+    const lightPrimaryText = Color(0xFF101828);
+    const lightSecondaryText = Color(0xFF667085);
+    const lightTertiaryText = Color(0xFF98A2B3);
+    const lightDivider = Color(0xFFE1E5EA);
 
     final lightTheme = ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
+
       scaffoldBackgroundColor: lightBackground,
 
       colorScheme: const ColorScheme.light(
-        primary: lightPrimary,
-        onPrimary: lightOnPrimary,
-        primaryContainer: lightPrimaryContainer,
-        onPrimaryContainer: Color(0xFF29496A),
-        secondary: Color(0xFF6E849D),
-        onSecondary: Color(0xFFFFFFFF),
-        secondaryContainer: Color(0xFFE2EAF2),
-        onSecondaryContainer: Color(0xFF304458),
-        tertiary: Color(0xFF7389A0),
+        primary: primaryBlue,
+        onPrimary: Colors.white,
+        secondary: primaryBlue,
+        onSecondary: Colors.white,
         surface: lightSurface,
-        surfaceContainerHighest: lightSurfaceVariant,
         onSurface: lightPrimaryText,
+        surfaceContainerHighest: lightSurfaceVariant,
         onSurfaceVariant: lightSecondaryText,
-        outline: lightOutline,
-        outlineVariant: Color(0xFFE0E6ED),
-        error: expenseColorLight,
-        onError: Color(0xFFFFFFFF),
+        outline: lightDivider,
       ),
-
-      scaffoldBackgroundColor: lightBackground,
 
       appBarTheme: const AppBarTheme(
         backgroundColor: lightBackground,
@@ -553,327 +304,133 @@ class FinanceApp extends StatelessWidget {
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         centerTitle: false,
-        titleTextStyle: TextStyle(
-          color: lightPrimaryText,
-          fontSize: 22,
-          fontWeight: FontWeight.w700,
-        ),
-        iconTheme: IconThemeData(
-          color: lightPrimaryText,
-        ),
       ),
 
       cardTheme: CardThemeData(
         color: lightSurface,
+        surfaceTintColor: Colors.transparent,
         elevation: 0,
         margin: EdgeInsets.zero,
-        surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(22),
+        ),
+      ),
+
+      dividerTheme: const DividerThemeData(
+        color: lightDivider,
+        thickness: 1,
+        space: 1,
+      ),
+
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: lightElevated,
+
+        labelStyle: const TextStyle(
+          color: lightSecondaryText,
+        ),
+
+        hintStyle: const TextStyle(
+          color: lightTertiaryText,
+        ),
+
+        prefixIconColor: lightSecondaryText,
+
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide.none,
+        ),
+
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide.none,
+        ),
+
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(
+            color: primaryBlue,
+            width: 1.2,
+          ),
+        ),
+      ),
+
+      navigationBarTheme: const NavigationBarThemeData(
+        backgroundColor: Color(0xFFFFFFFF),
+        surfaceTintColor: Colors.transparent,
+        indicatorColor: Color(0xFFE3ECFA),
+        selectedIconTheme: IconThemeData(
+          color: primaryBlue,
+        ),
+        unselectedIconTheme: IconThemeData(
+          color: lightSecondaryText,
+        ),
+        selectedLabelTextStyle: TextStyle(
+          color: primaryBlue,
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+        ),
+        unselectedLabelTextStyle: TextStyle(
+          color: lightSecondaryText,
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
+        elevation: 0,
+      ),
+
+      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+        backgroundColor: Colors.white,
+        selectedItemColor: primaryBlue,
+        unselectedItemColor: lightSecondaryText,
+        elevation: 0,
+        type: BottomNavigationBarType.fixed,
+        selectedLabelStyle: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+        ),
+        unselectedLabelStyle: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+
+      floatingActionButtonTheme: const FloatingActionButtonThemeData(
+        backgroundColor: primaryBlue,
+        foregroundColor: Colors.white,
+        elevation: 0,
+      ),
+
+      snackBarTheme: SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: const Color(0xFF20242A),
+        contentTextStyle: const TextStyle(
+          color: Colors.white,
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
         ),
       ),
 
       dialogTheme: DialogThemeData(
         backgroundColor: lightSurface,
         surfaceTintColor: Colors.transparent,
-        elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(24),
-        ),
-        titleTextStyle: const TextStyle(
-          color: lightPrimaryText,
-          fontSize: 20,
-          fontWeight: FontWeight.w800,
-        ),
-        contentTextStyle: const TextStyle(
-          color: lightSecondaryText,
-          fontSize: 14,
-          height: 1.45,
-        ),
-      ),
-
-      inputDecorationTheme: InputDecorationTheme(
-        filled: true,
-        fillColor: lightSurface,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 15,
-        ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide.none,
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(
-            color: lightOutline,
-          ),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(
-            color: lightPrimary,
-            width: 1.4,
-          ),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(
-            color: expenseColorLight,
-          ),
-        ),
-        focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(
-            color: expenseColorLight,
-            width: 1.4,
-          ),
-        ),
-        labelStyle: const TextStyle(
-          color: lightSecondaryText,
-        ),
-        floatingLabelStyle: const TextStyle(
-          color: lightPrimary,
-        ),
-        hintStyle: const TextStyle(
-          color: lightTertiaryText,
-        ),
-        prefixIconColor: lightSecondaryText,
-        suffixIconColor: lightSecondaryText,
-      ),
-
-      dividerTheme: const DividerThemeData(
-        color: lightOutline,
-        thickness: 1,
-        space: 1,
-      ),
-
-      iconTheme: const IconThemeData(
-        color: lightSecondaryText,
-      ),
-
-      listTileTheme: const ListTileThemeData(
-        iconColor: lightSecondaryText,
-        textColor: lightPrimaryText,
-        tileColor: Colors.transparent,
-      ),
-
-      switchTheme: SwitchThemeData(
-        thumbColor: WidgetStateProperty.resolveWith<Color>(
-          (states) {
-            if (states.contains(WidgetState.selected)) {
-              return lightOnPrimary;
-            }
-            return lightSecondaryText;
-          },
-        ),
-        trackColor: WidgetStateProperty.resolveWith<Color>(
-          (states) {
-            if (states.contains(WidgetState.selected)) {
-              return lightPrimary;
-            }
-            return lightSurfaceVariant;
-          },
-        ),
-        trackOutlineColor: WidgetStateProperty.resolveWith<Color>(
-          (states) {
-            if (states.contains(WidgetState.selected)) {
-              return lightPrimary;
-            }
-            return lightOutline;
-          },
-        ),
-      ),
-
-      checkboxTheme: CheckboxThemeData(
-        fillColor: WidgetStateProperty.resolveWith<Color>(
-          (states) {
-            if (states.contains(WidgetState.selected)) {
-              return lightPrimary;
-            }
-            return lightSurface;
-          },
-        ),
-        checkColor: WidgetStateProperty.all(
-          lightOnPrimary,
-        ),
-        side: const BorderSide(
-          color: lightOutline,
-        ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(5),
-        ),
-      ),
-
-      radioTheme: RadioThemeData(
-        fillColor: WidgetStateProperty.resolveWith<Color>(
-          (states) {
-            if (states.contains(WidgetState.selected)) {
-              return lightPrimary;
-            }
-            return lightSecondaryText;
-          },
-        ),
-      ),
-
-      progressIndicatorTheme: const ProgressIndicatorThemeData(
-        color: lightPrimary,
-        linearTrackColor: lightSurfaceVariant,
-      ),
-
-      snackBarTheme: SnackBarThemeData(
-        backgroundColor: const Color(0xFF2B3948),
-        contentTextStyle: const TextStyle(
-          color: Color(0xFFF5F8FC),
-          fontSize: 13,
-        ),
-        actionTextColor: Color(0xFFB9D4F7),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-      ),
-
-      floatingActionButtonTheme: const FloatingActionButtonThemeData(
-        backgroundColor: lightPrimary,
-        foregroundColor: lightOnPrimary,
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(
-            Radius.circular(18),
-          ),
-        ),
-      ),
-
-      filledButtonTheme: FilledButtonThemeData(
-        style: FilledButton.styleFrom(
-          backgroundColor: lightPrimary,
-          foregroundColor: lightOnPrimary,
-          elevation: 0,
-          minimumSize: const Size(0, 48),
-          padding: const EdgeInsets.symmetric(
-            horizontal: 20,
-            vertical: 13,
-          ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-        ),
-      ),
-
-      outlinedButtonTheme: OutlinedButtonThemeData(
-        style: OutlinedButton.styleFrom(
-          foregroundColor: lightPrimary,
-          side: const BorderSide(
-            color: lightPrimary,
-            width: 1,
-          ),
-          minimumSize: const Size(0, 48),
-          padding: const EdgeInsets.symmetric(
-            horizontal: 20,
-            vertical: 13,
-          ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-        ),
-      ),
-
-      textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(
-          foregroundColor: lightPrimary,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      ),
-
-      navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: lightSurface,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        height: 76,
-        indicatorColor: lightPrimaryContainer,
-        indicatorShape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(18),
-        ),
-        labelTextStyle: WidgetStateProperty.resolveWith<TextStyle>(
-          (states) {
-            final selected =
-                states.contains(WidgetState.selected);
-
-            return TextStyle(
-              color: selected
-                  ? lightPrimary
-                  : lightSecondaryText,
-              fontSize: 11,
-              fontWeight:
-                  selected ? FontWeight.w700 : FontWeight.w600,
-            );
-          },
-        ),
-        iconTheme: WidgetStateProperty.resolveWith<IconThemeData>(
-          (states) {
-            final selected =
-                states.contains(WidgetState.selected);
-
-            return IconThemeData(
-              color: selected
-                  ? lightPrimary
-                  : lightSecondaryText,
-              size: 23,
-            );
-          },
         ),
       ),
 
       popupMenuTheme: PopupMenuThemeData(
         color: lightSurface,
         surfaceTintColor: Colors.transparent,
-        elevation: 4,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(18),
-        ),
-        textStyle: const TextStyle(
-          color: lightPrimaryText,
-          fontSize: 14,
-          fontWeight: FontWeight.w600,
+          borderRadius: BorderRadius.circular(16),
         ),
       ),
 
-      bottomSheetTheme: const BottomSheetThemeData(
-        backgroundColor: lightSurface,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        modalBackgroundColor: lightSurface,
-      ),
-
-      tooltipTheme: TooltipThemeData(
-        decoration: BoxDecoration(
-          color: const Color(0xFF2B3948),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        textStyle: const TextStyle(
-          color: Color(0xFFF5F8FC),
-          fontSize: 12,
-        ),
-      ),
-
-      pageTransitionsTheme: const PageTransitionsTheme(
-        builders: <TargetPlatform, PageTransitionsBuilder>{
-          TargetPlatform.android:
-              FadeForwardsPageTransitionsBuilder(),
-          TargetPlatform.iOS:
-              CupertinoPageTransitionsBuilder(),
-          TargetPlatform.linux:
-              FadeForwardsPageTransitionsBuilder(),
-          TargetPlatform.macOS:
-              FadeForwardsPageTransitionsBuilder(),
-          TargetPlatform.windows:
-              FadeForwardsPageTransitionsBuilder(),
-          TargetPlatform.fuchsia:
-              FadeForwardsPageTransitionsBuilder(),
-        },
+      progressIndicatorTheme: const ProgressIndicatorThemeData(
+        color: primaryBlue,
       ),
     );
 
@@ -887,14 +444,16 @@ class FinanceApp extends StatelessWidget {
             return MaterialApp(
               debugShowCheckedModeBanner: false,
               title: 'Cimpli Finance',
+
               theme: lightTheme,
               darkTheme: darkTheme,
               themeMode: themeController.themeMode,
+
               home: const AppLockGate(),
+
               routes: {
-                '/recurring-transactions':
-                    (context) =>
-                        const RecurringTransactionsPage(),
+                '/recurring-transactions': (context) =>
+                    const RecurringTransactionsPage(),
               },
             );
           },
