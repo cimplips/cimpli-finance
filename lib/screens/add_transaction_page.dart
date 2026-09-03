@@ -20,6 +20,35 @@ class AddTransactionPage extends StatefulWidget {
 
 class _AddTransactionPageState
     extends State<AddTransactionPage> {
+  bool get _isDark =>
+      Theme.of(context).brightness == Brightness.dark;
+
+  Color get _textSecondary =>
+      Theme.of(context).colorScheme.onSurfaceVariant;
+
+  Color get _surfaceSoft =>
+      Theme.of(context).colorScheme.surfaceContainerLow;
+
+  Color get _borderColor => _isDark
+      ? const Color(0xFF50535A)
+      : const Color(0xFFE1E6EF);
+
+  Color get _expenseColor => _isDark
+      ? const Color(0xFFE39A9A)
+      : const Color(0xFFB85C5C);
+
+  Color get _expenseSoft => _isDark
+      ? const Color(0xFF514145)
+      : const Color(0xFFFFECEC);
+
+  Color get _incomeColor => _isDark
+      ? const Color(0xFF86CBBB)
+      : const Color(0xFF4F8A68);
+
+  Color get _incomeSoft => _isDark
+      ? const Color(0xFF40514D)
+      : const Color(0xFFE7F6F2);
+
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _amountController = TextEditingController();
@@ -73,28 +102,10 @@ class _AddTransactionPageState
 
   String _formatAmountForInput(double amount) {
     if (amount == amount.roundToDouble()) {
-      return _formatThousands(amount.toInt().toString());
+      return amount.toInt().toString();
     }
 
     return amount.toString();
-  }
-
-  String _formatThousands(String digits) {
-    if (digits.isEmpty) {
-      return '';
-    }
-
-    final buffer = StringBuffer();
-
-    for (var i = 0; i < digits.length; i++) {
-      if (i > 0 && (digits.length - i) % 3 == 0) {
-        buffer.write('.');
-      }
-
-      buffer.write(digits[i]);
-    }
-
-    return buffer.toString();
   }
 
   double? _parseAmount(String value) {
@@ -104,23 +115,37 @@ class _AddTransactionPageState
       return null;
     }
 
-    text = text.replaceAll('.', '');
-    text = text.replaceAll(RegExp(r'[^0-9,]'), '');
+    text = text.replaceAll(RegExp(r'[^0-9,.]'), '');
 
     if (text.isEmpty) {
       return null;
     }
 
-    if (text.contains(',')) {
-      final lastComma = text.lastIndexOf(',');
+    final lastComma = text.lastIndexOf(',');
+    final lastDot = text.lastIndexOf('.');
+
+    if (lastComma >= 0 && lastDot >= 0) {
+      if (lastComma > lastDot) {
+        text = text.replaceAll('.', '');
+        text = text.replaceAll(',', '.');
+      } else {
+        text = text.replaceAll(',', '');
+      }
+    } else if (lastComma >= 0) {
       final digitsAfterComma =
           text.length - lastComma - 1;
 
-      if (digitsAfterComma > 0 &&
-          digitsAfterComma <= 2) {
-        text = text.replaceFirst(',', '.');
-      } else {
+      if (digitsAfterComma == 3) {
         text = text.replaceAll(',', '');
+      } else {
+        text = text.replaceAll(',', '.');
+      }
+    } else if (lastDot >= 0) {
+      final digitsAfterDot =
+          text.length - lastDot - 1;
+
+      if (digitsAfterDot == 3) {
+        text = text.replaceAll('.', '');
       }
     }
 
@@ -131,7 +156,18 @@ class _AddTransactionPageState
     final rounded = value.round();
     final digits = rounded.abs().toString();
 
-    final result = _formatThousands(digits);
+    final buffer = StringBuffer();
+
+    for (var i = 0; i < digits.length; i++) {
+      if (i > 0 &&
+          (digits.length - i) % 3 == 0) {
+        buffer.write('.');
+      }
+
+      buffer.write(digits[i]);
+    }
+
+    final result = buffer.toString();
 
     if (rounded < 0) {
       return '-Rp $result';
@@ -380,8 +416,7 @@ class _AddTransactionPageState
       await showDialog<void>(
         context: context,
         builder: (dialogContext) {
-          final colorScheme =
-              Theme.of(dialogContext).colorScheme;
+          final colorScheme = Theme.of(dialogContext).colorScheme;
 
           return AlertDialog(
             icon: Icon(
@@ -468,8 +503,6 @@ class _AddTransactionPageState
   @override
   Widget build(BuildContext context) {
     final store = FinanceScope.of(context);
-    final colorScheme = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final accounts = store.accounts;
 
@@ -484,108 +517,52 @@ class _AddTransactionPageState
     }
 
     return Scaffold(
-      backgroundColor: colorScheme.surface,
       appBar: AppBar(
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        titleSpacing: 20,
         title: Text(
-          _isEditing ? 'Edit Transaksi' : 'Tambah Transaksi',
+          _isEditing
+              ? 'Edit Transaksi'
+              : 'Tambah Transaksi',
           style: const TextStyle(
             fontWeight: FontWeight.w800,
-            letterSpacing: -0.3,
           ),
         ),
       ),
       body: Form(
         key: _formKey,
         child: ListView(
-          keyboardDismissBehavior:
-              ScrollViewKeyboardDismissBehavior.onDrag,
-          padding: const EdgeInsets.fromLTRB(18, 10, 18, 34),
+          padding: const EdgeInsets.fromLTRB(
+            20,
+            8,
+            20,
+            32,
+          ),
           children: [
             Container(
-              padding: const EdgeInsets.fromLTRB(18, 17, 18, 18),
+              padding: const EdgeInsets.all(5),
               decoration: BoxDecoration(
-                color: colorScheme.primaryContainer.withValues(
-                  alpha: isDark ? 0.28 : 0.62,
-                ),
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(
-                  color: colorScheme.primary.withValues(
-                    alpha: isDark ? 0.20 : 0.10,
-                  ),
-                ),
+                color: _surfaceSoft,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: _borderColor),
               ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 46,
-                    height: 46,
-                    decoration: BoxDecoration(
-                      color: colorScheme.primary.withValues(
-                        alpha: isDark ? 0.20 : 0.10,
-                      ),
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                    child: Icon(
-                      _isEditing
-                          ? Icons.edit_rounded
-                          : Icons.receipt_long_rounded,
-                      color: colorScheme.primary,
-                      size: 22,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _isEditing
-                              ? 'Perbarui transaksi'
-                              : 'Catat transaksi baru',
-                          style: TextStyle(
-                            color: colorScheme.onPrimaryContainer,
-                            fontSize: 15,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: -0.2,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          _isEditing
-                              ? 'Pastikan detail transaksi sudah sesuai.'
-                              : 'Lengkapi detail berikut agar pencatatan tetap rapi.',
-                          style: TextStyle(
-                            color: colorScheme.onPrimaryContainer
-                                .withValues(alpha: 0.72),
-                            fontSize: 11,
-                            height: 1.35,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 18),
-            _TypeSelector(
-              value: _type,
-              onChanged: (type) {
-                setState(() {
-                  _type = type;
+              child: _TypeSelector(
+                value: _type,
+                onChanged: (type) {
+                  setState(() {
+                    _type = type;
 
-                  if (_selectedCategory != null) {
-                    final categories = _categoriesForType();
+                    if (_selectedCategory != null) {
+                      final categories =
+                          _categoriesForType();
 
-                    if (!categories.contains(_selectedCategory)) {
-                      _selectedCategory = null;
+                      if (!categories.contains(
+                        _selectedCategory,
+                      )) {
+                        _selectedCategory = null;
+                      }
                     }
-                  }
-                });
-              },
+                  });
+                },
+              ),
             ),
             const SizedBox(height: 22),
             TextFormField(
@@ -594,35 +571,46 @@ class _AddTransactionPageState
               decoration: const InputDecoration(
                 labelText: 'Keterangan',
                 hintText: 'Contoh: Belanja bulanan',
-                prefixIcon: Icon(Icons.description_outlined),
+                prefixIcon: Icon(
+                  Icons.description_outlined,
+                ),
               ),
               validator: (value) {
-                if (value == null || value.trim().isEmpty) {
+                if (value == null ||
+                    value.trim().isEmpty) {
                   return 'Keterangan wajib diisi.';
                 }
+
                 return null;
               },
             ),
             const SizedBox(height: 14),
             TextFormField(
               controller: _amountController,
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: false,
+              keyboardType:
+                  const TextInputType.numberWithOptions(
+                decimal: true,
               ),
               inputFormatters: <TextInputFormatter>[
-                _RupiahInputFormatter(),
+                FilteringTextInputFormatter.allow(
+                  RegExp(r'[0-9.,]'),
+                ),
               ],
-              textInputAction: TextInputAction.next,
               decoration: const InputDecoration(
                 labelText: 'Nominal',
                 hintText: 'Contoh: 1.500.000',
-                prefixIcon: Icon(Icons.payments_outlined),
+                prefixIcon: Icon(
+                  Icons.payments_outlined,
+                ),
               ),
               validator: (value) {
-                final amount = _parseAmount(value ?? '');
+                final amount =
+                    _parseAmount(value ?? '');
+
                 if (amount == null || amount <= 0) {
                   return 'Masukkan nominal yang valid.';
                 }
+
                 return null;
               },
             ),
@@ -632,11 +620,14 @@ class _AddTransactionPageState
               isExpanded: true,
               decoration: const InputDecoration(
                 labelText: 'Akun',
-                prefixIcon: Icon(Icons.account_balance_wallet_outlined),
+                prefixIcon: Icon(
+                  Icons.account_balance_wallet_outlined,
+                ),
               ),
               items: accounts
                   .map(
-                    (account) => DropdownMenuItem<String>(
+                    (account) =>
+                        DropdownMenuItem<String>(
                       value: account,
                       child: Text(
                         account,
@@ -657,6 +648,7 @@ class _AddTransactionPageState
                 if (value == null || value.isEmpty) {
                   return 'Pilih akun.';
                 }
+
                 return null;
               },
             ),
@@ -664,25 +656,34 @@ class _AddTransactionPageState
             FutureBuilder<List<String>>(
               future: _loadCategories(),
               builder: (context, snapshot) {
-                final categories = snapshot.data ?? <String>[];
-                final selected = categories.contains(_selectedCategory)
-                    ? _selectedCategory
-                    : null;
+                final categories =
+                    snapshot.data ?? <String>[];
+
+                final selected =
+                    categories.contains(
+                  _selectedCategory,
+                )
+                        ? _selectedCategory
+                        : null;
 
                 return DropdownButtonFormField<String>(
                   initialValue: selected,
                   isExpanded: true,
                   decoration: const InputDecoration(
                     labelText: 'Kategori',
-                    prefixIcon: Icon(Icons.category_outlined),
+                    prefixIcon: Icon(
+                      Icons.category_outlined,
+                    ),
                   ),
                   items: categories
                       .map(
-                        (category) => DropdownMenuItem<String>(
+                        (category) =>
+                            DropdownMenuItem<String>(
                           value: category,
                           child: Text(
                             category,
-                            overflow: TextOverflow.ellipsis,
+                            overflow:
+                                TextOverflow.ellipsis,
                           ),
                         ),
                       )
@@ -695,9 +696,11 @@ class _AddTransactionPageState
                           });
                         },
                   validator: (value) {
-                    if (value == null || value.isEmpty) {
+                    if (value == null ||
+                        value.isEmpty) {
                       return 'Pilih kategori.';
                     }
+
                     return null;
                   },
                 );
@@ -710,190 +713,78 @@ class _AddTransactionPageState
               child: InputDecorator(
                 decoration: const InputDecoration(
                   labelText: 'Tanggal',
-                  prefixIcon: Icon(Icons.calendar_today_outlined),
-                  suffixIcon: Icon(Icons.chevron_right_rounded),
+                  prefixIcon: Icon(
+                    Icons.calendar_today_outlined,
+                  ),
+                  suffixIcon: Icon(
+                    Icons.chevron_right,
+                  ),
                 ),
-                child: Text(_formatDate(_date)),
+                child: Text(
+                  _formatDate(_date),
+                ),
               ),
             ),
-            const SizedBox(height: 22),
-            ValueListenableBuilder<TextEditingValue>(
-              valueListenable: _amountController,
-              builder: (context, value, child) {
-                final amount = _parseAmount(value.text);
+            const SizedBox(height: 28),
+            if (_amountController.text.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(
+                  bottom: 14,
+                ),
+                child: ValueListenableBuilder<
+                    TextEditingValue>(
+                  valueListenable: _amountController,
+                  builder: (
+                    context,
+                    value,
+                    child,
+                  ) {
+                    final amount =
+                        _parseAmount(value.text);
 
-                if (amount == null || amount <= 0) {
-                  return const SizedBox.shrink();
-                }
+                    if (amount == null ||
+                        amount <= 0) {
+                      return const SizedBox.shrink();
+                    }
 
-                return Container(
-                  margin: const EdgeInsets.only(bottom: 14),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 13,
-                  ),
-                  decoration: BoxDecoration(
-                    color: colorScheme.surfaceContainerHighest,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.payments_rounded,
-                        size: 18,
-                        color: colorScheme.primary,
+                    return Text(
+                      _formatRupiah(amount),
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: _textSecondary,
+                        fontSize: 13,
                       ),
-                      const SizedBox(width: 9),
-                      Expanded(
-                        child: Text(
-                          'Nominal transaksi',
-                          style: TextStyle(
-                            color: colorScheme.onSurfaceVariant,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                      Text(
-                        _formatRupiah(amount),
-                        style: TextStyle(
-                          color: colorScheme.onSurface,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
+                    );
+                  },
+                ),
+              ),
             SizedBox(
               height: 56,
-              child: FilledButton.icon(
+              child: FilledButton(
                 onPressed: _saving ? null : _save,
-                icon: _saving
+                child: _saving
                     ? const SizedBox(
-                        width: 19,
-                        height: 19,
-                        child: CircularProgressIndicator(
+                        width: 22,
+                        height: 22,
+                        child:
+                            CircularProgressIndicator(
                           strokeWidth: 2,
                         ),
                       )
-                    : Icon(
+                    : Text(
                         _isEditing
-                            ? Icons.check_rounded
-                            : Icons.add_rounded,
+                            ? 'Simpan Perubahan'
+                            : 'Simpan Transaksi',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
-                label: Text(
-                  _isEditing
-                      ? 'Simpan Perubahan'
-                      : 'Simpan Transaksi',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
               ),
             ),
           ],
         ),
       ),
     );
-  }
-
-}
-
-class _RupiahInputFormatter
-    extends TextInputFormatter {
-  @override
-  TextEditingValue formatEditUpdate(
-    TextEditingValue oldValue,
-    TextEditingValue newValue,
-  ) {
-    final digitsBeforeCursor =
-        _countDigitsBeforeCursor(newValue);
-
-    final digits =
-        newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
-
-    if (digits.isEmpty) {
-      return const TextEditingValue(
-        text: '',
-        selection: TextSelection.collapsed(
-          offset: 0,
-        ),
-      );
-    }
-
-    final formatted = _formatDigits(digits);
-
-    final cursorPosition =
-        _cursorPositionForDigitCount(
-      formatted,
-      digitsBeforeCursor,
-    );
-
-    return TextEditingValue(
-      text: formatted,
-      selection: TextSelection.collapsed(
-        offset: cursorPosition,
-      ),
-    );
-  }
-
-  int _countDigitsBeforeCursor(
-    TextEditingValue value,
-  ) {
-    final cursor = value.selection.baseOffset;
-
-    if (cursor <= 0) {
-      return 0;
-    }
-
-    final end = cursor > value.text.length
-        ? value.text.length
-        : cursor;
-
-    return value.text
-        .substring(0, end)
-        .replaceAll(RegExp(r'[^0-9]'), '')
-        .length;
-  }
-
-  int _cursorPositionForDigitCount(
-    String text,
-    int digitCount,
-  ) {
-    if (digitCount <= 0) {
-      return 0;
-    }
-
-    var digitsSeen = 0;
-
-    for (var i = 0; i < text.length; i++) {
-      if (RegExp(r'[0-9]').hasMatch(text[i])) {
-        digitsSeen++;
-
-        if (digitsSeen >= digitCount) {
-          return i + 1;
-        }
-      }
-    }
-
-    return text.length;
-  }
-
-  String _formatDigits(String digits) {
-    final buffer = StringBuffer();
-
-    for (var i = 0; i < digits.length; i++) {
-      if (i > 0 && (digits.length - i) % 3 == 0) {
-        buffer.write('.');
-      }
-
-      buffer.write(digits[i]);
-    }
-
-    return buffer.toString();
   }
 }
 
@@ -916,6 +807,12 @@ class _TypeSelector extends StatelessWidget {
             icon: Icons.arrow_upward_rounded,
             selected:
                 value == TransactionType.expense,
+            selectedColor: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFFE39A9A)
+                : const Color(0xFFB85C5C),
+            selectedBackground: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFF514145)
+                : const Color(0xFFFFECEC),
             onTap: () {
               onChanged(TransactionType.expense);
             },
@@ -928,6 +825,12 @@ class _TypeSelector extends StatelessWidget {
             icon: Icons.arrow_downward_rounded,
             selected:
                 value == TransactionType.income,
+            selectedColor: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFF86CBBB)
+                : const Color(0xFF4F8A68),
+            selectedBackground: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFF40514D)
+                : const Color(0xFFE7F6F2),
             onTap: () {
               onChanged(TransactionType.income);
             },
@@ -949,19 +852,20 @@ class _TypeButton extends StatelessWidget {
   final String label;
   final IconData icon;
   final bool selected;
+  final Color selectedColor;
+  final Color selectedBackground;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme =
-        Theme.of(context).colorScheme;
+    final colorScheme = Theme.of(context).colorScheme;
 
     final backgroundColor = selected
-        ? colorScheme.secondaryContainer
+        ? selectedBackground
         : colorScheme.surfaceContainerHighest;
 
     final foregroundColor = selected
-        ? colorScheme.onSecondaryContainer
+        ? selectedColor
         : colorScheme.onSurfaceVariant;
 
     return Material(
