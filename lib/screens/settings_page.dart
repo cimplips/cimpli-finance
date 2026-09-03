@@ -1049,133 +1049,6 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
           const SizedBox(height: 28),
 
-          // Tampilan
-          sectionTitle(
-            'Tampilan',
-            'Pilih tampilan gelap atau terang untuk Cimpli Finance.',
-          ),
-          const SizedBox(height: 14),
-          Builder(
-            builder: (context) {
-              final themeController = ThemeControllerScope.of(context);
-
-              return Card(
-                child: SwitchListTile(
-                  value: themeController.isDarkMode,
-                  onChanged: (enabled) async {
-                    await themeController.setThemeMode(
-                      enabled ? ThemeMode.dark : ThemeMode.light,
-                    );
-                  },
-                  secondary: Icon(
-                    themeController.isDarkMode
-                        ? Icons.dark_mode_outlined
-                        : Icons.light_mode_outlined,
-                    color: colorScheme.primary,
-                  ),
-                  title: const Text(
-                    'Mode Gelap',
-                    style: TextStyle(fontWeight: FontWeight.w800),
-                  ),
-                  subtitle: Text(
-                    themeController.isDarkMode
-                        ? 'Tampilan gelap sedang digunakan.'
-                        : 'Tampilan terang sedang digunakan.',
-                  ),
-                ),
-              );
-            },
-          ),
-          const SizedBox(height: 28),
-          const Divider(),
-          const SizedBox(height: 30),
-
-          // Backup & Restore
-          sectionTitle(
-            'Backup & Restore',
-            'Simpan salinan data keuangan untuk ganti HP atau reinstall aplikasi.',
-          ),
-          const SizedBox(height: 14),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Column(
-                children: [
-                  ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: iconBox(Icons.backup_outlined),
-                    title: const Text(
-                      'Backup Data',
-                      style: TextStyle(fontWeight: FontWeight.w800),
-                    ),
-                    subtitle: const Text(
-                      'Simpan seluruh akun, transaksi, kategori, transaksi berulang, dan anggaran.',
-                    ),
-                    trailing: Icon(
-                      Icons.chevron_right,
-                      color: colorScheme.onSurfaceVariant,
-                    ),
-                    onTap: _backupData,
-                  ),
-                  const Divider(height: 1),
-                  ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: iconBox(Icons.restore_outlined),
-                    title: const Text(
-                      'Restore Data',
-                      style: TextStyle(fontWeight: FontWeight.w800),
-                    ),
-                    subtitle: const Text(
-                      'Pulihkan data dari file backup JSON yang sebelumnya disimpan.',
-                    ),
-                    trailing: Icon(
-                      Icons.chevron_right,
-                      color: colorScheme.onSurfaceVariant,
-                    ),
-                    onTap: () async {
-                      await _restoreData(store);
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 28),
-          const Divider(),
-          const SizedBox(height: 30),
-
-          // Keamanan
-          sectionTitle(
-            'Keamanan',
-            'Lindungi Cimpli Finance dengan kunci perangkat atau sidik jari.',
-          ),
-          const SizedBox(height: 14),
-          Card(
-            child: _loadingAppLock
-                ? const Padding(
-                    padding: EdgeInsets.all(18),
-                    child: Center(child: CircularProgressIndicator()),
-                  )
-                : SwitchListTile(
-                    value: _appLockEnabled,
-                    onChanged: _setAppLock,
-                    secondary: Icon(
-                      Icons.lock_outline_rounded,
-                      color: colorScheme.primary,
-                    ),
-                    title: const Text(
-                      'Kunci Aplikasi',
-                      style: TextStyle(fontWeight: FontWeight.w800),
-                    ),
-                    subtitle: const Text(
-                      'Gunakan PIN/pola/password perangkat atau sidik jari saat membuka aplikasi.',
-                    ),
-                  ),
-          ),
-          const SizedBox(height: 28),
-          const Divider(),
-          const SizedBox(height: 30),
-
           // Akun Keuangan
           sectionTitle(
             'Akun Keuangan',
@@ -1574,8 +1447,7 @@ class _SettingsPageState extends State<SettingsPage> {
           const Divider(),
           const SizedBox(height: 30),
 
-          // Transaksi Berulang dipindahkan menjadi menu Pengaturan,
-          // bukan lagi FloatingActionButton.
+          // Lainnya
           sectionTitle(
             'Lainnya',
             'Fitur tambahan untuk mengelola keuangan secara otomatis.',
@@ -1607,6 +1479,137 @@ class _SettingsPageState extends State<SettingsPage> {
               },
             ),
           ),
+          const SizedBox(height: 28),
+          const Divider(),
+          const SizedBox(height: 30),
+
+          // Tampilan
+          sectionTitle(
+            'Tampilan',
+            'Pilih tampilan gelap atau terang untuk Cimpli Finance.',
+          ),
+          const SizedBox(height: 14),
+          Builder(
+            builder: (context) {
+              final themeController = ThemeControllerScope.of(context);
+
+              return Card(
+                child: SwitchListTile(
+                  value: themeController.isDarkMode,
+                  onChanged: (enabled) async {
+                    await themeController.setThemeMode(
+                      enabled ? ThemeMode.dark : ThemeMode.light,
+                    );
+                  },
+                  secondary: Icon(
+                    themeController.isDarkMode
+                        ? Icons.dark_mode_outlined
+                        : Icons.light_mode_outlined,
+                    color: colorScheme.primary,
+                  ),
+                  title: const Text(
+                    'Mode Gelap',
+                    style: TextStyle(fontWeight: FontWeight.w800),
+                  ),
+                  subtitle: Text(
+                    themeController.isDarkMode
+                        ? 'Tampilan gelap sedang digunakan.'
+                        : 'Tampilan terang sedang digunakan.',
+                  ),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 28),
+          const Divider(),
+          const SizedBox(height: 30),
+
+          // Keamanan
+          sectionTitle(
+            'Keamanan',
+            'Lindungi Cimpli Finance dengan kunci perangkat atau sidik jari.',
+          ),
+          const SizedBox(height: 14),
+          Card(
+            child: _loadingAppLock
+                ? const Padding(
+                    padding: EdgeInsets.all(18),
+                    child: Center(child: CircularProgressIndicator()),
+                  )
+                : SwitchListTile(
+                    value: _appLockEnabled,
+                    onChanged: _setAppLock,
+                    secondary: Icon(
+                      Icons.lock_outline_rounded,
+                      color: colorScheme.primary,
+                    ),
+                    title: const Text(
+                      'Kunci Aplikasi',
+                      style: TextStyle(fontWeight: FontWeight.w800),
+                    ),
+                    subtitle: const Text(
+                      'Gunakan PIN/pola/password perangkat atau sidik jari saat membuka aplikasi.',
+                    ),
+                  ),
+          ),
+          const SizedBox(height: 28),
+          const Divider(),
+          const SizedBox(height: 30),
+
+          // Backup & Restore
+          sectionTitle(
+            'Backup & Restore',
+            'Simpan salinan data keuangan untuk ganti HP atau reinstall aplikasi.',
+          ),
+          const SizedBox(height: 14),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Column(
+                children: [
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: iconBox(Icons.backup_outlined),
+                    title: const Text(
+                      'Backup Data',
+                      style: TextStyle(fontWeight: FontWeight.w800),
+                    ),
+                    subtitle: const Text(
+                      'Simpan seluruh akun, transaksi, kategori, transaksi berulang, dan anggaran.',
+                    ),
+                    trailing: Icon(
+                      Icons.chevron_right,
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                    onTap: _backupData,
+                  ),
+                  const Divider(height: 1),
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: iconBox(Icons.restore_outlined),
+                    title: const Text(
+                      'Restore Data',
+                      style: TextStyle(fontWeight: FontWeight.w800),
+                    ),
+                    subtitle: const Text(
+                      'Pulihkan data dari file backup JSON yang sebelumnya disimpan.',
+                    ),
+                    trailing: Icon(
+                      Icons.chevron_right,
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                    onTap: () async {
+                      await _restoreData(store);
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 28),
+          const Divider(),
+          const SizedBox(height: 30),
+
           const SizedBox(height: 24),
         ],
       ),
