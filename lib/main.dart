@@ -71,7 +71,7 @@ class ThemeControllerScope extends InheritedNotifier<ThemeController> {
   const ThemeControllerScope({
     super.key,
     required ThemeController controller,
-    super.child,
+    required super.child,
   }) : super(
           notifier: controller,
         );
@@ -101,13 +101,9 @@ class FinanceApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // ============================================================
-    // DARK MODE
-    // ============================================================
-    //
-    // Dibuat abu tua, bukan hitam pekat, agar lebih nyaman
-    // digunakan dalam waktu lama.
-    //
+    // =========================
+    // PALETTE TEMA GELAP
+    // =========================
     const darkBackground = Color(0xFF2B2D31);
     const darkSurface = Color(0xFF35383D);
     const darkSurfaceVariant = Color(0xFF41444A);
@@ -118,10 +114,9 @@ class FinanceApp extends StatelessWidget {
     const darkTertiary = Color(0xFF92969E);
     const darkDivider = Color(0xFF4A4D53);
 
-    // ============================================================
-    // LIGHT MODE
-    // ============================================================
-
+    // =========================
+    // PALETTE TEMA TERANG
+    // =========================
     const lightBackground = Color(0xFFF5F6F8);
     const lightSurface = Color(0xFFFFFFFF);
     const lightSurfaceVariant = Color(0xFFE7E9ED);
@@ -132,24 +127,18 @@ class FinanceApp extends StatelessWidget {
     const lightTertiary = Color(0xFF8B9098);
     const lightDivider = Color(0xFFE1E4E8);
 
-    // ============================================================
-    // DARK THEME
-    // ============================================================
-
     final darkTheme = ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
-
       scaffoldBackgroundColor: darkBackground,
+      dividerColor: darkDivider,
 
       colorScheme: const ColorScheme.dark(
         primary: darkPrimary,
         secondary: darkSecondary,
+        tertiary: darkTertiary,
         surface: darkSurface,
         surfaceContainerHighest: darkSurfaceVariant,
-        onSurface: darkPrimary,
-        onSurfaceVariant: darkSecondary,
-        outline: darkDivider,
       ),
 
       appBarTheme: const AppBarTheme(
@@ -161,7 +150,6 @@ class FinanceApp extends StatelessWidget {
 
       cardTheme: CardThemeData(
         color: darkSurface,
-        surfaceTintColor: Colors.transparent,
         elevation: 0,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
@@ -172,90 +160,50 @@ class FinanceApp extends StatelessWidget {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: darkInput,
-
-        labelStyle: const TextStyle(
-          color: darkSecondary,
-        ),
-
-        hintStyle: const TextStyle(
-          color: darkTertiary,
-        ),
-
-        prefixIconColor: darkSecondary,
-
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide.none,
         ),
-
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide.none,
         ),
-
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: const BorderSide(
             color: darkSecondary,
-            width: 1.2,
           ),
         ),
-      ),
-
-      dividerTheme: const DividerThemeData(
-        color: darkDivider,
-        thickness: 1,
-        space: 1,
+        hintStyle: const TextStyle(
+          color: darkTertiary,
+        ),
       ),
 
       navigationBarTheme: const NavigationBarThemeData(
         backgroundColor: darkSurface,
-        surfaceTintColor: Colors.transparent,
-        indicatorColor: Color(0xFF59616D),
-        elevation: 0,
+        indicatorColor: Color(0xFF526A8C),
         labelTextStyle: WidgetStatePropertyAll(
           TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-            color: darkPrimary,
+            fontWeight: FontWeight.w600,
           ),
         ),
       ),
 
-      bottomNavigationBarTheme:
-          const BottomNavigationBarThemeData(
+      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: darkSurface,
         selectedItemColor: darkPrimary,
         unselectedItemColor: darkSecondary,
-        elevation: 0,
         type: BottomNavigationBarType.fixed,
-        selectedLabelStyle: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w700,
-        ),
-        unselectedLabelStyle: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-
-      floatingActionButtonTheme:
-          const FloatingActionButtonThemeData(
-        backgroundColor: Color(0xFF69727E),
-        foregroundColor: Colors.white,
         elevation: 0,
       ),
 
       snackBarTheme: SnackBarThemeData(
-        behavior: SnackBarBehavior.floating,
         backgroundColor: darkSurfaceVariant,
         contentTextStyle: const TextStyle(
           color: darkPrimary,
-          fontSize: 13,
-          fontWeight: FontWeight.w600,
         ),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(14),
         ),
       ),
 
@@ -263,41 +211,35 @@ class FinanceApp extends StatelessWidget {
         backgroundColor: darkSurface,
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(22),
         ),
       ),
 
       popupMenuTheme: PopupMenuThemeData(
-        color: darkSurfaceVariant,
+        color: darkSurface,
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
       ),
 
-      progressIndicatorTheme: const ProgressIndicatorThemeData(
-        color: darkPrimary,
+      listTileTheme: const ListTileThemeData(
+        iconColor: darkSecondary,
       ),
     );
-
-    // ============================================================
-    // LIGHT THEME
-    // ============================================================
 
     final lightTheme = ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
-
       scaffoldBackgroundColor: lightBackground,
+      dividerColor: lightDivider,
 
       colorScheme: const ColorScheme.light(
         primary: lightPrimary,
         secondary: lightSecondary,
+        tertiary: lightTertiary,
         surface: lightSurface,
         surfaceContainerHighest: lightSurfaceVariant,
-        onSurface: lightPrimary,
-        onSurfaceVariant: lightSecondary,
-        outline: lightDivider,
       ),
 
       appBarTheme: const AppBarTheme(
@@ -309,7 +251,6 @@ class FinanceApp extends StatelessWidget {
 
       cardTheme: CardThemeData(
         color: lightSurface,
-        surfaceTintColor: Colors.transparent,
         elevation: 0,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
@@ -320,90 +261,50 @@ class FinanceApp extends StatelessWidget {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: lightInput,
-
-        labelStyle: const TextStyle(
-          color: lightSecondary,
-        ),
-
-        hintStyle: const TextStyle(
-          color: lightTertiary,
-        ),
-
-        prefixIconColor: lightSecondary,
-
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide.none,
         ),
-
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide.none,
         ),
-
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: const BorderSide(
             color: lightSecondary,
-            width: 1.2,
           ),
         ),
-      ),
-
-      dividerTheme: const DividerThemeData(
-        color: lightDivider,
-        thickness: 1,
-        space: 1,
+        hintStyle: const TextStyle(
+          color: lightTertiary,
+        ),
       ),
 
       navigationBarTheme: const NavigationBarThemeData(
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.transparent,
+        backgroundColor: lightSurface,
         indicatorColor: Color(0xFFDCE3EC),
-        elevation: 0,
         labelTextStyle: WidgetStatePropertyAll(
           TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-            color: lightPrimary,
+            fontWeight: FontWeight.w600,
           ),
         ),
       ),
 
-      bottomNavigationBarTheme:
-          const BottomNavigationBarThemeData(
-        backgroundColor: Colors.white,
+      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+        backgroundColor: lightSurface,
         selectedItemColor: lightPrimary,
         unselectedItemColor: lightSecondary,
-        elevation: 0,
         type: BottomNavigationBarType.fixed,
-        selectedLabelStyle: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w700,
-        ),
-        unselectedLabelStyle: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-
-      floatingActionButtonTheme:
-          const FloatingActionButtonThemeData(
-        backgroundColor: Color(0xFF59616D),
-        foregroundColor: Colors.white,
         elevation: 0,
       ),
 
       snackBarTheme: SnackBarThemeData(
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: const Color(0xFF30343A),
+        backgroundColor: lightPrimary,
         contentTextStyle: const TextStyle(
           color: Colors.white,
-          fontSize: 13,
-          fontWeight: FontWeight.w600,
         ),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(14),
         ),
       ),
 
@@ -411,7 +312,7 @@ class FinanceApp extends StatelessWidget {
         backgroundColor: lightSurface,
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(22),
         ),
       ),
 
@@ -423,8 +324,8 @@ class FinanceApp extends StatelessWidget {
         ),
       ),
 
-      progressIndicatorTheme: const ProgressIndicatorThemeData(
-        color: lightPrimary,
+      listTileTheme: const ListTileThemeData(
+        iconColor: lightSecondary,
       ),
     );
 
@@ -443,9 +344,8 @@ class FinanceApp extends StatelessWidget {
               themeMode: themeController.themeMode,
               home: const AppLockGate(),
               routes: {
-                '/recurring-transactions':
-                    (context) =>
-                        const RecurringTransactionsPage(),
+                '/recurring-transactions': (context) =>
+                    const RecurringTransactionsPage(),
               },
             );
           },
