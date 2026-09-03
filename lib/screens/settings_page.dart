@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../main.dart';
+
 import '../core/finance_scope.dart';
 import '../services/finance_store.dart';
 import '../services/app_lock_service.dart';
@@ -1326,6 +1328,59 @@ class _SettingsPageState extends State<SettingsPage> {
                   ),
                 ],
               ),
+            ),
+            const SizedBox(height: 28),
+            const Divider(),
+            const SizedBox(height: 30),
+            const Text(
+              'Tampilan',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              'Pilih tampilan gelap atau terang untuk Cimpli Finance.',
+              style: TextStyle(
+                color: Color(0xFF9A9DA3),
+              ),
+            ),
+            const SizedBox(height: 14),
+            Builder(
+              builder: (context) {
+                final themeController =
+                    ThemeControllerScope.of(context);
+
+                return Card(
+                  child: SwitchListTile(
+                    value: themeController.isDarkMode,
+                    onChanged: (enabled) async {
+                      await themeController.setThemeMode(
+                        enabled
+                            ? ThemeMode.dark
+                            : ThemeMode.light,
+                      );
+                    },
+                    secondary: Icon(
+                      themeController.isDarkMode
+                          ? Icons.dark_mode_outlined
+                          : Icons.light_mode_outlined,
+                    ),
+                    title: const Text(
+                      'Mode Gelap',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    subtitle: Text(
+                      themeController.isDarkMode
+                          ? 'Tampilan gelap sedang digunakan.'
+                          : 'Tampilan terang sedang digunakan.',
+                    ),
+                  ),
+                );
+              },
             ),
             const SizedBox(height: 28),
             const Divider(),
