@@ -360,14 +360,6 @@ class _DashboardPageState extends State<DashboardPage> {
                       crossAxisAlignment:
                           CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'Keuangan Prima',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Color(0xFF9A9DA3),
-                          ),
-                        ),
-                        const SizedBox(height: 4),
                         Text(
                           account,
                           maxLines: 1,
