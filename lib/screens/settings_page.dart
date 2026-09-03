@@ -966,719 +966,649 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget build(BuildContext context) {
     final store = FinanceScope.of(context);
     final activeAccount = store.activeAccount;
+    final colorScheme = Theme.of(context).colorScheme;
 
-    return SafeArea(
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Pengaturan'),
+    final iconBackground = colorScheme.primaryContainer;
+    final iconColor = colorScheme.primary;
+
+    Widget iconBox(IconData icon, {double size = 48}) {
+      return Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          color: iconBackground,
+          borderRadius: BorderRadius.circular(size * 0.31),
         ),
-        body: ListView(
-          padding: const EdgeInsets.all(20),
-          children: [
-            const Text(
-              'Akun Keuangan',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w800,
+        child: Icon(
+          icon,
+          color: iconColor,
+        ),
+      );
+    }
+
+    Widget sectionTitle(String title, String subtitle) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            subtitle,
+            style: TextStyle(
+              color: colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
+      );
+    }
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Pengaturan'),
+      ),
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
+        children: [
+          // Informasi kategori tetap mengikuti warna tema terang/gelap.
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: colorScheme.surface,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: colorScheme.outlineVariant),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  Icons.info_outline,
+                  size: 20,
+                  color: colorScheme.onSurfaceVariant,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Kategori yang masih digunakan oleh transaksi '
+                    'tidak dapat dihapus. Edit kategori akan otomatis '
+                    'memperbarui transaksi yang menggunakannya.',
+                    style: TextStyle(
+                      color: colorScheme.onSurfaceVariant,
+                      fontSize: 12,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 28),
+
+          // Tampilan
+          sectionTitle(
+            'Tampilan',
+            'Pilih tampilan gelap atau terang untuk Cimpli Finance.',
+          ),
+          const SizedBox(height: 14),
+          Builder(
+            builder: (context) {
+              final themeController = ThemeControllerScope.of(context);
+
+              return Card(
+                child: SwitchListTile(
+                  value: themeController.isDarkMode,
+                  onChanged: (enabled) async {
+                    await themeController.setThemeMode(
+                      enabled ? ThemeMode.dark : ThemeMode.light,
+                    );
+                  },
+                  secondary: Icon(
+                    themeController.isDarkMode
+                        ? Icons.dark_mode_outlined
+                        : Icons.light_mode_outlined,
+                    color: colorScheme.primary,
+                  ),
+                  title: const Text(
+                    'Mode Gelap',
+                    style: TextStyle(fontWeight: FontWeight.w800),
+                  ),
+                  subtitle: Text(
+                    themeController.isDarkMode
+                        ? 'Tampilan gelap sedang digunakan.'
+                        : 'Tampilan terang sedang digunakan.',
+                  ),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 28),
+          const Divider(),
+          const SizedBox(height: 30),
+
+          // Backup & Restore
+          sectionTitle(
+            'Backup & Restore',
+            'Simpan salinan data keuangan untuk ganti HP atau reinstall aplikasi.',
+          ),
+          const SizedBox(height: 14),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Column(
+                children: [
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: iconBox(Icons.backup_outlined),
+                    title: const Text(
+                      'Backup Data',
+                      style: TextStyle(fontWeight: FontWeight.w800),
+                    ),
+                    subtitle: const Text(
+                      'Simpan seluruh akun, transaksi, kategori, transaksi berulang, dan anggaran.',
+                    ),
+                    trailing: Icon(
+                      Icons.chevron_right,
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                    onTap: _backupData,
+                  ),
+                  const Divider(height: 1),
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: iconBox(Icons.restore_outlined),
+                    title: const Text(
+                      'Restore Data',
+                      style: TextStyle(fontWeight: FontWeight.w800),
+                    ),
+                    subtitle: const Text(
+                      'Pulihkan data dari file backup JSON yang sebelumnya disimpan.',
+                    ),
+                    trailing: Icon(
+                      Icons.chevron_right,
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                    onTap: () async {
+                      await _restoreData(store);
+                    },
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 6),
-            const Text(
-              'Pilih akun aktif dan kelola seluruh keuangan Anda.',
-              style: TextStyle(
-                color: Color(0xFF9A9DA3),
+          ),
+          const SizedBox(height: 28),
+          const Divider(),
+          const SizedBox(height: 30),
+
+          // Keamanan
+          sectionTitle(
+            'Keamanan',
+            'Lindungi Cimpli Finance dengan kunci perangkat atau sidik jari.',
+          ),
+          const SizedBox(height: 14),
+          Card(
+            child: _loadingAppLock
+                ? const Padding(
+                    padding: EdgeInsets.all(18),
+                    child: Center(child: CircularProgressIndicator()),
+                  )
+                : SwitchListTile(
+                    value: _appLockEnabled,
+                    onChanged: _setAppLock,
+                    secondary: Icon(
+                      Icons.lock_outline_rounded,
+                      color: colorScheme.primary,
+                    ),
+                    title: const Text(
+                      'Kunci Aplikasi',
+                      style: TextStyle(fontWeight: FontWeight.w800),
+                    ),
+                    subtitle: const Text(
+                      'Gunakan PIN/pola/password perangkat atau sidik jari saat membuka aplikasi.',
+                    ),
+                  ),
+          ),
+          const SizedBox(height: 28),
+          const Divider(),
+          const SizedBox(height: 30),
+
+          // Akun Keuangan
+          sectionTitle(
+            'Akun Keuangan',
+            'Pilih akun aktif dan kelola seluruh keuangan Anda.',
+          ),
+          const SizedBox(height: 14),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  iconBox(_accountIcon(activeAccount)),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Akun Aktif',
+                          style: TextStyle(
+                            color: colorScheme.primary,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          activeAccount ?? 'Belum ada akun',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(
+                    Icons.settings_outlined,
+                    color: colorScheme.primary,
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 20),
-            Card(
+          ),
+          const SizedBox(height: 10),
+          if (store.accounts.isEmpty)
+            const Card(
               child: Padding(
-                padding: const EdgeInsets.all(18),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 52,
-                      height: 52,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF30343A),
-                        borderRadius:
-                            BorderRadius.circular(16),
-                      ),
-                      child: Icon(
-                        _accountIcon(activeAccount),
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment:
-                            CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Akun Aktif',
-                            style: TextStyle(
-                              color: Color(0xFF9A9DA3),
-                              fontSize: 12,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            activeAccount ?? 'Belum ada akun',
-                            maxLines: 1,
-                            overflow:
-                                TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 17,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const Icon(
-                      Icons.verified_outlined,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-            if (store.accounts.isEmpty)
-              const Card(
-                child: Padding(
-                  padding: EdgeInsets.all(20),
-                  child: Text(
-                    'Belum ada akun keuangan.',
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-              )
-            else
-              ...store.accounts.map(
-                (name) {
-                  final isActive =
-                      name == store.activeAccount;
-
-                  return Padding(
-                    padding:
-                        const EdgeInsets.only(bottom: 12),
-                    child: Card(
-                      child: InkWell(
-                        borderRadius:
-                            BorderRadius.circular(22),
-                        onTap: () {
-                          _selectAccount(
-                            context,
-                            store,
-                            name,
-                          );
-                        },
-                        child: Padding(
-                          padding:
-                              const EdgeInsets.all(16),
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 48,
-                                height: 48,
-                                decoration:
-                                    BoxDecoration(
-                                  color: const Color(
-                                    0xFF30343A,
-                                  ),
-                                  borderRadius:
-                                      BorderRadius.circular(
-                                    15,
-                                  ),
-                                ),
-                                child: Icon(
-                                  _accountIcon(name),
-                                ),
-                              ),
-                              const SizedBox(width: 14),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment
-                                          .start,
-                                  children: [
-                                    Text(
-                                      name,
-                                      maxLines: 1,
-                                      overflow:
-                                          TextOverflow
-                                              .ellipsis,
-                                      style:
-                                          const TextStyle(
-                                        fontSize: 16,
-                                        fontWeight:
-                                            FontWeight.w800,
-                                      ),
-                                    ),
-                                    const SizedBox(
-                                      height: 4,
-                                    ),
-                                    Text(
-                                      isActive
-                                          ? 'Sedang digunakan'
-                                          : 'Tap untuk menggunakan akun ini',
-                                      style: TextStyle(
-                                        color: isActive
-                                            ? const Color(
-                                                0xFFB8BCC2,
-                                              )
-                                            : const Color(
-                                                0xFF777B82,
-                                              ),
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              PopupMenuButton<String>(
-                                tooltip: 'Menu akun',
-                                onSelected:
-                                    (value) async {
-                                  if (value == 'select') {
-                                    _selectAccount(
-                                      context,
-                                      store,
-                                      name,
-                                    );
-                                  } else if (value ==
-                                      'rename') {
-                                    await _showRenameAccountDialog(
-                                      context,
-                                      store,
-                                      name,
-                                    );
-                                  } else if (value ==
-                                      'delete') {
-                                    await _showDeleteAccountDialog(
-                                      context,
-                                      store,
-                                      name,
-                                    );
-                                  }
-                                },
-                                itemBuilder: (_) => [
-                                  if (!isActive)
-                                    const PopupMenuItem<
-                                        String>(
-                                      value: 'select',
-                                      child: Row(
-                                        children: [
-                                          Icon(
-                                            Icons
-                                                .check_circle_outline,
-                                          ),
-                                          SizedBox(width: 10),
-                                          Text('Gunakan'),
-                                        ],
-                                      ),
-                                    ),
-                                  const PopupMenuItem<String>(
-                                    value: 'rename',
-                                    child: Row(
-                                      children: [
-                                        Icon(
-                                          Icons.edit_outlined,
-                                        ),
-                                        SizedBox(width: 10),
-                                        Text('Edit nama'),
-                                      ],
-                                    ),
-                                  ),
-                                  if (store.accounts.length >
-                                      1)
-                                    const PopupMenuItem<
-                                        String>(
-                                      value: 'delete',
-                                      child: Row(
-                                        children: [
-                                          Icon(
-                                            Icons
-                                                .delete_outline,
-                                          ),
-                                          SizedBox(width: 10),
-                                          Text('Hapus'),
-                                        ],
-                                      ),
-                                    ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            const SizedBox(height: 8),
-            OutlinedButton.icon(
-              onPressed: () async {
-                await _showAddAccountDialog(
-                  context,
-                  store,
-                );
-              },
-              icon: const Icon(Icons.add),
-              label: const Padding(
-                padding: EdgeInsets.symmetric(
-                  vertical: 14,
-                ),
+                padding: EdgeInsets.all(20),
                 child: Text(
-                  'Tambah Akun Keuangan',
+                  'Belum ada akun keuangan.',
+                  textAlign: TextAlign.center,
                 ),
               ),
-            ),
-            const SizedBox(height: 34),
-            const Divider(),
-            const SizedBox(height: 30),
-            const Text(
-              'Kategori Transaksi',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              activeAccount == null
-                  ? 'Pilih akun untuk mengelola kategori.'
-                  : 'Kategori khusus untuk akun "$activeAccount".',
-              style: const TextStyle(
-                color: Color(0xFF9A9DA3),
-              ),
-            ),
-            const SizedBox(height: 20),
-            if (activeAccount == null)
-              const Card(
-                child: Padding(
-                  padding: EdgeInsets.all(20),
-                  child: Text(
-                    'Belum ada akun aktif.',
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-              )
-            else
-              FutureBuilder<List<String>>(
-                future: _loadCategories(store),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState ==
-                      ConnectionState.waiting) {
-                    return const Padding(
-                      padding: EdgeInsets.symmetric(
-                        vertical: 24,
-                      ),
-                      child: Center(
-                        child: CircularProgressIndicator(),
-                      ),
-                    );
-                  }
+            )
+          else
+            Card(
+              clipBehavior: Clip.antiAlias,
+              child: Column(
+                children: [
+                  ...store.accounts.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final name = entry.value;
+                    final isActive = name == store.activeAccount;
 
-                  if (snapshot.hasError) {
-                    return Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(18),
-                        child: Text(
-                          'Gagal memuat kategori: '
-                          '${snapshot.error}',
-                        ),
-                      ),
-                    );
-                  }
-
-                  final categories =
-                      snapshot.data ?? <String>[];
-
-                  if (categories.isEmpty) {
-                    return Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(20),
-                        child: Column(
-                          children: [
-                            const Icon(
-                              Icons.category_outlined,
-                              size: 42,
+                    return Column(
+                      children: [
+                        InkWell(
+                          onTap: () {
+                            _selectAccount(context, store, name);
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
                             ),
-                            const SizedBox(height: 12),
-                            const Text(
-                              'Belum ada kategori',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w800,
-                                fontSize: 16,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            const Text(
-                              'Tambahkan kategori pertama untuk '
-                              'akun ini.',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: Color(0xFF9A9DA3),
-                                fontSize: 13,
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            OutlinedButton.icon(
-                              onPressed: () async {
-                                await _showAddCategoryDialog(
-                                  context,
-                                  store,
-                                );
-                              },
-                              icon: const Icon(Icons.add),
-                              label: const Text(
-                                'Tambah Kategori',
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  }
-
-                  return Column(
-                    children: [
-                      ...categories.map(
-                        (category) {
-                          return Padding(
-                            padding:
-                                const EdgeInsets.only(
-                              bottom: 10,
-                            ),
-                            child: Card(
-                              child: ListTile(
-                                leading: Container(
-                                  width: 44,
-                                  height: 44,
-                                  decoration:
-                                      BoxDecoration(
-                                    color: const Color(
-                                      0xFF30343A,
-                                    ),
-                                    borderRadius:
-                                        BorderRadius.circular(
-                                      14,
-                                    ),
-                                  ),
-                                  child: const Icon(
-                                    Icons.category_outlined,
+                            child: Row(
+                              children: [
+                                iconBox(_accountIcon(name), size: 44),
+                                const SizedBox(width: 14),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        name,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w800,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        isActive
+                                            ? 'Sedang digunakan'
+                                            : 'Tap untuk menggunakan akun ini',
+                                        style: TextStyle(
+                                          color: colorScheme.onSurfaceVariant,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                                title: Text(
-                                  category,
-                                  maxLines: 1,
-                                  overflow:
-                                      TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                    fontWeight:
-                                        FontWeight.w700,
+                                PopupMenuButton<String>(
+                                  tooltip: 'Menu akun',
+                                  icon: Icon(
+                                    Icons.more_vert,
+                                    color: colorScheme.onSurface,
                                   ),
-                                ),
-                                subtitle: const Text(
-                                  'Kategori transaksi',
-                                  style: TextStyle(
-                                    color:
-                                        Color(0xFF777B82),
-                                    fontSize: 12,
-                                  ),
-                                ),
-                                trailing:
-                                    PopupMenuButton<String>(
-                                  tooltip:
-                                      'Menu kategori',
-                                  onSelected:
-                                      (value) async {
-                                    if (value == 'rename') {
-                                      await _showRenameCategoryDialog(
+                                  onSelected: (value) async {
+                                    if (value == 'select') {
+                                      _selectAccount(context, store, name);
+                                    } else if (value == 'rename') {
+                                      await _showRenameAccountDialog(
                                         context,
                                         store,
-                                        category,
+                                        name,
                                       );
-                                    } else if (value ==
-                                        'delete') {
-                                      await _showDeleteCategoryDialog(
+                                    } else if (value == 'delete') {
+                                      await _showDeleteAccountDialog(
                                         context,
                                         store,
-                                        category,
+                                        name,
                                       );
                                     }
                                   },
-                                  itemBuilder: (_) => const [
+                                  itemBuilder: (_) => [
+                                    if (!isActive)
+                                      PopupMenuItem<String>(
+                                        value: 'select',
+                                        child: Row(
+                                          children: [
+                                            Icon(
+                                              Icons.check_circle_outline,
+                                              color: colorScheme.primary,
+                                            ),
+                                            const SizedBox(width: 10),
+                                            const Text('Gunakan'),
+                                          ],
+                                        ),
+                                      ),
                                     PopupMenuItem<String>(
                                       value: 'rename',
                                       child: Row(
                                         children: [
                                           Icon(
-                                            Icons
-                                                .edit_outlined,
+                                            Icons.edit_outlined,
+                                            color: colorScheme.primary,
                                           ),
-                                          SizedBox(width: 10),
-                                          Text('Edit'),
+                                          const SizedBox(width: 10),
+                                          const Text('Edit nama'),
                                         ],
                                       ),
                                     ),
-                                    PopupMenuItem<String>(
-                                      value: 'delete',
-                                      child: Row(
-                                        children: [
-                                          Icon(
-                                            Icons
-                                                .delete_outline,
-                                          ),
-                                          SizedBox(width: 10),
-                                          Text('Hapus'),
-                                        ],
+                                    if (store.accounts.length > 1)
+                                      PopupMenuItem<String>(
+                                        value: 'delete',
+                                        child: Row(
+                                          children: [
+                                            Icon(
+                                              Icons.delete_outline,
+                                              color: colorScheme.error,
+                                            ),
+                                            const SizedBox(width: 10),
+                                            const Text('Hapus'),
+                                          ],
+                                        ),
                                       ),
-                                    ),
                                   ],
                                 ),
-                              ),
+                              ],
                             ),
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 6),
-                      OutlinedButton.icon(
-                        onPressed: () async {
-                          await _showAddCategoryDialog(
-                            context,
-                            store,
-                          );
-                        },
-                        icon: const Icon(Icons.add),
-                        label: const Padding(
-                          padding: EdgeInsets.symmetric(
-                            vertical: 12,
-                          ),
-                          child: Text(
-                            'Tambah Kategori',
                           ),
                         ),
-                      ),
-                    ],
-                  );
-                },
-              ),
-            const SizedBox(height: 24),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: const Color(0xFF1C1E22),
-                borderRadius: BorderRadius.circular(18),
-              ),
-              child: const Row(
-                crossAxisAlignment:
-                    CrossAxisAlignment.start,
-                children: [
-                  Icon(
-                    Icons.info_outline,
-                    size: 20,
-                    color: Color(0xFF9A9DA3),
-                  ),
-                  SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      'Kategori yang masih digunakan oleh transaksi '
-                      'tidak dapat dihapus. Edit kategori akan otomatis '
-                      'memperbarui transaksi yang menggunakannya.',
-                      style: TextStyle(
-                        color: Color(0xFF9A9DA3),
-                        fontSize: 12,
-                        height: 1.4,
-                      ),
-                    ),
-                  ),
+                        if (index < store.accounts.length - 1)
+                          const Divider(height: 1),
+                      ],
+                    );
+                  }),
                 ],
               ),
             ),
-            const SizedBox(height: 28),
-            const Divider(),
-            const SizedBox(height: 30),
-            const Text(
-              'Tampilan',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w800,
-              ),
+          const SizedBox(height: 10),
+          OutlinedButton.icon(
+            onPressed: () async {
+              await _showAddAccountDialog(context, store);
+            },
+            icon: Icon(Icons.add, color: colorScheme.primary),
+            label: const Padding(
+              padding: EdgeInsets.symmetric(vertical: 14),
+              child: Text('Tambah Akun Keuangan'),
             ),
-            const SizedBox(height: 6),
-            const Text(
-              'Pilih tampilan gelap atau terang untuk Cimpli Finance.',
-              style: TextStyle(
-                color: Color(0xFF9A9DA3),
-              ),
-            ),
-            const SizedBox(height: 14),
-            Builder(
-              builder: (context) {
-                final themeController =
-                    ThemeControllerScope.of(context);
+          ),
+          const SizedBox(height: 34),
+          const Divider(),
+          const SizedBox(height: 30),
 
-                return Card(
-                  child: SwitchListTile(
-                    value: themeController.isDarkMode,
-                    onChanged: (enabled) async {
-                      await themeController.setThemeMode(
-                        enabled
-                            ? ThemeMode.dark
-                            : ThemeMode.light,
-                      );
-                    },
-                    secondary: Icon(
-                      themeController.isDarkMode
-                          ? Icons.dark_mode_outlined
-                          : Icons.light_mode_outlined,
+          // Kategori Transaksi
+          sectionTitle(
+            'Kategori Transaksi',
+            activeAccount == null
+                ? 'Pilih akun untuk mengelola kategori.'
+                : 'Kategori khusus untuk akun "$activeAccount".',
+          ),
+          const SizedBox(height: 20),
+          if (activeAccount == null)
+            const Card(
+              child: Padding(
+                padding: EdgeInsets.all(20),
+                child: Text(
+                  'Belum ada akun aktif.',
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            )
+          else
+            FutureBuilder<List<String>>(
+              future: _loadCategories(store),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 24),
+                    child: Center(child: CircularProgressIndicator()),
+                  );
+                }
+
+                if (snapshot.hasError) {
+                  return Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(18),
+                      child: Text('Gagal memuat kategori: ${snapshot.error}'),
                     ),
-                    title: const Text(
-                      'Mode Gelap',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w800,
+                  );
+                }
+
+                final categories = snapshot.data ?? <String>[];
+
+                if (categories.isEmpty) {
+                  return Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        children: [
+                          Icon(
+                            Icons.category_outlined,
+                            size: 42,
+                            color: colorScheme.primary,
+                          ),
+                          const SizedBox(height: 12),
+                          const Text(
+                            'Belum ada kategori',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w800,
+                              fontSize: 16,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            'Tambahkan kategori pertama untuk akun ini.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: colorScheme.onSurfaceVariant,
+                              fontSize: 13,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          OutlinedButton.icon(
+                            onPressed: () async {
+                              await _showAddCategoryDialog(context, store);
+                            },
+                            icon: Icon(Icons.add, color: colorScheme.primary),
+                            label: const Text('Tambah Kategori'),
+                          ),
+                        ],
                       ),
                     ),
-                    subtitle: Text(
-                      themeController.isDarkMode
-                          ? 'Tampilan gelap sedang digunakan.'
-                          : 'Tampilan terang sedang digunakan.',
+                  );
+                }
+
+                return Column(
+                  children: [
+                    Card(
+                      clipBehavior: Clip.antiAlias,
+                      child: Column(
+                        children: [
+                          ...categories.asMap().entries.map((entry) {
+                            final index = entry.key;
+                            final category = entry.value;
+
+                            return Column(
+                              children: [
+                                ListTile(
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 4,
+                                  ),
+                                  leading: iconBox(
+                                    Icons.category_outlined,
+                                    size: 44,
+                                  ),
+                                  title: Text(
+                                    category,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                  subtitle: Text(
+                                    'Kategori transaksi',
+                                    style: TextStyle(
+                                      color: colorScheme.onSurfaceVariant,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                  trailing: PopupMenuButton<String>(
+                                    tooltip: 'Menu kategori',
+                                    icon: Icon(
+                                      Icons.more_vert,
+                                      color: colorScheme.onSurface,
+                                    ),
+                                    onSelected: (value) async {
+                                      if (value == 'rename') {
+                                        await _showRenameCategoryDialog(
+                                          context,
+                                          store,
+                                          category,
+                                        );
+                                      } else if (value == 'delete') {
+                                        await _showDeleteCategoryDialog(
+                                          context,
+                                          store,
+                                          category,
+                                        );
+                                      }
+                                    },
+                                    itemBuilder: (_) => [
+                                      PopupMenuItem<String>(
+                                        value: 'rename',
+                                        child: Row(
+                                          children: [
+                                            Icon(
+                                              Icons.edit_outlined,
+                                              color: colorScheme.primary,
+                                            ),
+                                            const SizedBox(width: 10),
+                                            const Text('Edit'),
+                                          ],
+                                        ),
+                                      ),
+                                      PopupMenuItem<String>(
+                                        value: 'delete',
+                                        child: Row(
+                                          children: [
+                                            Icon(
+                                              Icons.delete_outline,
+                                              color: colorScheme.error,
+                                            ),
+                                            const SizedBox(width: 10),
+                                            const Text('Hapus'),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                if (index < categories.length - 1)
+                                  const Divider(height: 1),
+                              ],
+                            );
+                          }),
+                        ],
+                      ),
                     ),
-                  ),
+                    const SizedBox(height: 10),
+                    OutlinedButton.icon(
+                      onPressed: () async {
+                        await _showAddCategoryDialog(context, store);
+                      },
+                      icon: Icon(Icons.add, color: colorScheme.primary),
+                      label: const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 12),
+                        child: Text('Tambah Kategori'),
+                      ),
+                    ),
+                  ],
                 );
               },
             ),
-            const SizedBox(height: 28),
-            const Divider(),
-            const SizedBox(height: 30),
-            const Text(
-              'Backup & Restore',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w800,
+          const SizedBox(height: 28),
+          const Divider(),
+          const SizedBox(height: 30),
+
+          // Transaksi Berulang dipindahkan menjadi menu Pengaturan,
+          // bukan lagi FloatingActionButton.
+          sectionTitle(
+            'Lainnya',
+            'Fitur tambahan untuk mengelola keuangan secara otomatis.',
+          ),
+          const SizedBox(height: 14),
+          Card(
+            child: ListTile(
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 6,
               ),
-            ),
-            const SizedBox(height: 6),
-            const Text(
-              'Simpan salinan data keuangan untuk ganti HP atau reinstall aplikasi.',
-              style: TextStyle(
-                color: Color(0xFF9A9DA3),
+              leading: iconBox(Icons.repeat_rounded),
+              title: const Text(
+                'Transaksi Berulang',
+                style: TextStyle(fontWeight: FontWeight.w800),
               ),
-            ),
-            const SizedBox(height: 14),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  children: [
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: Container(
-                        width: 48,
-                        height: 48,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF30343A),
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                        child: const Icon(
-                          Icons.backup_outlined,
-                        ),
-                      ),
-                      title: const Text(
-                        'Backup Data',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      subtitle: const Text(
-                        'Simpan seluruh akun, transaksi, kategori, transaksi berulang, dan anggaran.',
-                      ),
-                      trailing: const Icon(
-                        Icons.chevron_right,
-                      ),
-                      onTap: _backupData,
-                    ),
-                    const Divider(height: 24),
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: Container(
-                        width: 48,
-                        height: 48,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF30343A),
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                        child: const Icon(
-                          Icons.restore_outlined,
-                        ),
-                      ),
-                      title: const Text(
-                        'Restore Data',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      subtitle: const Text(
-                        'Pulihkan data dari file backup JSON yang sebelumnya disimpan.',
-                      ),
-                      trailing: const Icon(
-                        Icons.chevron_right,
-                      ),
-                      onTap: () async {
-                        await _restoreData(store);
-                      },
-                    ),
-                  ],
-                ),
+              subtitle: const Text(
+                'Kelola dan lihat semua transaksi berulang.',
               ),
-            ),
-            const SizedBox(height: 28),
-            const Divider(),
-            const SizedBox(height: 30),
-            const Text(
-              'Keamanan',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w800,
+              trailing: Icon(
+                Icons.chevron_right,
+                color: colorScheme.onSurfaceVariant,
               ),
+              onTap: () async {
+                await Navigator.pushNamed(
+                  context,
+                  '/recurring-transactions',
+                );
+              },
             ),
-            const SizedBox(height: 6),
-            const Text(
-              'Lindungi Cimpli Finance dengan kunci perangkat atau sidik jari.',
-              style: TextStyle(
-                color: Color(0xFF9A9DA3),
-              ),
-            ),
-            const SizedBox(height: 14),
-            Card(
-              child: _loadingAppLock
-                  ? const Padding(
-                      padding: EdgeInsets.all(18),
-                      child: Center(
-                        child: CircularProgressIndicator(),
-                      ),
-                    )
-                  : SwitchListTile(
-                      value: _appLockEnabled,
-                      onChanged: _setAppLock,
-                      secondary: const Icon(
-                        Icons.lock_outline_rounded,
-                      ),
-                      title: const Text(
-                        'Kunci Aplikasi',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      subtitle: const Text(
-                        'Gunakan PIN/pola/password perangkat atau sidik jari saat membuka aplikasi.',
-                      ),
-                    ),
-            ),
-            const SizedBox(height: 110),
-          ],
-        ),
+          ),
+          const SizedBox(height: 24),
+        ],
       ),
     );
   }
