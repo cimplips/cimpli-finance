@@ -1,3 +1,4 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
 import '../main.dart';
@@ -5,6 +6,7 @@ import '../main.dart';
 import '../core/finance_scope.dart';
 import '../services/finance_store.dart';
 import '../services/app_lock_service.dart';
+import '../services/backup_service.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({
@@ -795,6 +797,171 @@ class _SettingsPageState extends State<SettingsPage> {
       );
   }
 
+  Future<void> _backupData() async {
+    final timestamp = _backupTimestamp(DateTime.now());
+
+    final outputPath = await FilePicker.platform.saveFile(
+      dialogTitle: 'Simpan Backup Cimpli Finance',
+      fileName: 'cimpli_finance_backup_$timestamp.json',
+      type: FileType.custom,
+      allowedExtensions: <String>['json'],
+    );
+
+    if (!mounted || outputPath == null || outputPath.isEmpty) {
+      return;
+    }
+
+    _showMessage('Membuat backup data...');
+
+    try {
+      await BackupService().exportBackup(
+        outputPath: outputPath,
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      _showMessage(
+        'Backup berhasil disimpan. Data Anda aman untuk dipindahkan atau dipulihkan nanti.',
+      );
+    } on BackupException catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      _showMessage('Backup gagal: $error');
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      _showMessage('Backup gagal: $error');
+    }
+  }
+
+  Future<void> _restoreData(FinanceStore store) async {
+    final result = await FilePicker.platform.pickFiles(
+      dialogTitle: 'Pilih Backup Cimpli Finance',
+      type: FileType.custom,
+      allowedExtensions: <String>['json'],
+      withData: false,
+    );
+
+    if (!mounted || result == null || result.files.isEmpty) {
+      return;
+    }
+
+    final inputPath = result.files.single.path;
+
+    if (inputPath == null || inputPath.isEmpty) {
+      _showMessage(
+        'File backup tidak dapat diakses dari perangkat ini.',
+      );
+      return;
+    }
+
+    final backupService = BackupService();
+
+    try {
+      final valid = await backupService.isValidBackup(
+        inputPath,
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      if (!valid) {
+        _showMessage(
+          'File bukan backup Cimpli Finance yang valid.',
+        );
+        return;
+      }
+
+      final itemCount = await backupService.getBackupItemCount(
+        inputPath,
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) {
+          return AlertDialog(
+            title: const Text('Restore Data?'),
+            content: Text(
+              'Data keuangan saat ini akan diganti dengan isi backup. '
+              'Backup berisi $itemCount baris data. Tindakan ini tidak dapat dibatalkan.\n\n'
+              'Sebaiknya buat backup data saat ini terlebih dahulu.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(dialogContext).pop(false);
+                },
+                child: const Text('Batal'),
+              ),
+              FilledButton(
+                onPressed: () {
+                  Navigator.of(dialogContext).pop(true);
+                },
+                child: const Text('Restore'),
+              ),
+            ],
+          );
+        },
+      );
+
+      if (!mounted || confirmed != true) {
+        return;
+      }
+
+      _showMessage('Memulihkan data...');
+
+      await backupService.restoreBackup(
+        inputPath: inputPath,
+      );
+
+      await store.load();
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {});
+
+      _showMessage(
+        'Restore berhasil. Data Cimpli Finance sudah dipulihkan.',
+      );
+    } on BackupException catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      _showMessage('Restore gagal: $error');
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      _showMessage('Restore gagal: $error');
+    }
+  }
+
+  String _backupTimestamp(DateTime dateTime) {
+    String twoDigits(int value) {
+      return value.toString().padLeft(2, '0');
+    }
+
+    return '${dateTime.year}${twoDigits(dateTime.month)}'
+        '${twoDigits(dateTime.day)}_'
+        '${twoDigits(dateTime.hour)}${twoDigits(dateTime.minute)}'
+        '${twoDigits(dateTime.second)}';
+  }
+
   @override
   Widget build(BuildContext context) {
     final store = FinanceScope.of(context);
@@ -1381,6 +1548,90 @@ class _SettingsPageState extends State<SettingsPage> {
                   ),
                 );
               },
+            ),
+            const SizedBox(height: 28),
+            const Divider(),
+            const SizedBox(height: 30),
+            const Text(
+              'Backup & Restore',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              'Simpan salinan data keuangan untuk ganti HP atau reinstall aplikasi.',
+              style: TextStyle(
+                color: Color(0xFF9A9DA3),
+              ),
+            ),
+            const SizedBox(height: 14),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF30343A),
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                        child: const Icon(
+                          Icons.backup_outlined,
+                        ),
+                      ),
+                      title: const Text(
+                        'Backup Data',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      subtitle: const Text(
+                        'Simpan seluruh akun, transaksi, kategori, transaksi berulang, dan anggaran.',
+                      ),
+                      trailing: const Icon(
+                        Icons.chevron_right,
+                      ),
+                      onTap: _backupData,
+                    ),
+                    const Divider(height: 24),
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF30343A),
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                        child: const Icon(
+                          Icons.restore_outlined,
+                        ),
+                      ),
+                      title: const Text(
+                        'Restore Data',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      subtitle: const Text(
+                        'Pulihkan data dari file backup JSON yang sebelumnya disimpan.',
+                      ),
+                      trailing: const Icon(
+                        Icons.chevron_right,
+                      ),
+                      onTap: () async {
+                        await _restoreData(store);
+                      },
+                    ),
+                  ],
+                ),
+              ),
             ),
             const SizedBox(height: 28),
             const Divider(),
