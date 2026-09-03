@@ -126,6 +126,19 @@ class _SettingsPageState extends State<SettingsPage> {
     return Icons.account_balance_wallet_outlined;
   }
 
+  Color _iconBackground(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Color.alphaBlend(
+      colorScheme.primary.withValues(alpha: 0.12),
+      colorScheme.surfaceContainerHighest,
+    );
+  }
+
+  Color _iconColor(BuildContext context) {
+    return Theme.of(context).colorScheme.primary;
+  }
+
   Future<void> _showAddAccountDialog(
     BuildContext context,
     FinanceStore store,
@@ -142,11 +155,12 @@ class _SettingsPageState extends State<SettingsPage> {
             autofocus: true,
             textCapitalization: TextCapitalization.words,
             textInputAction: TextInputAction.done,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               labelText: 'Nama akun',
               hintText: 'Contoh: Keuangan Usaha',
               prefixIcon: Icon(
                 Icons.account_balance_wallet_outlined,
+                color: _iconColor(dialogContext),
               ),
             ),
             onSubmitted: (_) async {
@@ -254,10 +268,11 @@ class _SettingsPageState extends State<SettingsPage> {
             autofocus: true,
             textCapitalization: TextCapitalization.words,
             textInputAction: TextInputAction.done,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               labelText: 'Nama akun',
               prefixIcon: Icon(
                 Icons.edit_outlined,
+                color: _iconColor(dialogContext),
               ),
             ),
             onSubmitted: (_) async {
@@ -476,11 +491,12 @@ class _SettingsPageState extends State<SettingsPage> {
             autofocus: true,
             textCapitalization: TextCapitalization.words,
             textInputAction: TextInputAction.done,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               labelText: 'Nama kategori',
               hintText: 'Contoh: Makan',
               prefixIcon: Icon(
                 Icons.category_outlined,
+                color: _iconColor(dialogContext),
               ),
             ),
             onSubmitted: (_) async {
@@ -599,10 +615,11 @@ class _SettingsPageState extends State<SettingsPage> {
             autofocus: true,
             textCapitalization: TextCapitalization.words,
             textInputAction: TextInputAction.done,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               labelText: 'Nama kategori',
               prefixIcon: Icon(
                 Icons.edit_outlined,
+                color: _iconColor(dialogContext),
               ),
             ),
             onSubmitted: (_) async {
@@ -1024,6 +1041,10 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget build(BuildContext context) {
     final store = FinanceScope.of(context);
     final activeAccount = store.activeAccount;
+    final colorScheme = Theme.of(context).colorScheme;
+
+    final iconBackground = _iconBackground(context);
+    final iconColor = colorScheme.primary;
 
     return SafeArea(
       child: Scaffold(
@@ -1041,10 +1062,10 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
             ),
             const SizedBox(height: 6),
-            const Text(
+            Text(
               'Pilih akun aktif dan kelola seluruh keuangan Anda.',
               style: TextStyle(
-                color: Color(0xFF9A9DA3),
+                color: colorScheme.onSurfaceVariant,
               ),
             ),
             const SizedBox(height: 20),
@@ -1057,12 +1078,13 @@ class _SettingsPageState extends State<SettingsPage> {
                       width: 52,
                       height: 52,
                       decoration: BoxDecoration(
-                        color: const Color(0xFF30343A),
+                        color: iconBackground,
                         borderRadius:
                             BorderRadius.circular(16),
                       ),
                       child: Icon(
                         _accountIcon(activeAccount),
+                        color: iconColor,
                       ),
                     ),
                     const SizedBox(width: 14),
@@ -1071,10 +1093,11 @@ class _SettingsPageState extends State<SettingsPage> {
                         crossAxisAlignment:
                             CrossAxisAlignment.start,
                         children: [
-                          const Text(
+                          Text(
                             'Akun Aktif',
                             style: TextStyle(
-                              color: Color(0xFF9A9DA3),
+                              color:
+                                  colorScheme.onSurfaceVariant,
                               fontSize: 12,
                             ),
                           ),
@@ -1092,8 +1115,9 @@ class _SettingsPageState extends State<SettingsPage> {
                         ],
                       ),
                     ),
-                    const Icon(
+                    Icon(
                       Icons.verified_outlined,
+                      color: iconColor,
                     ),
                   ],
                 ),
@@ -1140,9 +1164,7 @@ class _SettingsPageState extends State<SettingsPage> {
                                 height: 48,
                                 decoration:
                                     BoxDecoration(
-                                  color: const Color(
-                                    0xFF30343A,
-                                  ),
+                                  color: iconBackground,
                                   borderRadius:
                                       BorderRadius.circular(
                                     15,
@@ -1150,6 +1172,7 @@ class _SettingsPageState extends State<SettingsPage> {
                                 ),
                                 child: Icon(
                                   _accountIcon(name),
+                                  color: iconColor,
                                 ),
                               ),
                               const SizedBox(width: 14),
@@ -1180,13 +1203,8 @@ class _SettingsPageState extends State<SettingsPage> {
                                           ? 'Sedang digunakan'
                                           : 'Tap untuk menggunakan akun ini',
                                       style: TextStyle(
-                                        color: isActive
-                                            ? const Color(
-                                                0xFFB8BCC2,
-                                              )
-                                            : const Color(
-                                                0xFF777B82,
-                                              ),
+                                        color: colorScheme
+                                            .onSurfaceVariant,
                                         fontSize: 12,
                                       ),
                                     ),
@@ -1195,6 +1213,7 @@ class _SettingsPageState extends State<SettingsPage> {
                               ),
                               PopupMenuButton<String>(
                                 tooltip: 'Menu akun',
+                                iconColor: iconColor,
                                 onSelected:
                                     (value) async {
                                   if (value == 'select') {
@@ -1221,45 +1240,52 @@ class _SettingsPageState extends State<SettingsPage> {
                                 },
                                 itemBuilder: (_) => [
                                   if (!isActive)
-                                    const PopupMenuItem<
-                                        String>(
+                                    PopupMenuItem<String>(
                                       value: 'select',
                                       child: Row(
                                         children: [
                                           Icon(
                                             Icons
                                                 .check_circle_outline,
+                                            color: iconColor,
                                           ),
-                                          SizedBox(width: 10),
-                                          Text('Gunakan'),
+                                          const SizedBox(
+                                            width: 10,
+                                          ),
+                                          const Text('Gunakan'),
                                         ],
                                       ),
                                     ),
-                                  const PopupMenuItem<String>(
+                                  PopupMenuItem<String>(
                                     value: 'rename',
                                     child: Row(
                                       children: [
                                         Icon(
                                           Icons.edit_outlined,
+                                          color: iconColor,
                                         ),
-                                        SizedBox(width: 10),
-                                        Text('Edit nama'),
+                                        const SizedBox(
+                                          width: 10,
+                                        ),
+                                        const Text('Edit nama'),
                                       ],
                                     ),
                                   ),
                                   if (store.accounts.length >
                                       1)
-                                    const PopupMenuItem<
-                                        String>(
+                                    PopupMenuItem<String>(
                                       value: 'delete',
                                       child: Row(
                                         children: [
                                           Icon(
                                             Icons
                                                 .delete_outline,
+                                            color: iconColor,
                                           ),
-                                          SizedBox(width: 10),
-                                          Text('Hapus'),
+                                          const SizedBox(
+                                            width: 10,
+                                          ),
+                                          const Text('Hapus'),
                                         ],
                                       ),
                                     ),
@@ -1281,7 +1307,10 @@ class _SettingsPageState extends State<SettingsPage> {
                   store,
                 );
               },
-              icon: const Icon(Icons.add),
+              icon: Icon(
+                Icons.add,
+                color: iconColor,
+              ),
               label: const Padding(
                 padding: EdgeInsets.symmetric(
                   vertical: 14,
@@ -1306,8 +1335,8 @@ class _SettingsPageState extends State<SettingsPage> {
               activeAccount == null
                   ? 'Pilih akun untuk mengelola kategori.'
                   : 'Kategori khusus untuk akun "$activeAccount".',
-              style: const TextStyle(
-                color: Color(0xFF9A9DA3),
+              style: TextStyle(
+                color: colorScheme.onSurfaceVariant,
               ),
             ),
             const SizedBox(height: 20),
@@ -1327,12 +1356,14 @@ class _SettingsPageState extends State<SettingsPage> {
                 builder: (context, snapshot) {
                   if (snapshot.connectionState ==
                       ConnectionState.waiting) {
-                    return const Padding(
-                      padding: EdgeInsets.symmetric(
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(
                         vertical: 24,
                       ),
                       child: Center(
-                        child: CircularProgressIndicator(),
+                        child: CircularProgressIndicator(
+                          color: iconColor,
+                        ),
                       ),
                     );
                   }
@@ -1358,9 +1389,10 @@ class _SettingsPageState extends State<SettingsPage> {
                         padding: const EdgeInsets.all(20),
                         child: Column(
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.category_outlined,
                               size: 42,
+                              color: iconColor,
                             ),
                             const SizedBox(height: 12),
                             const Text(
@@ -1371,12 +1403,13 @@ class _SettingsPageState extends State<SettingsPage> {
                               ),
                             ),
                             const SizedBox(height: 6),
-                            const Text(
+                            Text(
                               'Tambahkan kategori pertama untuk '
                               'akun ini.',
                               textAlign: TextAlign.center,
                               style: TextStyle(
-                                color: Color(0xFF9A9DA3),
+                                color: colorScheme
+                                    .onSurfaceVariant,
                                 fontSize: 13,
                               ),
                             ),
@@ -1388,7 +1421,10 @@ class _SettingsPageState extends State<SettingsPage> {
                                   store,
                                 );
                               },
-                              icon: const Icon(Icons.add),
+                              icon: Icon(
+                                Icons.add,
+                                color: iconColor,
+                              ),
                               label: const Text(
                                 'Tambah Kategori',
                               ),
@@ -1415,16 +1451,15 @@ class _SettingsPageState extends State<SettingsPage> {
                                   height: 44,
                                   decoration:
                                       BoxDecoration(
-                                    color: const Color(
-                                      0xFF30343A,
-                                    ),
+                                    color: iconBackground,
                                     borderRadius:
                                         BorderRadius.circular(
                                       14,
                                     ),
                                   ),
-                                  child: const Icon(
+                                  child: Icon(
                                     Icons.category_outlined,
+                                    color: iconColor,
                                   ),
                                 ),
                                 title: Text(
@@ -1437,11 +1472,11 @@ class _SettingsPageState extends State<SettingsPage> {
                                         FontWeight.w700,
                                   ),
                                 ),
-                                subtitle: const Text(
+                                subtitle: Text(
                                   'Kategori transaksi',
                                   style: TextStyle(
-                                    color:
-                                        Color(0xFF777B82),
+                                    color: colorScheme
+                                        .onSurfaceVariant,
                                     fontSize: 12,
                                   ),
                                 ),
@@ -1449,6 +1484,7 @@ class _SettingsPageState extends State<SettingsPage> {
                                     PopupMenuButton<String>(
                                   tooltip:
                                       'Menu kategori',
+                                  iconColor: iconColor,
                                   onSelected:
                                       (value) async {
                                     if (value == 'rename') {
@@ -1466,7 +1502,7 @@ class _SettingsPageState extends State<SettingsPage> {
                                       );
                                     }
                                   },
-                                  itemBuilder: (_) => const [
+                                  itemBuilder: (_) => [
                                     PopupMenuItem<String>(
                                       value: 'rename',
                                       child: Row(
@@ -1474,9 +1510,12 @@ class _SettingsPageState extends State<SettingsPage> {
                                           Icon(
                                             Icons
                                                 .edit_outlined,
+                                            color: iconColor,
                                           ),
-                                          SizedBox(width: 10),
-                                          Text('Edit'),
+                                          const SizedBox(
+                                            width: 10,
+                                          ),
+                                          const Text('Edit'),
                                         ],
                                       ),
                                     ),
@@ -1487,9 +1526,12 @@ class _SettingsPageState extends State<SettingsPage> {
                                           Icon(
                                             Icons
                                                 .delete_outline,
+                                            color: iconColor,
                                           ),
-                                          SizedBox(width: 10),
-                                          Text('Hapus'),
+                                          const SizedBox(
+                                            width: 10,
+                                          ),
+                                          const Text('Hapus'),
                                         ],
                                       ),
                                     ),
@@ -1508,7 +1550,10 @@ class _SettingsPageState extends State<SettingsPage> {
                             store,
                           );
                         },
-                        icon: const Icon(Icons.add),
+                        icon: Icon(
+                          Icons.add,
+                          color: iconColor,
+                        ),
                         label: const Padding(
                           padding: EdgeInsets.symmetric(
                             vertical: 12,
@@ -1526,26 +1571,31 @@ class _SettingsPageState extends State<SettingsPage> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: const Color(0xFF1C1E22),
+                color: Color.alphaBlend(
+                  colorScheme.primary.withValues(
+                    alpha: 0.10,
+                  ),
+                  colorScheme.surfaceContainerHighest,
+                ),
                 borderRadius: BorderRadius.circular(18),
               ),
-              child: const Row(
+              child: Row(
                 crossAxisAlignment:
                     CrossAxisAlignment.start,
                 children: [
                   Icon(
                     Icons.info_outline,
                     size: 20,
-                    color: Color(0xFF9A9DA3),
+                    color: iconColor,
                   ),
-                  SizedBox(width: 12),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Text(
                       'Kategori yang masih digunakan oleh transaksi '
                       'tidak dapat dihapus. Edit kategori akan otomatis '
                       'memperbarui transaksi yang menggunakannya.',
                       style: TextStyle(
-                        color: Color(0xFF9A9DA3),
+                        color: colorScheme.onSurfaceVariant,
                         fontSize: 12,
                         height: 1.4,
                       ),
@@ -1565,10 +1615,10 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
             ),
             const SizedBox(height: 6),
-            const Text(
+            Text(
               'Pilih tampilan gelap atau terang untuk Cimpli Finance.',
               style: TextStyle(
-                color: Color(0xFF9A9DA3),
+                color: colorScheme.onSurfaceVariant,
               ),
             ),
             const SizedBox(height: 14),
@@ -1591,6 +1641,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       themeController.isDarkMode
                           ? Icons.dark_mode_outlined
                           : Icons.light_mode_outlined,
+                      color: iconColor,
                     ),
                     title: const Text(
                       'Mode Gelap',
@@ -1618,10 +1669,10 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
             ),
             const SizedBox(height: 6),
-            const Text(
+            Text(
               'Simpan salinan data keuangan untuk ganti HP atau reinstall aplikasi.',
               style: TextStyle(
-                color: Color(0xFF9A9DA3),
+                color: colorScheme.onSurfaceVariant,
               ),
             ),
             const SizedBox(height: 14),
@@ -1636,11 +1687,13 @@ class _SettingsPageState extends State<SettingsPage> {
                         width: 48,
                         height: 48,
                         decoration: BoxDecoration(
-                          color: const Color(0xFF30343A),
-                          borderRadius: BorderRadius.circular(15),
+                          color: iconBackground,
+                          borderRadius:
+                              BorderRadius.circular(15),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.backup_outlined,
+                          color: iconColor,
                         ),
                       ),
                       title: const Text(
@@ -1652,8 +1705,9 @@ class _SettingsPageState extends State<SettingsPage> {
                       subtitle: const Text(
                         'Simpan seluruh akun, transaksi, kategori, transaksi berulang, dan anggaran.',
                       ),
-                      trailing: const Icon(
+                      trailing: Icon(
                         Icons.chevron_right,
+                        color: iconColor,
                       ),
                       onTap: _backupData,
                     ),
@@ -1664,11 +1718,13 @@ class _SettingsPageState extends State<SettingsPage> {
                         width: 48,
                         height: 48,
                         decoration: BoxDecoration(
-                          color: const Color(0xFF30343A),
-                          borderRadius: BorderRadius.circular(15),
+                          color: iconBackground,
+                          borderRadius:
+                              BorderRadius.circular(15),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.restore_outlined,
+                          color: iconColor,
                         ),
                       ),
                       title: const Text(
@@ -1680,8 +1736,9 @@ class _SettingsPageState extends State<SettingsPage> {
                       subtitle: const Text(
                         'Pulihkan data dari file backup JSON yang sebelumnya disimpan.',
                       ),
-                      trailing: const Icon(
+                      trailing: Icon(
                         Icons.chevron_right,
+                        color: iconColor,
                       ),
                       onTap: () async {
                         await _restoreData(store);
@@ -1702,26 +1759,29 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
             ),
             const SizedBox(height: 6),
-            const Text(
+            Text(
               'Lindungi Cimpli Finance dengan kunci perangkat atau sidik jari.',
               style: TextStyle(
-                color: Color(0xFF9A9DA3),
+                color: colorScheme.onSurfaceVariant,
               ),
             ),
             const SizedBox(height: 14),
             Card(
               child: _loadingAppLock
-                  ? const Padding(
-                      padding: EdgeInsets.all(18),
-                      child: Center(
-                        child: CircularProgressIndicator(),
+                  ? Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(18),
+                        child: CircularProgressIndicator(
+                          color: iconColor,
+                        ),
                       ),
                     )
                   : SwitchListTile(
                       value: _appLockEnabled,
                       onChanged: _setAppLock,
-                      secondary: const Icon(
+                      secondary: Icon(
                         Icons.lock_outline_rounded,
+                        color: iconColor,
                       ),
                       title: const Text(
                         'Kunci Aplikasi',
