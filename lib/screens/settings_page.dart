@@ -1037,6 +1037,55 @@ class _SettingsPageState extends State<SettingsPage> {
         '${twoDigits(dateTime.second)}';
   }
 
+  Widget _sectionHeader(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String subtitle,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            color: colorScheme.primary.withValues(alpha: 0.10),
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Icon(icon, color: colorScheme.primary),
+        ),
+        const SizedBox(width: 14),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                  height: 1.15,
+                ),
+              ),
+              const SizedBox(height: 5),
+              Text(
+                subtitle,
+                style: TextStyle(
+                  color: colorScheme.onSurfaceVariant,
+                  fontSize: 13,
+                  height: 1.35,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final store = FinanceScope.of(context);
@@ -1052,16 +1101,15 @@ class _SettingsPageState extends State<SettingsPage> {
           title: const Text('Pengaturan'),
         ),
         body: ListView(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 110),
           children: [
-            const Text(
-              'Akun Keuangan',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w800,
-              ),
+            _sectionHeader(
+              context,
+              icon: Icons.account_balance_wallet_outlined,
+              title: 'Akun Keuangan',
+              subtitle: 'Pilih akun aktif dan kelola seluruh keuangan Anda.',
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 18),
             Text(
               'Pilih akun aktif dan kelola seluruh keuangan Anda.',
               style: TextStyle(
@@ -1070,6 +1118,7 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
             const SizedBox(height: 20),
             Card(
+              clipBehavior: Clip.antiAlias,
               child: Padding(
                 padding: const EdgeInsets.all(18),
                 child: Row(
@@ -1144,6 +1193,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     padding:
                         const EdgeInsets.only(bottom: 12),
                     child: Card(
+                      clipBehavior: Clip.antiAlias,
                       child: InkWell(
                         borderRadius:
                             BorderRadius.circular(22),
@@ -1323,14 +1373,14 @@ class _SettingsPageState extends State<SettingsPage> {
             const SizedBox(height: 34),
             const Divider(),
             const SizedBox(height: 30),
-            const Text(
-              'Kategori Transaksi',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w800,
-              ),
+            _sectionHeader(
+              context,
+              icon: Icons.category_outlined,
+              title: 'Kategori Transaksi',
+              subtitle: activeAccount == null
+                  ? 'Pilih akun untuk mengelola kategori.'
+                  : 'Kategori khusus untuk akun \"$activeAccount\".',
             ),
-            const SizedBox(height: 6),
             Text(
               activeAccount == null
                   ? 'Pilih akun untuk mengelola kategori.'
@@ -1445,6 +1495,7 @@ class _SettingsPageState extends State<SettingsPage> {
                               bottom: 10,
                             ),
                             child: Card(
+                              clipBehavior: Clip.antiAlias,
                               child: ListTile(
                                 leading: Container(
                                   width: 44,
@@ -1607,19 +1658,11 @@ class _SettingsPageState extends State<SettingsPage> {
             const SizedBox(height: 28),
             const Divider(),
             const SizedBox(height: 30),
-            const Text(
-              'Tampilan',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              'Pilih tampilan gelap atau terang untuk Cimpli Finance.',
-              style: TextStyle(
-                color: colorScheme.onSurfaceVariant,
-              ),
+            _sectionHeader(
+              context,
+              icon: Icons.palette_outlined,
+              title: 'Tampilan',
+              subtitle: 'Pilih tampilan gelap atau terang untuk Cimpli Finance.',
             ),
             const SizedBox(height: 14),
             Builder(
@@ -1661,22 +1704,15 @@ class _SettingsPageState extends State<SettingsPage> {
             const SizedBox(height: 28),
             const Divider(),
             const SizedBox(height: 30),
-            const Text(
-              'Backup & Restore',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              'Simpan salinan data keuangan untuk ganti HP atau reinstall aplikasi.',
-              style: TextStyle(
-                color: colorScheme.onSurfaceVariant,
-              ),
+            _sectionHeader(
+              context,
+              icon: Icons.cloud_sync_outlined,
+              title: 'Backup & Restore',
+              subtitle: 'Simpan salinan data keuangan untuk ganti HP atau reinstall aplikasi.',
             ),
             const SizedBox(height: 14),
             Card(
+              clipBehavior: Clip.antiAlias,
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
@@ -1751,19 +1787,11 @@ class _SettingsPageState extends State<SettingsPage> {
             const SizedBox(height: 28),
             const Divider(),
             const SizedBox(height: 30),
-            const Text(
-              'Keamanan',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              'Lindungi Cimpli Finance dengan kunci perangkat atau sidik jari.',
-              style: TextStyle(
-                color: colorScheme.onSurfaceVariant,
-              ),
+            _sectionHeader(
+              context,
+              icon: Icons.security_outlined,
+              title: 'Keamanan',
+              subtitle: 'Lindungi Cimpli Finance dengan kunci perangkat atau sidik jari.',
             ),
             const SizedBox(height: 14),
             Card(
@@ -1794,7 +1822,6 @@ class _SettingsPageState extends State<SettingsPage> {
                       ),
                     ),
             ),
-            const SizedBox(height: 110),
           ],
         ),
       ),
