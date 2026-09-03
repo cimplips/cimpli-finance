@@ -59,7 +59,7 @@ class _HomePageState extends State<HomePage> {
         },
         backgroundColor: Theme.of(context).colorScheme.surface,
         surfaceTintColor: Colors.transparent,
-        indicatorColor: Theme.of(context).colorScheme.secondaryContainer,
+        indicatorColor: Theme.of(context).colorScheme.primary,
         destinations: const <NavigationDestination>[
           NavigationDestination(
             icon: Icon(Icons.dashboard_outlined),
