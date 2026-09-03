@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../core/finance_scope.dart';
 import '../services/finance_store.dart';
+import '../services/app_lock_service.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({
@@ -15,6 +16,86 @@ class SettingsPage extends StatefulWidget {
 class _SettingsPageState extends State<SettingsPage> {
   final TextEditingController _controller =
       TextEditingController();
+  final AppLockService _lockService = AppLockService();
+
+  bool _appLockEnabled = false;
+  bool _loadingAppLock = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAppLockState();
+  }
+
+  Future<void> _loadAppLockState() async {
+    final enabled = await _lockService.isEnabled();
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _appLockEnabled = enabled;
+      _loadingAppLock = false;
+    });
+  }
+
+  Future<void> _setAppLock(bool enabled) async {
+    if (!enabled) {
+      await _lockService.setEnabled(false);
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _appLockEnabled = false;
+      });
+
+      _showMessage('Kunci aplikasi dinonaktifkan.');
+      return;
+    }
+
+    final supported = await _lockService.isDeviceSupported();
+
+    if (!mounted) {
+      return;
+    }
+
+    if (!supported) {
+      _showMessage(
+        'Perangkat belum mendukung PIN, pola, password, atau biometrik untuk kunci aplikasi.',
+      );
+      return;
+    }
+
+    final authenticated = await _lockService.authenticate();
+
+    if (!mounted) {
+      return;
+    }
+
+    if (!authenticated) {
+      _showMessage(
+        'Verifikasi gagal atau dibatalkan. Kunci aplikasi belum diaktifkan.',
+      );
+      return;
+    }
+
+    await _lockService.setEnabled(true);
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _appLockEnabled = true;
+    });
+
+    _showMessage(
+      'Kunci aplikasi aktif. Gunakan PIN/kunci perangkat atau sidik jari.',
+    );
+  }
 
   @override
   void dispose() {
@@ -1245,6 +1326,49 @@ class _SettingsPageState extends State<SettingsPage> {
                   ),
                 ],
               ),
+            ),
+            const SizedBox(height: 28),
+            const Divider(),
+            const SizedBox(height: 30),
+            const Text(
+              'Keamanan',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              'Lindungi Cimpli Finance dengan kunci perangkat atau sidik jari.',
+              style: TextStyle(
+                color: Color(0xFF9A9DA3),
+              ),
+            ),
+            const SizedBox(height: 14),
+            Card(
+              child: _loadingAppLock
+                  ? const Padding(
+                      padding: EdgeInsets.all(18),
+                      child: Center(
+                        child: CircularProgressIndicator(),
+                      ),
+                    )
+                  : SwitchListTile(
+                      value: _appLockEnabled,
+                      onChanged: _setAppLock,
+                      secondary: const Icon(
+                        Icons.lock_outline_rounded,
+                      ),
+                      title: const Text(
+                        'Kunci Aplikasi',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      subtitle: const Text(
+                        'Gunakan PIN/pola/password perangkat atau sidik jari saat membuka aplikasi.',
+                      ),
+                    ),
             ),
             const SizedBox(height: 110),
           ],
