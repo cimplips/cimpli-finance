@@ -57,9 +57,9 @@ class _HomePageState extends State<HomePage> {
             _currentIndex = index;
           });
         },
-        backgroundColor: const Color(0xFF1C1E22),
+        backgroundColor: Theme.of(context).colorScheme.surface,
         surfaceTintColor: Colors.transparent,
-        indicatorColor: const Color(0xFF34373D),
+        indicatorColor: Theme.of(context).colorScheme.secondaryContainer,
         destinations: const <NavigationDestination>[
           NavigationDestination(
             icon: Icon(Icons.dashboard_outlined),
