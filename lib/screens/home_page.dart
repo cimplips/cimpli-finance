@@ -20,7 +20,6 @@ class _HomePageState extends State<HomePage> {
 
   Color get _background => Theme.of(context).scaffoldBackgroundColor;
   Color get _surface => Theme.of(context).colorScheme.surface;
-  Color get _primary => Theme.of(context).colorScheme.primary;
 
   static const List<Widget> _pages = <Widget>[
     DashboardPage(),
@@ -30,41 +29,13 @@ class _HomePageState extends State<HomePage> {
     SettingsPage(),
   ];
 
-  Future<void> _openRecurringTransactions() async {
-    await Navigator.pushNamed(
-      context,
-      '/recurring-transactions',
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    final isSettings = _currentIndex == 4;
-
     return Scaffold(
       backgroundColor: _background,
       body: SafeArea(
         child: _pages[_currentIndex],
       ),
-      floatingActionButton: isSettings
-          ? Padding(
-              padding: const EdgeInsets.only(right: 4, bottom: 4),
-              child: FloatingActionButton.extended(
-                elevation: 0,
-                backgroundColor: _primary,
-                foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(18),
-                ),
-                onPressed: _openRecurringTransactions,
-                icon: const Icon(Icons.repeat_rounded),
-                label: const Text(
-                  'Transaksi Berulang',
-                  style: TextStyle(fontWeight: FontWeight.w700),
-                ),
-              ),
-            )
-          : null,
       bottomNavigationBar: NavigationBar(
         elevation: 0,
         height: 78,
