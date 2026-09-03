@@ -25,12 +25,6 @@ class _SettingsPageState extends State<SettingsPage> {
   bool _appLockEnabled = false;
   bool _loadingAppLock = true;
 
-  bool get _isDark => Theme.of(context).brightness == Brightness.dark;
-  Color get _background => _isDark ? const Color(0xFF2C2F34) : const Color(0xFFF7F8FC);
-  Color get _surface => _isDark ? const Color(0xFF36393F) : Colors.white;
-  Color get _surfaceSoft => _isDark ? const Color(0xFF40434A) : const Color(0xFFF1F4FA);
-  Color get _border => _isDark ? const Color(0xFF50535A) : const Color(0xFFE1E6EF);
-
   @override
   void initState() {
     super.initState();
@@ -140,9 +134,6 @@ class _SettingsPageState extends State<SettingsPage> {
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
-          ),
           title: const Text('Tambah Akun Keuangan'),
           content: TextField(
             controller: _controller,
@@ -255,9 +246,6 @@ class _SettingsPageState extends State<SettingsPage> {
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
-          ),
           title: const Text('Edit Nama Akun'),
           content: TextField(
             controller: _controller,
@@ -387,9 +375,6 @@ class _SettingsPageState extends State<SettingsPage> {
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
-          ),
           title: const Text('Hapus Akun?'),
           content: Text(
             'Akun "$name" beserta seluruh transaksi di dalamnya '
@@ -483,9 +468,6 @@ class _SettingsPageState extends State<SettingsPage> {
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
-          ),
           title: const Text('Tambah Kategori'),
           content: TextField(
             controller: _controller,
@@ -609,9 +591,6 @@ class _SettingsPageState extends State<SettingsPage> {
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
-          ),
           title: const Text('Edit Kategori'),
           content: TextField(
             controller: _controller,
@@ -760,9 +739,6 @@ class _SettingsPageState extends State<SettingsPage> {
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
-          ),
           title: const Text('Hapus Kategori?'),
           content: Text(
             'Kategori "$name" akan dihapus dari akun ini.',
@@ -915,9 +891,6 @@ class _SettingsPageState extends State<SettingsPage> {
         context: context,
         builder: (dialogContext) {
           return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
-          ),
             title: const Text('Restore Data?'),
             content: Text(
               'Data keuangan saat ini akan diganti dengan isi backup. '
@@ -996,24 +969,16 @@ class _SettingsPageState extends State<SettingsPage> {
 
     return SafeArea(
       child: Scaffold(
-        backgroundColor: _background,
         appBar: AppBar(
-          backgroundColor: _background,
-          surfaceTintColor: Colors.transparent,
-          elevation: 0,
-          titleSpacing: 20,
-          title: const Text(
-            'Pengaturan',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800),
-          ),
+          title: const Text('Pengaturan'),
         ),
         body: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 110),
+          padding: const EdgeInsets.all(20),
           children: [
             const Text(
               'Akun Keuangan',
               style: TextStyle(
-                fontSize: 20,
+                fontSize: 22,
                 fontWeight: FontWeight.w800,
               ),
             ),
@@ -1026,13 +991,6 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
             const SizedBox(height: 20),
             Card(
-              color: _surface,
-              surfaceTintColor: Colors.transparent,
-              clipBehavior: Clip.antiAlias,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-                side: BorderSide(color: _border),
-              ),
               child: Padding(
                 padding: const EdgeInsets.all(18),
                 child: Row(
@@ -1041,7 +999,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       width: 52,
                       height: 52,
                       decoration: BoxDecoration(
-                        color: _surfaceSoft,
+                        color: const Color(0xFF30343A),
                         borderRadius:
                             BorderRadius.circular(16),
                       ),
@@ -1085,14 +1043,7 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
             const SizedBox(height: 24),
             if (store.accounts.isEmpty)
-              Card(
-                color: _surface,
-                surfaceTintColor: Colors.transparent,
-                clipBehavior: Clip.antiAlias,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                  side: BorderSide(color: _border),
-                ),
+              const Card(
                 child: Padding(
                   padding: EdgeInsets.all(20),
                   child: Text(
@@ -1288,7 +1239,7 @@ class _SettingsPageState extends State<SettingsPage> {
             const Text(
               'Kategori Transaksi',
               style: TextStyle(
-                fontSize: 20,
+                fontSize: 22,
                 fontWeight: FontWeight.w800,
               ),
             ),
@@ -1303,14 +1254,7 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
             const SizedBox(height: 20),
             if (activeAccount == null)
-              Card(
-                color: _surface,
-                surfaceTintColor: Colors.transparent,
-                clipBehavior: Clip.antiAlias,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                  side: BorderSide(color: _border),
-                ),
+              const Card(
                 child: Padding(
                   padding: EdgeInsets.all(20),
                   child: Text(
@@ -1524,7 +1468,7 @@ class _SettingsPageState extends State<SettingsPage> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: _surfaceSoft,
+                color: const Color(0xFF1C1E22),
                 borderRadius: BorderRadius.circular(18),
               ),
               child: const Row(
@@ -1558,7 +1502,7 @@ class _SettingsPageState extends State<SettingsPage> {
             const Text(
               'Tampilan',
               style: TextStyle(
-                fontSize: 20,
+                fontSize: 22,
                 fontWeight: FontWeight.w800,
               ),
             ),
@@ -1611,7 +1555,7 @@ class _SettingsPageState extends State<SettingsPage> {
             const Text(
               'Backup & Restore',
               style: TextStyle(
-                fontSize: 20,
+                fontSize: 22,
                 fontWeight: FontWeight.w800,
               ),
             ),
@@ -1624,13 +1568,6 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
             const SizedBox(height: 14),
             Card(
-              color: _surface,
-              surfaceTintColor: Colors.transparent,
-              clipBehavior: Clip.antiAlias,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-                side: BorderSide(color: _border),
-              ),
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
@@ -1641,7 +1578,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         width: 48,
                         height: 48,
                         decoration: BoxDecoration(
-                          color: _surfaceSoft,
+                          color: const Color(0xFF30343A),
                           borderRadius: BorderRadius.circular(15),
                         ),
                         child: const Icon(
@@ -1669,7 +1606,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         width: 48,
                         height: 48,
                         decoration: BoxDecoration(
-                          color: _surfaceSoft,
+                          color: const Color(0xFF30343A),
                           borderRadius: BorderRadius.circular(15),
                         ),
                         child: const Icon(
@@ -1702,7 +1639,7 @@ class _SettingsPageState extends State<SettingsPage> {
             const Text(
               'Keamanan',
               style: TextStyle(
-                fontSize: 20,
+                fontSize: 22,
                 fontWeight: FontWeight.w800,
               ),
             ),
@@ -1715,13 +1652,6 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
             const SizedBox(height: 14),
             Card(
-              color: _surface,
-              surfaceTintColor: Colors.transparent,
-              clipBehavior: Clip.antiAlias,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-                side: BorderSide(color: _border),
-              ),
               child: _loadingAppLock
                   ? const Padding(
                       padding: EdgeInsets.all(18),
