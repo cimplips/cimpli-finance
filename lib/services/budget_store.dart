@@ -61,7 +61,8 @@ class BudgetStore extends ChangeNotifier {
 
     _db = await openDatabase(
       dbPath,
-      version: 2,
+      version: 3,
+      singleInstance: false,
       onOpen: (db) async {
         await db.execute('''
           CREATE TABLE IF NOT EXISTS budgets(
@@ -391,9 +392,13 @@ class BudgetStore extends ChangeNotifier {
   }
 
   Future<void> close() async {
-    // BudgetStore menggunakan database yang sama dengan FinanceStore.
-    // Jangan menutup koneksi SQLite di sini karena dapat membuat
-    // FinanceStore mengalami "database_closed".
+    final db = _db;
+
+    if (db == null) {
+      return;
+    }
+
+    await db.close();
     _db = null;
   }
 
