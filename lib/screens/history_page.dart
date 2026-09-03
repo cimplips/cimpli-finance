@@ -328,14 +328,19 @@ class _HistoryPageState extends State<HistoryPage> {
   }
 
   void _showFilterSheet() {
+    final colorScheme = Theme.of(context).colorScheme;
+
     showModalBottomSheet<void>(
       context: context,
-      backgroundColor: const Color(0xFF1C1E22),
+      backgroundColor: colorScheme.surface,
       showDragHandle: true,
       isScrollControlled: true,
       builder: (sheetContext) {
         return StatefulBuilder(
           builder: (context, setSheetState) {
+            final sheetColorScheme =
+                Theme.of(context).colorScheme;
+
             return SafeArea(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(
@@ -347,7 +352,8 @@ class _HistoryPageState extends State<HistoryPage> {
                 child: SingleChildScrollView(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment:
+                        CrossAxisAlignment.start,
                     children: [
                       const Text(
                         'Filter transaksi',
@@ -357,10 +363,10 @@ class _HistoryPageState extends State<HistoryPage> {
                         ),
                       ),
                       const SizedBox(height: 20),
-                      const Text(
+                      Text(
                         'Periode',
                         style: TextStyle(
-                          color: Color(0xFF9A9DA3),
+                          color: sheetColorScheme.onSurfaceVariant,
                           fontSize: 13,
                         ),
                       ),
@@ -417,23 +423,25 @@ class _HistoryPageState extends State<HistoryPage> {
                           setSheetState(() {});
                         },
                       ),
-                      if (_selectedPeriod == 'Rentang tanggal' &&
+                      if (_selectedPeriod ==
+                              'Rentang tanggal' &&
                           _startDate != null &&
                           _endDate != null) ...[
                         const SizedBox(height: 8),
                         Text(
                           _periodLabel(),
-                          style: const TextStyle(
-                            color: Color(0xFFB8BCC2),
+                          style: TextStyle(
+                            color:
+                                sheetColorScheme.onSurfaceVariant,
                             fontSize: 13,
                           ),
                         ),
                       ],
                       const SizedBox(height: 16),
-                      const Text(
+                      Text(
                         'Jenis transaksi',
                         style: TextStyle(
-                          color: Color(0xFF9A9DA3),
+                          color: sheetColorScheme.onSurfaceVariant,
                           fontSize: 13,
                         ),
                       ),
@@ -464,10 +472,10 @@ class _HistoryPageState extends State<HistoryPage> {
                         },
                       ),
                       const SizedBox(height: 16),
-                      const Text(
+                      Text(
                         'Kategori',
                         style: TextStyle(
-                          color: Color(0xFF9A9DA3),
+                          color: sheetColorScheme.onSurfaceVariant,
                           fontSize: 13,
                         ),
                       ),
@@ -476,17 +484,21 @@ class _HistoryPageState extends State<HistoryPage> {
                         future: _loadCategories(),
                         builder: (context, snapshot) {
                           final categories =
-                              snapshot.data ?? <String>['Semua'];
+                              snapshot.data ??
+                                  <String>['Semua'];
 
                           final selected =
-                              categories.contains(_selectedCategory)
+                              categories.contains(
+                                _selectedCategory,
+                              )
                                   ? _selectedCategory
                                   : 'Semua';
 
                           return DropdownButtonFormField<String>(
                             initialValue: selected,
                             isExpanded: true,
-                            decoration: const InputDecoration(
+                            decoration:
+                                const InputDecoration(
                               labelText: 'Kategori',
                             ),
                             items: categories
@@ -558,8 +570,7 @@ class _HistoryPageState extends State<HistoryPage> {
     final buffer = StringBuffer();
 
     for (var i = 0; i < digits.length; i++) {
-      if (i > 0 &&
-          (digits.length - i) % 3 == 0) {
+      if (i > 0 && (digits.length - i) % 3 == 0) {
         buffer.write('.');
       }
 
@@ -610,6 +621,7 @@ class _HistoryPageState extends State<HistoryPage> {
   Widget build(BuildContext context) {
     final store = FinanceScope.of(context);
     final account = store.activeAccount;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return RefreshIndicator(
       onRefresh: () async {
@@ -651,8 +663,8 @@ class _HistoryPageState extends State<HistoryPage> {
           const SizedBox(height: 4),
           Text(
             account ?? 'Belum ada akun',
-            style: const TextStyle(
-              color: Color(0xFF9A9DA3),
+            style: TextStyle(
+              color: colorScheme.onSurfaceVariant,
             ),
           ),
           const SizedBox(height: 16),
@@ -814,8 +826,25 @@ class _TransactionItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     final isIncome =
         transaction.type == TransactionType.income;
+
+    final incomeColor = const Color(0xFF4F8A68);
+    final expenseColor = const Color(0xFFB85C5C);
+
+    final accentColor =
+        isIncome ? incomeColor : expenseColor;
+
+    final iconBackground = isIncome
+        ? const Color(0xFFEAF5EE)
+        : const Color(0xFFF9ECEC);
+
+    final darkIconBackground = isIncome
+        ? const Color(0xFF294035)
+        : const Color(0xFF493033);
+
+    final cardColor = colorScheme.surfaceContainerLow;
 
     return Container(
       padding: const EdgeInsets.fromLTRB(
@@ -825,18 +854,28 @@ class _TransactionItem extends StatelessWidget {
         14,
       ),
       decoration: BoxDecoration(
-        color: const Color(0xFF1C1E22),
+        color: cardColor,
         borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: colorScheme.outlineVariant.withValues(
+            alpha: 0.45,
+          ),
+        ),
       ),
       child: Row(
         children: [
           CircleAvatar(
             radius: 22,
-            backgroundColor: const Color(0xFF34373D),
+            backgroundColor:
+                Theme.of(context).brightness == Brightness.dark
+                    ? darkIconBackground
+                    : iconBackground,
             child: Icon(
               isIncome
                   ? Icons.arrow_downward_rounded
                   : Icons.arrow_upward_rounded,
+              color: accentColor,
+              size: 21,
             ),
           ),
           const SizedBox(width: 14),
@@ -858,15 +897,16 @@ class _TransactionItem extends StatelessWidget {
                   '${transaction.category} • ${formatDate(transaction.date)}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Color(0xFF9A9DA3),
+                  style: TextStyle(
+                    color: colorScheme.onSurfaceVariant,
                     fontSize: 12,
                   ),
                 ),
                 const SizedBox(height: 5),
                 Text(
                   '${isIncome ? '+' : '-'}${formatRupiah(transaction.amount)}',
-                  style: const TextStyle(
+                  style: TextStyle(
+                    color: accentColor,
                     fontWeight: FontWeight.w800,
                     fontSize: 14,
                   ),
@@ -921,6 +961,8 @@ class _HistoryMessage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Padding(
       padding: const EdgeInsets.only(
         top: 70,
@@ -930,7 +972,7 @@ class _HistoryMessage extends StatelessWidget {
           Icon(
             icon,
             size: 48,
-            color: const Color(0xFF777B82),
+            color: colorScheme.onSurfaceVariant,
           ),
           const SizedBox(height: 14),
           Text(
@@ -945,8 +987,8 @@ class _HistoryMessage extends StatelessWidget {
           Text(
             message,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Color(0xFF9A9DA3),
+            style: TextStyle(
+              color: colorScheme.onSurfaceVariant,
               fontSize: 13,
             ),
           ),
