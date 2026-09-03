@@ -35,112 +35,170 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    final background = isDark
+        ? const Color(0xFF0D1117)
+        : const Color(0xFFF6F8FB);
 
     final navigationBackground = isDark
-        ? const Color(0xFF20242A)
+        ? const Color(0xFF151A21)
         : Colors.white;
 
-    final navigationColor = isDark
-        ? const Color(0xFFB8D0F2)
-        : const Color(0xFF3F6FAE);
+    final navigationForeground = isDark
+        ? const Color(0xFFE8EEF8)
+        : const Color(0xFF1B2433);
+
+    final navigationMuted = isDark
+        ? const Color(0xFF8D99AA)
+        : const Color(0xFF697586);
 
     final indicatorColor = isDark
-        ? const Color(0xFF3A506F)
-        : const Color(0xFFE7EFFC);
+        ? const Color(0xFF293A55)
+        : const Color(0xFFEAF0FF);
+
+    final borderColor = isDark
+        ? const Color(0xFF29313D)
+        : const Color(0xFFE2E7EF);
 
     return Scaffold(
+      backgroundColor: background,
       body: SafeArea(
-        child: _pages[_currentIndex],
+        bottom: false,
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 180),
+          switchInCurve: Curves.easeOut,
+          switchOutCurve: Curves.easeIn,
+          child: KeyedSubtree(
+            key: ValueKey<int>(_currentIndex),
+            child: _pages[_currentIndex],
+          ),
+        ),
       ),
       floatingActionButton: _currentIndex == 4
-          ? FloatingActionButton.extended(
-              onPressed: _openRecurringTransactions,
-              icon: const Icon(
-                Icons.repeat_rounded,
-              ),
-              label: const Text(
-                'Transaksi Berulang',
+          ? Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: FloatingActionButton.extended(
+                elevation: 4,
+                onPressed: _openRecurringTransactions,
+                icon: const Icon(Icons.repeat_rounded),
+                label: const Text('Transaksi Berulang'),
               ),
             )
           : null,
-      bottomNavigationBar: NavigationBarTheme(
-        data: NavigationBarThemeData(
-          backgroundColor: navigationBackground,
-          surfaceTintColor: Colors.transparent,
-          indicatorColor: indicatorColor,
-          elevation: 0,
-          iconTheme: WidgetStatePropertyAll<IconThemeData>(
-            IconThemeData(
-              color: navigationColor,
-              size: 24,
+      floatingActionButtonLocation:
+          FloatingActionButtonLocation.endFloat,
+      bottomNavigationBar: SafeArea(
+        top: false,
+        child: Container(
+          decoration: BoxDecoration(
+            color: navigationBackground,
+            border: Border(
+              top: BorderSide(
+                color: borderColor,
+                width: 0.7,
+              ),
+            ),
+            boxShadow: [
+              if (!isDark)
+                const BoxShadow(
+                  color: Color(0x10000000),
+                  blurRadius: 18,
+                  offset: Offset(0, -5),
+                ),
+            ],
+          ),
+          child: NavigationBarTheme(
+            data: NavigationBarThemeData(
+              backgroundColor: navigationBackground,
+              surfaceTintColor: Colors.transparent,
+              indicatorColor: indicatorColor,
+              elevation: 0,
+              height: 72,
+              labelBehavior:
+                  NavigationDestinationLabelBehavior.alwaysShow,
+              iconTheme: WidgetStateProperty.resolveWith<IconThemeData>(
+                (states) {
+                  final selected = states.contains(
+                    WidgetState.selected,
+                  );
+
+                  return IconThemeData(
+                    color: selected
+                        ? navigationForeground
+                        : navigationMuted,
+                    size: selected ? 23 : 22,
+                  );
+                },
+              ),
+              labelTextStyle:
+                  WidgetStateProperty.resolveWith<TextStyle>(
+                (states) {
+                  final selected = states.contains(
+                    WidgetState.selected,
+                  );
+
+                  return TextStyle(
+                    color: selected
+                        ? navigationForeground
+                        : navigationMuted,
+                    fontSize: 10,
+                    height: 1.1,
+                    fontWeight: selected
+                        ? FontWeight.w800
+                        : FontWeight.w600,
+                  );
+                },
+              ),
+            ),
+            child: NavigationBar(
+              selectedIndex: _currentIndex,
+              onDestinationSelected: (index) {
+                if (_currentIndex == index) {
+                  return;
+                }
+
+                setState(() {
+                  _currentIndex = index;
+                });
+              },
+              backgroundColor: navigationBackground,
+              surfaceTintColor: Colors.transparent,
+              indicatorColor: indicatorColor,
+              destinations: const <NavigationDestination>[
+                NavigationDestination(
+                  icon: Icon(Icons.dashboard_outlined),
+                  selectedIcon: Icon(Icons.dashboard_rounded),
+                  label: 'Beranda',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.receipt_long_outlined),
+                  selectedIcon: Icon(Icons.receipt_long_rounded),
+                  label: 'Riwayat',
+                ),
+                NavigationDestination(
+                  icon: Icon(
+                    Icons.account_balance_wallet_outlined,
+                  ),
+                  selectedIcon: Icon(
+                    Icons.account_balance_wallet_rounded,
+                  ),
+                  label: 'Anggaran',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.bar_chart_outlined),
+                  selectedIcon: Icon(Icons.bar_chart_rounded),
+                  label: 'Laporan',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.settings_outlined),
+                  selectedIcon: Icon(Icons.settings_rounded),
+                  label: 'Pengaturan',
+                ),
+              ],
             ),
           ),
-          labelTextStyle: WidgetStatePropertyAll<TextStyle>(
-            TextStyle(
-              color: navigationColor,
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ),
-        child: NavigationBar(
-          selectedIndex: _currentIndex,
-          onDestinationSelected: (index) {
-            setState(() {
-              _currentIndex = index;
-            });
-          },
-          backgroundColor: navigationBackground,
-          surfaceTintColor: Colors.transparent,
-          indicatorColor: indicatorColor,
-          destinations: const <NavigationDestination>[
-            NavigationDestination(
-              icon: Icon(
-                Icons.dashboard_outlined,
-              ),
-              selectedIcon: Icon(
-                Icons.dashboard,
-              ),
-              label: 'Beranda',
-            ),
-            NavigationDestination(
-              icon: Icon(
-                Icons.receipt_long_outlined,
-              ),
-              selectedIcon: Icon(
-                Icons.receipt_long,
-              ),
-              label: 'Riwayat',
-            ),
-            NavigationDestination(
-              icon: Icon(
-                Icons.account_balance_wallet_outlined,
-              ),
-              selectedIcon: Icon(
-                Icons.account_balance_wallet,
-              ),
-              label: 'Anggaran',
-            ),
-            NavigationDestination(
-              icon: Icon(
-                Icons.bar_chart_outlined,
-              ),
-              selectedIcon: Icon(
-                Icons.bar_chart,
-              ),
-              label: 'Laporan',
-            ),
-            NavigationDestination(
-              icon: Icon(
-                Icons.settings_outlined,
-              ),
-              selectedIcon: Icon(
-                Icons.settings,
-              ),
-              label: 'Pengaturan',
-            ),
-          ],
         ),
       ),
     );
