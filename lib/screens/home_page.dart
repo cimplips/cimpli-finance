@@ -37,12 +37,16 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
+    final navigationBackground = isDark
+        ? const Color(0xFF20242A)
+        : Colors.white;
+
     final navigationColor = isDark
-        ? const Color(0xFFAFC7EA)
+        ? const Color(0xFFB8D0F2)
         : const Color(0xFF3F6FAE);
 
     final indicatorColor = isDark
-        ? const Color(0xFF2D3F5A)
+        ? const Color(0xFF3A506F)
         : const Color(0xFFE7EFFC);
 
     return Scaffold(
@@ -62,9 +66,10 @@ class _HomePageState extends State<HomePage> {
           : null,
       bottomNavigationBar: NavigationBarTheme(
         data: NavigationBarThemeData(
-          backgroundColor: Theme.of(context).colorScheme.surface,
+          backgroundColor: navigationBackground,
           surfaceTintColor: Colors.transparent,
           indicatorColor: indicatorColor,
+          elevation: 0,
           iconTheme: WidgetStatePropertyAll<IconThemeData>(
             IconThemeData(
               color: navigationColor,
@@ -86,15 +91,26 @@ class _HomePageState extends State<HomePage> {
               _currentIndex = index;
             });
           },
+          backgroundColor: navigationBackground,
+          surfaceTintColor: Colors.transparent,
+          indicatorColor: indicatorColor,
           destinations: const <NavigationDestination>[
             NavigationDestination(
-              icon: Icon(Icons.dashboard_outlined),
-              selectedIcon: Icon(Icons.dashboard),
+              icon: Icon(
+                Icons.dashboard_outlined,
+              ),
+              selectedIcon: Icon(
+                Icons.dashboard,
+              ),
               label: 'Beranda',
             ),
             NavigationDestination(
-              icon: Icon(Icons.receipt_long_outlined),
-              selectedIcon: Icon(Icons.receipt_long),
+              icon: Icon(
+                Icons.receipt_long_outlined,
+              ),
+              selectedIcon: Icon(
+                Icons.receipt_long,
+              ),
               label: 'Riwayat',
             ),
             NavigationDestination(
@@ -107,13 +123,21 @@ class _HomePageState extends State<HomePage> {
               label: 'Anggaran',
             ),
             NavigationDestination(
-              icon: Icon(Icons.bar_chart_outlined),
-              selectedIcon: Icon(Icons.bar_chart),
+              icon: Icon(
+                Icons.bar_chart_outlined,
+              ),
+              selectedIcon: Icon(
+                Icons.bar_chart,
+              ),
               label: 'Laporan',
             ),
             NavigationDestination(
-              icon: Icon(Icons.settings_outlined),
-              selectedIcon: Icon(Icons.settings),
+              icon: Icon(
+                Icons.settings_outlined,
+              ),
+              selectedIcon: Icon(
+                Icons.settings,
+              ),
               label: 'Pengaturan',
             ),
           ],
