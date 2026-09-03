@@ -71,10 +71,9 @@ class ThemeControllerScope extends InheritedNotifier<ThemeController> {
   const ThemeControllerScope({
     super.key,
     required ThemeController controller,
-    required Widget child,
+    required super.child,
   }) : super(
           notifier: controller,
-          child: child,
         );
 
   static ThemeController of(BuildContext context) {
