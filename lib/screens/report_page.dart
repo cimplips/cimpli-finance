@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 
 import '../core/finance_scope.dart';
@@ -71,6 +74,72 @@ class _ReportPageState extends State<ReportPage> {
         _selectedMonth.month + offset,
       );
     });
+  }
+
+  Future<void> _exportCsv(List<Tx> transactions) async {
+    if (transactions.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(content: Text('Belum ada transaksi untuk diekspor.')),
+        );
+      return;
+    }
+
+    final rows = <List<String>>[
+      ['Tanggal', 'Jenis', 'Judul', 'Kategori', 'Jumlah'],
+      ...transactions.map(
+        (tx) => <String>[
+          _formatDate(tx.date),
+          tx.type == TransactionType.income ? 'Pemasukan' : 'Pengeluaran',
+          tx.title,
+          tx.category,
+          tx.amount.round().toString(),
+        ],
+      ),
+    ];
+
+    String escapeCsv(String value) {
+      final escaped = value.replaceAll('"', '""');
+      return '"$escaped"';
+    }
+
+    final csv = rows
+        .map((row) => row.map(escapeCsv).join(','))
+        .join('\r\n');
+
+    try {
+      final directory = Directory('/storage/emulated/0/Download');
+      if (!await directory.exists()) {
+        await directory.create(recursive: true);
+      }
+
+      final accountName = FinanceScope.of(context).activeAccount ?? 'akun';
+      final safeAccount = accountName.replaceAll(RegExp(r'[^a-zA-Z0-9_-]+'), '_');
+      final fileName =
+          'cimpli_finance_${safeAccount}_${_selectedMonth.year}_${_selectedMonth.month.toString().padLeft(2, '0')}.csv';
+      final file = File('${directory.path}/$fileName');
+      await file.writeAsString('﻿$csv', encoding: utf8);
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(content: Text('Laporan CSV tersimpan di Download/$fileName.')),
+        );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Laporan gagal diekspor. Pastikan izin penyimpanan tersedia.',
+            ),
+          ),
+        );
+    }
   }
 
   String _monthName(int month) {
@@ -247,17 +316,7 @@ class _ReportPageState extends State<ReportPage> {
                   ),
                   IconButton(
                     tooltip: 'Ekspor laporan',
-                    onPressed: () {
-                      ScaffoldMessenger.of(context)
-                        ..hideCurrentSnackBar()
-                        ..showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              'Fitur ekspor laporan akan tersedia pada tahap berikutnya.',
-                            ),
-                          ),
-                        );
-                    },
+                    onPressed: () => _exportCsv(monthTransactions),
                     icon: Icon(
                       Icons.download_outlined,
                       color: theme.primaryText,
