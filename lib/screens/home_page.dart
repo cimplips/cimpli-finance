@@ -35,6 +35,16 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final navigationColor = isDark
+        ? const Color(0xFFAFC7EA)
+        : const Color(0xFF3F6FAE);
+
+    final indicatorColor = isDark
+        ? const Color(0xFF2D3F5A)
+        : const Color(0xFFE7EFFC);
+
     return Scaffold(
       body: SafeArea(
         child: _pages[_currentIndex],
@@ -50,47 +60,64 @@ class _HomePageState extends State<HomePage> {
               ),
             )
           : null,
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _currentIndex,
-        onDestinationSelected: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        surfaceTintColor: Colors.transparent,
-        indicatorColor: Theme.of(context).colorScheme.primary,
-        destinations: const <NavigationDestination>[
-          NavigationDestination(
-            icon: Icon(Icons.dashboard_outlined),
-            selectedIcon: Icon(Icons.dashboard),
-            label: 'Beranda',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.receipt_long_outlined),
-            selectedIcon: Icon(Icons.receipt_long),
-            label: 'Riwayat',
-          ),
-          NavigationDestination(
-            icon: Icon(
-              Icons.account_balance_wallet_outlined,
+      bottomNavigationBar: NavigationBarTheme(
+        data: NavigationBarThemeData(
+          backgroundColor: Theme.of(context).colorScheme.surface,
+          surfaceTintColor: Colors.transparent,
+          indicatorColor: indicatorColor,
+          iconTheme: WidgetStatePropertyAll<IconThemeData>(
+            IconThemeData(
+              color: navigationColor,
+              size: 24,
             ),
-            selectedIcon: Icon(
-              Icons.account_balance_wallet,
+          ),
+          labelTextStyle: WidgetStatePropertyAll<TextStyle>(
+            TextStyle(
+              color: navigationColor,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
             ),
-            label: 'Anggaran',
           ),
-          NavigationDestination(
-            icon: Icon(Icons.bar_chart_outlined),
-            selectedIcon: Icon(Icons.bar_chart),
-            label: 'Laporan',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.settings_outlined),
-            selectedIcon: Icon(Icons.settings),
-            label: 'Pengaturan',
-          ),
-        ],
+        ),
+        child: NavigationBar(
+          selectedIndex: _currentIndex,
+          onDestinationSelected: (index) {
+            setState(() {
+              _currentIndex = index;
+            });
+          },
+          destinations: const <NavigationDestination>[
+            NavigationDestination(
+              icon: Icon(Icons.dashboard_outlined),
+              selectedIcon: Icon(Icons.dashboard),
+              label: 'Beranda',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.receipt_long_outlined),
+              selectedIcon: Icon(Icons.receipt_long),
+              label: 'Riwayat',
+            ),
+            NavigationDestination(
+              icon: Icon(
+                Icons.account_balance_wallet_outlined,
+              ),
+              selectedIcon: Icon(
+                Icons.account_balance_wallet,
+              ),
+              label: 'Anggaran',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.bar_chart_outlined),
+              selectedIcon: Icon(Icons.bar_chart),
+              label: 'Laporan',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.settings_outlined),
+              selectedIcon: Icon(Icons.settings),
+              label: 'Pengaturan',
+            ),
+          ],
+        ),
       ),
     );
   }
