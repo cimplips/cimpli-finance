@@ -492,10 +492,10 @@ class _DashboardPageState extends State<DashboardPage> {
             physics:
                 const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.fromLTRB(
-              18,
-              14,
-              18,
-              36,
+              20,
+              16,
+              20,
+              40,
             ),
             children: [
               _DashboardHeader(
@@ -503,7 +503,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 month: _monthName(),
                 onAccountTap: _showAccountSelector,
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 18),
               _BalanceCard(
                 balance: data.balance,
                 income: data.income,
@@ -805,7 +805,7 @@ class _BalanceCard extends StatelessWidget {
       ),
       decoration: BoxDecoration(
         color: t.card,
-        borderRadius: BorderRadius.circular(25),
+        borderRadius: BorderRadius.circular(24),
         border: Border.all(
           color: t.divider,
         ),
@@ -931,7 +931,7 @@ class _SummaryCard extends StatelessWidget {
       padding: const EdgeInsets.all(17),
       decoration: BoxDecoration(
         color: t.card,
-        borderRadius: BorderRadius.circular(21),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: t.divider,
         ),
@@ -1050,7 +1050,7 @@ class _FinancialHealthCard
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: t.cardElevated,
-        borderRadius: BorderRadius.circular(21),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: t.divider,
         ),
@@ -1254,7 +1254,7 @@ class _BudgetAlertSection
       padding: const EdgeInsets.all(17),
       decoration: BoxDecoration(
         color: t.card,
-        borderRadius: BorderRadius.circular(21),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: t.divider,
         ),
@@ -1489,7 +1489,7 @@ class _SafeBudgetCard
       padding: const EdgeInsets.all(17),
       decoration: BoxDecoration(
         color: t.card,
-        borderRadius: BorderRadius.circular(21),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: t.divider,
         ),
@@ -1658,7 +1658,7 @@ class _RecurringSummaryCard
       padding: const EdgeInsets.all(17),
       decoration: BoxDecoration(
         color: t.card,
-        borderRadius: BorderRadius.circular(21),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: t.divider,
         ),
@@ -2067,7 +2067,7 @@ class _EmptyTransactions
       ),
       decoration: BoxDecoration(
         color: t.card,
-        borderRadius: BorderRadius.circular(21),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: t.divider,
         ),
