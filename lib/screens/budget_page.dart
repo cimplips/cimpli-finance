@@ -575,21 +575,23 @@ class _BudgetPageState extends State<BudgetPage> {
 
   Color _statusColor(Budget budget) {
     if (budget.isOverBudget) {
-      return Colors.redAccent;
+      return const Color(0xFFB85C5C);
     }
 
     if (budget.limit > 0 &&
         budget.spent / budget.limit >= 0.8) {
-      return Colors.orangeAccent;
+      return const Color(0xFFB07A3A);
     }
 
-    return Colors.greenAccent;
+    return const Color(0xFF4F8A68);
   }
 
   Widget _buildBudgetCard({
     required Budget budget,
     required String account,
   }) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     final percentage = budget.limit <= 0
         ? 0.0
         : budget.spent / budget.limit;
@@ -620,8 +622,7 @@ class _BudgetPageState extends State<BudgetPage> {
                   width: 46,
                   height: 46,
                   decoration: BoxDecoration(
-                    color:
-                        const Color(0xFF30343A),
+                    color: colorScheme.surfaceContainerHighest,
                     borderRadius:
                         BorderRadius.circular(14),
                   ),
@@ -761,7 +762,7 @@ class _BudgetPageState extends State<BudgetPage> {
                             FontWeight.w800,
                         color:
                             budget.isOverBudget
-                                ? Colors.redAccent
+                                ? const Color(0xFFB85C5C)
                                 : null,
                       ),
                     ),
@@ -776,8 +777,7 @@ class _BudgetPageState extends State<BudgetPage> {
               child: LinearProgressIndicator(
                 value: progress,
                 minHeight: 10,
-                backgroundColor:
-                    const Color(0xFF30343A),
+                backgroundColor: colorScheme.surfaceContainerHighest,
                 valueColor:
                     AlwaysStoppedAnimation<Color>(
                   statusColor,
@@ -824,6 +824,8 @@ class _BudgetPageState extends State<BudgetPage> {
     required double totalBudget,
     required double totalSpent,
   }) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     final remaining =
         totalBudget - totalSpent;
 
@@ -843,10 +845,10 @@ class _BudgetPageState extends State<BudgetPage> {
     final statusColor = !hasBudget
         ? const Color(0xFF555A62)
         : isOver
-            ? Colors.redAccent
+            ? const Color(0xFFB85C5C)
             : percentage >= 0.8
-                ? Colors.orangeAccent
-                : Colors.greenAccent;
+                ? const Color(0xFFB07A3A)
+                : const Color(0xFF4F8A68);
 
     String statusTitle;
 
@@ -959,8 +961,7 @@ class _BudgetPageState extends State<BudgetPage> {
                         ? progress
                         : 0,
                 minHeight: 10,
-                backgroundColor:
-                    const Color(0xFF30343A),
+                backgroundColor: colorScheme.surfaceContainerHighest,
                 valueColor:
                     AlwaysStoppedAnimation<
                         Color>(
@@ -1187,6 +1188,7 @@ class _BudgetPageState extends State<BudgetPage> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     final financeStore =
         FinanceScope.of(context);
 
@@ -1395,9 +1397,7 @@ class _BudgetPageState extends State<BudgetPage> {
                     ),
                     decoration:
                         BoxDecoration(
-                      color: const Color(
-                        0xFF1C1E22,
-                      ),
+                      color: colorScheme.surfaceContainerLow,
                       borderRadius:
                           BorderRadius.circular(
                         18,
