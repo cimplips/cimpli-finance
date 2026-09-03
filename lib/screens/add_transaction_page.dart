@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../core/finance_scope.dart';
+import '../core/nominal_input_formatter.dart';
 import '../models/transaction.dart';
 import '../services/budget_store.dart';
 
@@ -84,57 +85,10 @@ class _AddTransactionPageState
     super.dispose();
   }
 
-  String _formatAmountForInput(double amount) {
-    if (amount == amount.roundToDouble()) {
-      return amount.toInt().toString();
-    }
+  String _formatAmountForInput(double amount) =>
+      formatNominalInput(amount);
 
-    return amount.toString();
-  }
-
-  double? _parseAmount(String value) {
-    var text = value.trim();
-
-    if (text.isEmpty) {
-      return null;
-    }
-
-    text = text.replaceAll(RegExp(r'[^0-9,.]'), '');
-
-    if (text.isEmpty) {
-      return null;
-    }
-
-    final lastComma = text.lastIndexOf(',');
-    final lastDot = text.lastIndexOf('.');
-
-    if (lastComma >= 0 && lastDot >= 0) {
-      if (lastComma > lastDot) {
-        text = text.replaceAll('.', '');
-        text = text.replaceAll(',', '.');
-      } else {
-        text = text.replaceAll(',', '');
-      }
-    } else if (lastComma >= 0) {
-      final digitsAfterComma =
-          text.length - lastComma - 1;
-
-      if (digitsAfterComma == 3) {
-        text = text.replaceAll(',', '');
-      } else {
-        text = text.replaceAll(',', '.');
-      }
-    } else if (lastDot >= 0) {
-      final digitsAfterDot =
-          text.length - lastDot - 1;
-
-      if (digitsAfterDot == 3) {
-        text = text.replaceAll('.', '');
-      }
-    }
-
-    return double.tryParse(text);
-  }
+  double? _parseAmount(String value) => parseNominalInput(value);
 
   String _formatRupiah(double value) {
     final rounded = value.round();
@@ -575,10 +529,8 @@ class _AddTransactionPageState
                   const TextInputType.numberWithOptions(
                 decimal: true,
               ),
-              inputFormatters: <TextInputFormatter>[
-                FilteringTextInputFormatter.allow(
-                  RegExp(r'[0-9.,]'),
-                ),
+              inputFormatters: const <TextInputFormatter>[
+                NominalInputFormatter(),
               ],
               decoration: const InputDecoration(
                 labelText: 'Nominal',
