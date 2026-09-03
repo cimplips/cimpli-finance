@@ -387,6 +387,8 @@ class _AddTransactionPageState
       await showDialog<void>(
         context: context,
         builder: (dialogContext) {
+          final colorScheme = Theme.of(dialogContext).colorScheme;
+
           return AlertDialog(
             icon: Icon(
               icon,
@@ -472,7 +474,6 @@ class _AddTransactionPageState
   @override
   Widget build(BuildContext context) {
     final store = FinanceScope.of(context);
-    final colorScheme = Theme.of(context).colorScheme;
 
     final accounts = store.accounts;
 
