@@ -1,6 +1,3 @@
-import 'dart:convert';
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 
 import '../core/finance_scope.dart';
@@ -74,71 +71,6 @@ class _ReportPageState extends State<ReportPage> {
         _selectedMonth.month + offset,
       );
     });
-  }
-
-  Future<void> _exportCsv(List<Tx> transactions, String accountName) async {
-    if (transactions.isEmpty) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          const SnackBar(content: Text('Belum ada transaksi untuk diekspor.')),
-        );
-      return;
-    }
-
-    final rows = <List<String>>[
-      ['Tanggal', 'Jenis', 'Judul', 'Kategori', 'Jumlah'],
-      ...transactions.map(
-        (tx) => <String>[
-          _formatDate(tx.date),
-          tx.type == TransactionType.income ? 'Pemasukan' : 'Pengeluaran',
-          tx.title,
-          tx.category,
-          tx.amount.round().toString(),
-        ],
-      ),
-    ];
-
-    String escapeCsv(String value) {
-      final escaped = value.replaceAll('"', '""');
-      return '"$escaped"';
-    }
-
-    final csv = rows
-        .map((row) => row.map(escapeCsv).join(','))
-        .join('\r\n');
-
-    try {
-      final directory = Directory('/storage/emulated/0/Download');
-      if (!await directory.exists()) {
-        await directory.create(recursive: true);
-      }
-
-      final safeAccount = accountName.replaceAll(RegExp(r'[^a-zA-Z0-9_-]+'), '_');
-      final fileName =
-          'cimpli_finance_${safeAccount}_${_selectedMonth.year}_${_selectedMonth.month.toString().padLeft(2, '0')}.csv';
-      final file = File('${directory.path}/$fileName');
-      await file.writeAsString('﻿$csv', encoding: utf8);
-
-      if (!mounted) return;
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          SnackBar(content: Text('Laporan CSV tersimpan di Download/$fileName.')),
-        );
-    } catch (_) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Laporan gagal diekspor. Pastikan izin penyimpanan tersedia.',
-            ),
-          ),
-        );
-    }
   }
 
   String _monthName(int month) {
@@ -219,14 +151,16 @@ class _ReportPageState extends State<ReportPage> {
       );
     }
 
-    return RefreshIndicator(
-      onRefresh: () async {
-        await store.load();
-        await _refresh();
-      },
-      child: FutureBuilder<List<Tx>>(
-        future: _transactionsFuture,
-        builder: (context, snapshot) {
+    return ColoredBox(
+      color: theme.background,
+      child: RefreshIndicator(
+        onRefresh: () async {
+          await store.load();
+          await _refresh();
+        },
+        child: FutureBuilder<List<Tx>>(
+          future: _transactionsFuture,
+          builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(
               child: CircularProgressIndicator(),
@@ -281,7 +215,7 @@ class _ReportPageState extends State<ReportPage> {
 
           return ListView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(18, 12, 18, 110),
+            padding: const EdgeInsets.fromLTRB(20, 14, 20, 110),
             children: [
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -294,7 +228,7 @@ class _ReportPageState extends State<ReportPage> {
                           'Laporan',
                           style: TextStyle(
                             color: theme.primaryText,
-                            fontSize: 27,
+                            fontSize: 26,
                             fontWeight: FontWeight.w800,
                             height: 1.1,
                           ),
@@ -306,8 +240,8 @@ class _ReportPageState extends State<ReportPage> {
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             color: theme.secondaryText,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
                       ],
@@ -315,10 +249,17 @@ class _ReportPageState extends State<ReportPage> {
                   ),
                   IconButton(
                     tooltip: 'Ekspor laporan',
-                    onPressed: () => _exportCsv(
-                        monthTransactions,
-                        store.activeAccount ?? 'akun',
-                      ),
+                    onPressed: () {
+                      ScaffoldMessenger.of(context)
+                        ..hideCurrentSnackBar()
+                        ..showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'Fitur ekspor laporan akan tersedia pada tahap berikutnya.',
+                            ),
+                          ),
+                        );
+                    },
                     icon: Icon(
                       Icons.download_outlined,
                       color: theme.primaryText,
@@ -326,7 +267,7 @@ class _ReportPageState extends State<ReportPage> {
                   ),
                 ],
               ),
-              const SizedBox(height: 18),
+              const SizedBox(height: 24),
               _MonthSelector(
                 monthLabel:
                     '${_monthName(_selectedMonth.month)} ${_selectedMonth.year}',
@@ -334,7 +275,7 @@ class _ReportPageState extends State<ReportPage> {
                 onPrevious: () => _changeMonth(-1),
                 onNext: () => _changeMonth(1),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
               _NetFlowCard(
                 net: net,
                 income: income,
@@ -342,7 +283,7 @@ class _ReportPageState extends State<ReportPage> {
                 formatRupiah: _formatRupiah,
                 theme: theme,
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
               Row(
                 children: [
                   Expanded(
@@ -370,12 +311,12 @@ class _ReportPageState extends State<ReportPage> {
                   ),
                 ],
               ),
-              const SizedBox(height: 26),
+              const SizedBox(height: 30),
               Text(
                 'Pengeluaran per Kategori',
                 style: TextStyle(
                   color: theme.primaryText,
-                  fontSize: 17,
+                  fontSize: 20,
                   fontWeight: FontWeight.w800,
                 ),
               ),
@@ -395,12 +336,12 @@ class _ReportPageState extends State<ReportPage> {
                   formatRupiah: _formatRupiah,
                   theme: theme,
                 ),
-              const SizedBox(height: 26),
+              const SizedBox(height: 30),
               Text(
                 'Aktivitas Bulan Ini',
                 style: TextStyle(
                   color: theme.primaryText,
-                  fontSize: 17,
+                  fontSize: 20,
                   fontWeight: FontWeight.w800,
                 ),
               ),
@@ -428,7 +369,8 @@ class _ReportPageState extends State<ReportPage> {
                 ),
             ],
           );
-        },
+          },
+        ),
       ),
     );
   }
@@ -448,40 +390,40 @@ class _ReportTheme {
   final bool isDark;
 
   Color get background =>
-      isDark ? const Color(0xFF0F1418) : const Color(0xFFF7F8FA);
+      isDark ? const Color(0xFF2C2F34) : const Color(0xFFF7F8FC);
 
   Color get card =>
-      isDark ? const Color(0xFF151C21) : Colors.white;
+      isDark ? const Color(0xFF36393F) : const Color(0xFFFFFFFF);
 
   Color get cardAlt =>
-      isDark ? const Color(0xFF192229) : const Color(0xFFF9FAFB);
+      isDark ? const Color(0xFF40434A) : const Color(0xFFF1F4FA);
 
   Color get border =>
-      isDark ? const Color(0xFF26333B) : const Color(0xFFE6EAF0);
+      isDark ? const Color(0xFF50535A) : const Color(0xFFE1E6EF);
 
   Color get primaryText =>
-      isDark ? const Color(0xFFF5F7F8) : const Color(0xFF101828);
+      isDark ? const Color(0xFFF1F3F6) : const Color(0xFF202735);
 
   Color get secondaryText =>
-      isDark ? const Color(0xFF9CA7AE) : const Color(0xFF667085);
+      isDark ? const Color(0xFFB8BDC6) : const Color(0xFF687386);
 
   Color get tertiaryText =>
-      isDark ? const Color(0xFF74818A) : const Color(0xFF98A2B3);
+      isDark ? const Color(0xFF8E949E) : const Color(0xFF98A2B3);
 
   Color get income =>
-      isDark ? const Color(0xFF35C878) : const Color(0xFF159447);
+      isDark ? const Color(0xFF86CBBB) : const Color(0xFF61B9A7);
 
   Color get expense =>
-      isDark ? const Color(0xFFFF6262) : const Color(0xFFE53935);
+      isDark ? const Color(0xFFE39A9A) : const Color(0xFFD87979);
 
   Color get info =>
-      isDark ? const Color(0xFF78A8FF) : const Color(0xFF6E97E8);
+      isDark ? const Color(0xFF9CB3F4) : const Color(0xFF6F8FEA);
 
   Color get netPositive =>
-      isDark ? const Color(0xFF1A3529) : const Color(0xFFF0FBF5);
+      isDark ? const Color(0xFF465A55) : const Color(0xFFE7F6F2);
 
   Color get netNegative =>
-      isDark ? const Color(0xFF351E22) : const Color(0xFFFFF3F2);
+      isDark ? const Color(0xFF574448) : const Color(0xFFFFECEC);
 }
 
 class _MonthSelector extends StatelessWidget {
@@ -500,16 +442,16 @@ class _MonthSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 60,
+      height: 68,
       decoration: BoxDecoration(
         color: theme.card,
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: theme.border),
         boxShadow: theme.isDark
             ? null
             : const [
                 BoxShadow(
-                  color: Color(0x0C000000),
+                  color: Color(0x0A000000),
                   blurRadius: 12,
                   offset: Offset(0, 4),
                 ),
@@ -575,10 +517,10 @@ class _NetFlowCard extends StatelessWidget {
     final background = positive ? theme.netPositive : theme.netNegative;
 
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: background,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(24),
         border: Border.all(
           color: theme.isDark
               ? theme.border
@@ -588,7 +530,7 @@ class _NetFlowCard extends StatelessWidget {
             ? null
             : const [
                 BoxShadow(
-                  color: Color(0x10000000),
+                  color: Color(0x0A000000),
                   blurRadius: 14,
                   offset: Offset(0, 5),
                 ),
@@ -613,7 +555,7 @@ class _NetFlowCard extends StatelessWidget {
                   formatRupiah(net),
                   style: TextStyle(
                     color: positive ? theme.income : theme.expense,
-                    fontSize: 28,
+                    fontSize: 30,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -621,8 +563,8 @@ class _NetFlowCard extends StatelessWidget {
               Icon(
                 Icons.account_balance_wallet_outlined,
                 color: theme.isDark
-                    ? const Color(0x667E8A91)
-                    : const Color(0x4D667085),
+                    ? const Color(0x668E949E)
+                    : const Color(0x4D687386),
                 size: 62,
               ),
             ],
@@ -682,7 +624,7 @@ class _FlowMiniCard extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(14, 14, 10, 12),
       decoration: BoxDecoration(
         color: theme.card.withValues(alpha: theme.isDark ? 0.72 : 0.86),
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(color: theme.border),
       ),
       child: Row(
@@ -757,13 +699,13 @@ class _MetricCard extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 15),
       decoration: BoxDecoration(
         color: theme.card,
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: theme.border),
         boxShadow: theme.isDark
             ? null
             : const [
                 BoxShadow(
-                  color: Color(0x0A000000),
+                  color: Color(0x09000000),
                   blurRadius: 10,
                   offset: Offset(0, 3),
                 ),
@@ -804,7 +746,7 @@ class _MetricCard extends StatelessWidget {
           ),
           const SizedBox(height: 14),
           ClipRRect(
-            borderRadius: BorderRadius.circular(15),
+            borderRadius: BorderRadius.circular(20),
             child: LinearProgressIndicator(
               minHeight: 6,
               value: progress,
@@ -840,7 +782,7 @@ class _EmptyReportCard extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
       decoration: BoxDecoration(
         color: theme.card,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(24),
         border: Border.all(color: theme.border),
         boxShadow: theme.isDark
             ? null
@@ -860,7 +802,7 @@ class _EmptyReportCard extends StatelessWidget {
             color: iconColor,
             size: 56,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           Text(
             title,
             textAlign: TextAlign.center,
@@ -905,7 +847,7 @@ class _CategoryCard extends StatelessWidget {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: theme.card,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(24),
         border: Border.all(color: theme.border),
         boxShadow: theme.isDark
             ? null
@@ -989,7 +931,7 @@ class _CategoryRow extends StatelessWidget {
         ),
         const SizedBox(height: 9),
         ClipRRect(
-          borderRadius: BorderRadius.circular(15),
+          borderRadius: BorderRadius.circular(20),
           child: LinearProgressIndicator(
             minHeight: 7,
             value: ratio,
@@ -1024,7 +966,7 @@ class _ActivityCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: theme.card,
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: theme.border),
       ),
       child: Row(
@@ -1122,7 +1064,7 @@ class _ErrorView extends StatelessWidget {
               message,
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             FilledButton.icon(
               onPressed: onRetry,
               icon: const Icon(Icons.refresh_rounded),
