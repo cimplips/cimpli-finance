@@ -67,21 +67,18 @@ class ThemeController extends ChangeNotifier {
   }
 }
 
-class ThemeControllerScope
-    extends InheritedNotifier<ThemeController> {
+class ThemeControllerScope extends InheritedNotifier<ThemeController> {
   const ThemeControllerScope({
     super.key,
     required ThemeController controller,
-    required Widget child,
+    super.child,
   }) : super(
           notifier: controller,
-          child: child,
         );
 
   static ThemeController of(BuildContext context) {
     final scope = context
-        .dependOnInheritedWidgetOfExactType<
-            ThemeControllerScope>();
+        .dependOnInheritedWidgetOfExactType<ThemeControllerScope>();
 
     assert(
       scope != null,
