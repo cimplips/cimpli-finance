@@ -30,10 +30,6 @@ class _SettingsPageState extends State<SettingsPage> {
   Color get _surface => _isDark ? const Color(0xFF36393F) : Colors.white;
   Color get _surfaceSoft => _isDark ? const Color(0xFF40434A) : const Color(0xFFF1F4FA);
   Color get _border => _isDark ? const Color(0xFF50535A) : const Color(0xFFE1E6EF);
-  Color get _textSecondary => _isDark ? const Color(0xFFB8BDC6) : const Color(0xFF687386);
-  Color get _primary => _isDark ? const Color(0xFF9CB3F4) : const Color(0xFF6F8FEA);
-  Color get _primarySoft => _isDark ? const Color(0xFF46506A) : const Color(0xFFE8EEFF);
-  Color get _danger => _isDark ? const Color(0xFFE39A9A) : const Color(0xFFD87979);
 
   @override
   void initState() {
