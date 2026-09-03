@@ -110,13 +110,10 @@ class _AppPalette {
   // Soft pastel accents
   static const blue = Color(0xFF6F8FEA);
   static const blueSoft = Color(0xFFE8EEFF);
-  static const bluePale = Color(0xFFF3F6FF);
   static const green = Color(0xFF61B9A7);
   static const greenSoft = Color(0xFFE7F6F2);
   static const purple = Color(0xFF9A83D9);
   static const purpleSoft = Color(0xFFF0EBFB);
-  static const peach = Color(0xFFE6A66E);
-  static const peachSoft = Color(0xFFFFF0E5);
   static const red = Color(0xFFD87979);
   static const redSoft = Color(0xFFFFECEC);
 
@@ -134,7 +131,6 @@ class _AppPalette {
   static const darkBlueSoft = Color(0xFF46506A);
   static const darkGreen = Color(0xFF86CBBB);
   static const darkPurple = Color(0xFFB6A5E5);
-  static const darkPeach = Color(0xFFE6B486);
   static const darkRed = Color(0xFFE39A9A);
 }
 
