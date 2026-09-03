@@ -14,6 +14,16 @@ class HistoryPage extends StatefulWidget {
 }
 
 class _HistoryPageState extends State<HistoryPage> {
+  Color _softPrimary(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark
+          ? const Color(0xFF46506A)
+          : const Color(0xFFE8EEFF);
+
+  Color _primary(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark
+          ? const Color(0xFF9CB3F4)
+          : const Color(0xFF6F8FEA);
+
   String? _selectedCategory;
   TransactionType? _selectedType;
   String _searchQuery = '';
@@ -622,8 +632,11 @@ class _HistoryPageState extends State<HistoryPage> {
     final store = FinanceScope.of(context);
     final account = store.activeAccount;
     final colorScheme = Theme.of(context).colorScheme;
+    final primary = _primary(context);
+    final softPrimary = _softPrimary(context);
 
     return RefreshIndicator(
+      color: primary,
       onRefresh: () async {
         if (mounted) {
           setState(() {});
@@ -631,76 +644,80 @@ class _HistoryPageState extends State<HistoryPage> {
       },
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(
-          20,
-          12,
-          20,
-          32,
-        ),
+        padding: const EdgeInsets.fromLTRB(18, 16, 18, 32),
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Riwayat Transaksi',
-                      style: TextStyle(
-                        color: colorScheme.onSurface,
-                        fontSize: 25,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: -0.6,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      account ?? 'Belum ada akun',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: colorScheme.onSurfaceVariant,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
+          Container(
+            padding: const EdgeInsets.fromLTRB(18, 18, 12, 18),
+            decoration: BoxDecoration(
+              color: colorScheme.surfaceContainerLow,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(
+                color: colorScheme.outlineVariant.withValues(alpha: 0.45),
               ),
-              const SizedBox(width: 10),
-              Material(
-                color: _hasActiveFilter
-                    ? colorScheme.primary.withValues(alpha: 0.12)
-                    : colorScheme.surfaceContainerLow,
-                borderRadius: BorderRadius.circular(14),
-                child: InkWell(
-                  onTap: _showFilterSheet,
-                  borderRadius: BorderRadius.circular(14),
-                  child: Container(
-                    width: 46,
-                    height: 46,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: colorScheme.outlineVariant.withValues(alpha: 0.55),
-                      ),
-                    ),
-                    child: Icon(
-                      _hasActiveFilter
-                          ? Icons.filter_alt_rounded
-                          : Icons.filter_alt_outlined,
-                      color: _hasActiveFilter
-                          ? colorScheme.primary
-                          : colorScheme.onSurfaceVariant,
-                      size: 20,
-                    ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: softPrimary,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Icon(
+                    Icons.receipt_long_rounded,
+                    color: primary,
+                    size: 24,
                   ),
                 ),
-              ),
-            ],
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Riwayat Transaksi',
+                        style: TextStyle(
+                          fontSize: 21,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.3,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        account ?? 'Belum ada akun',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: colorScheme.onSurfaceVariant,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 6),
+                IconButton.filledTonal(
+                  tooltip: 'Filter transaksi',
+                  onPressed: _showFilterSheet,
+                  style: IconButton.styleFrom(
+                    backgroundColor: _hasActiveFilter
+                        ? softPrimary
+                        : colorScheme.surfaceContainerHighest,
+                    foregroundColor: _hasActiveFilter
+                        ? primary
+                        : colorScheme.onSurfaceVariant,
+                  ),
+                  icon: Icon(
+                    _hasActiveFilter
+                        ? Icons.filter_alt_rounded
+                        : Icons.filter_alt_outlined,
+                  ),
+                ),
+              ],
+            ),
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 16),
           TextField(
             onChanged: (value) {
               setState(() {
@@ -719,92 +736,88 @@ class _HistoryPageState extends State<HistoryPage> {
                           _searchQuery = '';
                         });
                       },
-                      icon: const Icon(Icons.clear),
+                      icon: const Icon(Icons.clear_rounded),
                     )
                   : null,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
           if (_hasActiveFilter)
-            Padding(
-              padding: const EdgeInsets.only(top: 2),
+            Container(
+              padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
+              decoration: BoxDecoration(
+                color: colorScheme.surfaceContainerLow,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: colorScheme.outlineVariant.withValues(alpha: 0.4),
+                ),
+              ),
               child: Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                if (_selectedPeriod != 'Semua')
-                  Chip(
-                    avatar: const Icon(
-                      Icons.date_range_outlined,
-                      size: 18,
+                spacing: 8,
+                runSpacing: 6,
+                children: [
+                  if (_selectedPeriod != 'Semua')
+                    InputChip(
+                      avatar: const Icon(Icons.date_range_outlined, size: 17),
+                      label: Text(_periodLabel()),
+                      onDeleted: () {
+                        setState(() {
+                          _selectedPeriod = 'Semua';
+                          _startDate = null;
+                          _endDate = null;
+                        });
+                      },
                     ),
-                    label: Text(
-                      _periodLabel(),
+                  if (_selectedType != null)
+                    InputChip(
+                      label: Text(_typeLabel(_selectedType)),
+                      onDeleted: () {
+                        setState(() {
+                          _selectedType = null;
+                        });
+                      },
                     ),
-                    onDeleted: () {
-                      setState(() {
-                        _selectedPeriod = 'Semua';
-                        _startDate = null;
-                        _endDate = null;
-                      });
-                    },
-                  ),
-                if (_selectedType != null)
-                  Chip(
-                    label: Text(
-                      _typeLabel(_selectedType),
+                  if (_selectedCategory != null)
+                    InputChip(
+                      label: Text(_selectedCategory!),
+                      onDeleted: () {
+                        setState(() {
+                          _selectedCategory = null;
+                        });
+                      },
                     ),
-                    onDeleted: () {
-                      setState(() {
-                        _selectedType = null;
-                      });
-                    },
-                  ),
-                if (_selectedCategory != null)
-                  Chip(
-                    label: Text(_selectedCategory!),
-                    onDeleted: () {
-                      setState(() {
-                        _selectedCategory = null;
-                      });
-                    },
-                  ),
                 ],
               ),
             ),
-          if (_hasActiveFilter)
-            const SizedBox(height: 12),
+          if (_hasActiveFilter) const SizedBox(height: 14),
           FutureBuilder<List<Tx>>(
             future: _loadTransactions(),
             builder: (context, snapshot) {
-              if (snapshot.connectionState ==
-                  ConnectionState.waiting) {
-                return const Padding(
-                  padding: EdgeInsets.only(top: 60),
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return Padding(
+                  padding: const EdgeInsets.only(top: 60),
                   child: Center(
-                    child: CircularProgressIndicator(),
+                    child: CircularProgressIndicator(color: primary),
                   ),
                 );
               }
 
               if (snapshot.hasError) {
                 return _HistoryMessage(
-                  icon: Icons.error_outline,
+                  icon: Icons.error_outline_rounded,
                   title: 'Gagal memuat transaksi',
                   message: snapshot.error.toString(),
                 );
               }
 
-              final transactions =
-                  snapshot.data ?? <Tx>[];
+              final transactions = snapshot.data ?? <Tx>[];
 
               if (transactions.isEmpty) {
-                final hasSearch =
-                    _searchQuery.trim().isNotEmpty;
+                final hasSearch = _searchQuery.trim().isNotEmpty;
 
                 return _HistoryMessage(
                   icon: hasSearch || _hasActiveFilter
-                      ? Icons.search_off_outlined
+                      ? Icons.search_off_rounded
                       : Icons.receipt_long_outlined,
                   title: hasSearch || _hasActiveFilter
                       ? 'Transaksi tidak ditemukan'
@@ -816,26 +829,22 @@ class _HistoryPageState extends State<HistoryPage> {
               }
 
               return Column(
-                children: transactions.map(
-                  (transaction) {
-                    return Padding(
-                      padding: const EdgeInsets.only(
-                        bottom: 10,
-                      ),
-                      child: _TransactionItem(
-                        transaction: transaction,
-                        formatRupiah: _formatRupiah,
-                        formatDate: _formatDate,
-                        onEdit: () {
-                          _editTransaction(transaction);
-                        },
-                        onDelete: () {
-                          _deleteTransaction(transaction);
-                        },
-                      ),
-                    );
-                  },
-                ).toList(),
+                children: transactions.map((transaction) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: _TransactionItem(
+                      transaction: transaction,
+                      formatRupiah: _formatRupiah,
+                      formatDate: _formatDate,
+                      onEdit: () {
+                        _editTransaction(transaction);
+                      },
+                      onDelete: () {
+                        _deleteTransaction(transaction);
+                      },
+                    ),
+                  );
+                }).toList(),
               );
             },
           ),
@@ -866,32 +875,31 @@ class _TransactionItem extends StatelessWidget {
     final isIncome =
         transaction.type == TransactionType.income;
 
-    final incomeColor = const Color(0xFF4F8A68);
-    final expenseColor = const Color(0xFFB85C5C);
+    final incomeColor = Theme.of(context).brightness == Brightness.dark
+        ? const Color(0xFF86CBBB)
+        : const Color(0xFF61B9A7);
+    final expenseColor = Theme.of(context).brightness == Brightness.dark
+        ? const Color(0xFFE39A9A)
+        : const Color(0xFFD87979);
 
     final accentColor =
         isIncome ? incomeColor : expenseColor;
 
     final iconBackground = isIncome
-        ? const Color(0xFFEAF5EE)
-        : const Color(0xFFF9ECEC);
+        ? const Color(0xFFE7F6F2)
+        : const Color(0xFFFFECEC);
 
     final darkIconBackground = isIncome
-        ? const Color(0xFF294035)
-        : const Color(0xFF493033);
+        ? const Color(0xFF3B5750)
+        : const Color(0xFF554044);
 
     final cardColor = colorScheme.surfaceContainerLow;
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(
-        15,
-        14,
-        8,
-        14,
-      ),
+      padding: const EdgeInsets.fromLTRB(16, 15, 8, 15),
       decoration: BoxDecoration(
         color: cardColor,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(
           color: colorScheme.outlineVariant.withValues(
             alpha: 0.45,
@@ -900,15 +908,12 @@ class _TransactionItem extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: Theme.of(context).brightness == Brightness.dark
-                  ? darkIconBackground
-                  : iconBackground,
-              borderRadius: BorderRadius.circular(14),
-            ),
+          CircleAvatar(
+            radius: 22,
+            backgroundColor:
+                Theme.of(context).brightness == Brightness.dark
+                    ? darkIconBackground
+                    : iconBackground,
             child: Icon(
               isIncome
                   ? Icons.arrow_downward_rounded
