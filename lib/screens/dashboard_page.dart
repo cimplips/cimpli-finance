@@ -1,4 +1,3 @@
-```dart
 import 'package:flutter/material.dart';
 
 import '../core/finance_scope.dart';
@@ -1904,4 +1903,4 @@ class _ErrorView extends StatelessWidget {
     );
   }
 }
-```
+
