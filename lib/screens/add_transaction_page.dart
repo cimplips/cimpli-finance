@@ -404,8 +404,8 @@ class _AddTransactionPageState
                 Text(
                   detail,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: Color(0xFF9A9DA3),
+                  style: TextStyle(
+                    color: colorScheme.onSurfaceVariant,
                     fontSize: 13,
                   ),
                 ),
@@ -472,6 +472,7 @@ class _AddTransactionPageState
   @override
   Widget build(BuildContext context) {
     final store = FinanceScope.of(context);
+    final colorScheme = Theme.of(context).colorScheme;
 
     final accounts = store.accounts;
 
@@ -802,10 +803,18 @@ class _TypeButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    final backgroundColor = selected
+        ? colorScheme.secondaryContainer
+        : colorScheme.surfaceContainerHighest;
+
+    final foregroundColor = selected
+        ? colorScheme.onSecondaryContainer
+        : colorScheme.onSurfaceVariant;
+
     return Material(
-      color: selected
-          ? const Color(0xFF34373D)
-          : const Color(0xFF1C1E22),
+      color: backgroundColor,
       borderRadius: BorderRadius.circular(18),
       child: InkWell(
         onTap: onTap,
@@ -818,13 +827,18 @@ class _TypeButton extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 20),
+              Icon(
+                icon,
+                size: 20,
+                color: foregroundColor,
+              ),
               const SizedBox(width: 8),
               Flexible(
                 child: Text(
                   label,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
+                    color: foregroundColor,
                     fontWeight: selected
                         ? FontWeight.w800
                         : FontWeight.w600,
