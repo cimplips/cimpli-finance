@@ -281,7 +281,7 @@ class _ReportPageState extends State<ReportPage> {
 
           return ListView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(20, 14, 20, 110),
+            padding: const EdgeInsets.fromLTRB(18, 12, 18, 110),
             children: [
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -294,7 +294,7 @@ class _ReportPageState extends State<ReportPage> {
                           'Laporan',
                           style: TextStyle(
                             color: theme.primaryText,
-                            fontSize: 26,
+                            fontSize: 27,
                             fontWeight: FontWeight.w800,
                             height: 1.1,
                           ),
@@ -306,8 +306,8 @@ class _ReportPageState extends State<ReportPage> {
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             color: theme.secondaryText,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ],
@@ -326,7 +326,7 @@ class _ReportPageState extends State<ReportPage> {
                   ),
                 ],
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 18),
               _MonthSelector(
                 monthLabel:
                     '${_monthName(_selectedMonth.month)} ${_selectedMonth.year}',
@@ -334,7 +334,7 @@ class _ReportPageState extends State<ReportPage> {
                 onPrevious: () => _changeMonth(-1),
                 onNext: () => _changeMonth(1),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               _NetFlowCard(
                 net: net,
                 income: income,
@@ -342,7 +342,7 @@ class _ReportPageState extends State<ReportPage> {
                 formatRupiah: _formatRupiah,
                 theme: theme,
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               Row(
                 children: [
                   Expanded(
@@ -370,12 +370,12 @@ class _ReportPageState extends State<ReportPage> {
                   ),
                 ],
               ),
-              const SizedBox(height: 30),
+              const SizedBox(height: 26),
               Text(
                 'Pengeluaran per Kategori',
                 style: TextStyle(
                   color: theme.primaryText,
-                  fontSize: 20,
+                  fontSize: 17,
                   fontWeight: FontWeight.w800,
                 ),
               ),
@@ -395,12 +395,12 @@ class _ReportPageState extends State<ReportPage> {
                   formatRupiah: _formatRupiah,
                   theme: theme,
                 ),
-              const SizedBox(height: 30),
+              const SizedBox(height: 26),
               Text(
                 'Aktivitas Bulan Ini',
                 style: TextStyle(
                   color: theme.primaryText,
-                  fontSize: 20,
+                  fontSize: 17,
                   fontWeight: FontWeight.w800,
                 ),
               ),
@@ -500,10 +500,10 @@ class _MonthSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 68,
+      height: 60,
       decoration: BoxDecoration(
         color: theme.card,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(15),
         border: Border.all(color: theme.border),
         boxShadow: theme.isDark
             ? null
@@ -575,10 +575,10 @@ class _NetFlowCard extends StatelessWidget {
     final background = positive ? theme.netPositive : theme.netNegative;
 
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: background,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(22),
         border: Border.all(
           color: theme.isDark
               ? theme.border
@@ -613,7 +613,7 @@ class _NetFlowCard extends StatelessWidget {
                   formatRupiah(net),
                   style: TextStyle(
                     color: positive ? theme.income : theme.expense,
-                    fontSize: 30,
+                    fontSize: 28,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -682,7 +682,7 @@ class _FlowMiniCard extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(14, 14, 10, 12),
       decoration: BoxDecoration(
         color: theme.card.withValues(alpha: theme.isDark ? 0.72 : 0.86),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(15),
         border: Border.all(color: theme.border),
       ),
       child: Row(
@@ -757,7 +757,7 @@ class _MetricCard extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 15),
       decoration: BoxDecoration(
         color: theme.card,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(15),
         border: Border.all(color: theme.border),
         boxShadow: theme.isDark
             ? null
@@ -804,7 +804,7 @@ class _MetricCard extends StatelessWidget {
           ),
           const SizedBox(height: 14),
           ClipRRect(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(15),
             child: LinearProgressIndicator(
               minHeight: 6,
               value: progress,
@@ -840,7 +840,7 @@ class _EmptyReportCard extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
       decoration: BoxDecoration(
         color: theme.card,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(22),
         border: Border.all(color: theme.border),
         boxShadow: theme.isDark
             ? null
@@ -860,7 +860,7 @@ class _EmptyReportCard extends StatelessWidget {
             color: iconColor,
             size: 56,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           Text(
             title,
             textAlign: TextAlign.center,
@@ -905,7 +905,7 @@ class _CategoryCard extends StatelessWidget {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: theme.card,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(22),
         border: Border.all(color: theme.border),
         boxShadow: theme.isDark
             ? null
@@ -989,7 +989,7 @@ class _CategoryRow extends StatelessWidget {
         ),
         const SizedBox(height: 9),
         ClipRRect(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(15),
           child: LinearProgressIndicator(
             minHeight: 7,
             value: ratio,
@@ -1024,7 +1024,7 @@ class _ActivityCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: theme.card,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(15),
         border: Border.all(color: theme.border),
       ),
       child: Row(
@@ -1122,7 +1122,7 @@ class _ErrorView extends StatelessWidget {
               message,
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             FilledButton.icon(
               onPressed: onRetry,
               icon: const Icon(Icons.refresh_rounded),
