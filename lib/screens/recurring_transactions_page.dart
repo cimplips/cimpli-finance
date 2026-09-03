@@ -17,14 +17,36 @@ class RecurringTransactionsPage extends StatefulWidget {
 
 class _RecurringTransactionsPageState
     extends State<RecurringTransactionsPage> {
-  Color _softSurface(BuildContext context) =>
-      Theme.of(context).colorScheme.surfaceContainerHighest;
-
-  Color _outline(BuildContext context) =>
-      Theme.of(context).colorScheme.outlineVariant;
-
   Future<List<RecurringTransaction>>? _recurringFuture;
   String? _futureAccount;
+
+  bool get _isDark => Theme.of(context).brightness == Brightness.dark;
+
+  Color get _textSecondary =>
+      Theme.of(context).colorScheme.onSurfaceVariant;
+
+  Color get _surfaceSoft =>
+      Theme.of(context).colorScheme.surfaceContainerLow;
+
+  Color get _borderColor => _isDark
+      ? const Color(0xFF50535A)
+      : const Color(0xFFE1E6EF);
+
+  Color get _incomeColor => _isDark
+      ? const Color(0xFF86CBBB)
+      : const Color(0xFF4F8A68);
+
+  Color get _incomeSoft => _isDark
+      ? const Color(0xFF394B48)
+      : const Color(0xFFE7F6F2);
+
+  Color get _expenseColor => _isDark
+      ? const Color(0xFFE39A9A)
+      : const Color(0xFFB85C5C);
+
+  Color get _expenseSoft => _isDark
+      ? const Color(0xFF4B3D40)
+      : const Color(0xFFFFECEC);
 
   @override
   void didChangeDependencies() {
@@ -216,6 +238,9 @@ class _RecurringTransactionsPageState
               setDialogState,
             ) {
               return AlertDialog(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24),
+                ),
                 title: Text(
                   recurring == null
                       ? 'Tambah Transaksi Berulang'
@@ -773,19 +798,19 @@ class _RecurringTransactionsPageState
     RecurringTransaction recurring,
   ) {
     final isIncome = recurring.isIncome;
-    final colorScheme = Theme.of(context).colorScheme;
-    final secondaryText = colorScheme.onSurfaceVariant;
-    final iconBackground = colorScheme.primary.withValues(alpha: 0.10);
-    final amountColor = isIncome
-        ? const Color(0xFF4F8A68)
-        : const Color(0xFFB85C5C);
+    final secondaryText = _textSecondary;
+    final iconBackground = isIncome ? _incomeSoft : _expenseSoft;
+    final amountColor = isIncome ? _incomeColor : _expenseColor;
+    final accentColor = isIncome ? _incomeColor : _expenseColor;
 
     return Card(
-      margin: const EdgeInsets.only(bottom: 10),
-      elevation: 0,
+      margin: const EdgeInsets.only(
+        bottom: 12,
+      ),
+      clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
-        side: BorderSide(color: _outline(context)),
+        side: BorderSide(color: _borderColor),
       ),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(
@@ -812,6 +837,7 @@ class _RecurringTransactionsPageState
                     recurring.type,
                   ),
                 ),
+                color: accentColor,
               ),
             ),
             const SizedBox(width: 12),
@@ -838,12 +864,14 @@ class _RecurringTransactionsPageState
                       ),
                       const SizedBox(width: 8),
                       if (!recurring.isActive)
-                        const Chip(
-                          label: Text(
+                        Chip(
+                          label: const Text(
                             'Nonaktif',
+                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
                           ),
-                          visualDensity:
-                              VisualDensity.compact,
+                          backgroundColor: _surfaceSoft,
+                          side: BorderSide(color: _borderColor),
+                          visualDensity: VisualDensity.compact,
                         ),
                     ],
                   ),
@@ -970,18 +998,31 @@ class _RecurringTransactionsPageState
     String account,
   ) {
     return Card(
-      elevation: 0,
+      clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(22),
-        side: BorderSide(color: _outline(context)),
+        side: BorderSide(color: _borderColor),
       ),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(22, 28, 22, 26),
+        padding: const EdgeInsets.all(24),
         child: Column(
           children: [
-            const Icon(
-              Icons.repeat_rounded,
-              size: 48,
+            Container(
+              width: 68,
+              height: 68,
+              decoration: BoxDecoration(
+                color: _isDark
+                    ? const Color(0xFF46506A)
+                    : const Color(0xFFE8EEFF),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Icon(
+                Icons.repeat_rounded,
+                size: 34,
+                color: _isDark
+                    ? const Color(0xFF9CB3F4)
+                    : const Color(0xFF6F8FEA),
+              ),
             ),
             const SizedBox(height: 14),
             const Text(
@@ -997,7 +1038,7 @@ class _RecurringTransactionsPageState
               'otomatis untuk akun $account.',
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                color: _textSecondary,
                 fontSize: 13,
                 height: 1.4,
               ),
@@ -1057,10 +1098,7 @@ class _RecurringTransactionsPageState
         appBar: AppBar(
           title: const Text(
             'Transaksi Berulang',
-            style: TextStyle(
-              fontWeight: FontWeight.w800,
-              letterSpacing: -0.3,
-            ),
+            style: TextStyle(fontWeight: FontWeight.w800),
           ),
           actions: [
             IconButton(
@@ -1075,7 +1113,7 @@ class _RecurringTransactionsPageState
               tooltip: 'Muat ulang',
               onPressed: _refresh,
               icon: const Icon(
-                Icons.refresh_rounded,
+                Icons.refresh,
               ),
             ),
           ],
@@ -1085,15 +1123,20 @@ class _RecurringTransactionsPageState
           onPressed: () {
             _showRecurringDialog();
           },
+          backgroundColor: _isDark
+              ? const Color(0xFF9CB3F4)
+              : const Color(0xFF6F8FEA),
+          foregroundColor: _isDark
+              ? const Color(0xFF20242A)
+              : Colors.white,
           icon: const Icon(Icons.add),
-          label: const Text('Transaksi'),
-        ),
-        body: DecoratedBox(
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surface,
+          label: const Text(
+            'Transaksi',
+            style: TextStyle(fontWeight: FontWeight.w700),
           ),
-          child: FutureBuilder<
-              List<RecurringTransaction>>(
+        ),
+        body: FutureBuilder<
+            List<RecurringTransaction>>(
           future: _recurringFuture,
           builder: (
             context,
@@ -1136,7 +1179,7 @@ class _RecurringTransactionsPageState
                         textAlign:
                             TextAlign.center,
                         style: TextStyle(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          color: _textSecondary,
                           fontSize: 12,
                         ),
                       ),
@@ -1172,33 +1215,12 @@ class _RecurringTransactionsPageState
                   120,
                 ),
                 children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 11,
-                      vertical: 7,
-                    ),
-                    decoration: BoxDecoration(
-                      color: _softSurface(context),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.account_balance_wallet_outlined,
-                          size: 14,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          account,
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ],
+                  Text(
+                    account,
+                    style: TextStyle(
+                      color: _textSecondary,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -1233,47 +1255,19 @@ class _RecurringTransactionsPageState
                   120,
                 ),
                 children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 11,
-                      vertical: 7,
-                    ),
-                    decoration: BoxDecoration(
-                      color: _softSurface(context),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.account_balance_wallet_outlined,
-                          size: 14,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          account,
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ],
+                  Text(
+                    account,
+                    style: TextStyle(
+                      color: _textSecondary,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                   const SizedBox(height: 14),
                   Card(
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                      side: BorderSide(color: _outline(context)),
-                    ),
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 18,
-                      ),
+                      padding:
+                          const EdgeInsets.all(18),
                       child: Row(
                         children: [
                           Expanded(
@@ -1337,7 +1331,6 @@ class _RecurringTransactionsPageState
               ),
             );
           },
-          ),
         ),
       ),
     );
@@ -1364,6 +1357,7 @@ class _SummaryItem extends StatelessWidget {
           style: TextStyle(
             color: Theme.of(context).colorScheme.onSurfaceVariant,
             fontSize: 11,
+            fontWeight: FontWeight.w600,
           ),
         ),
         const SizedBox(height: 5),
