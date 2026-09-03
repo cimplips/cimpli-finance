@@ -767,6 +767,12 @@ class _RecurringTransactionsPageState
     RecurringTransaction recurring,
   ) {
     final isIncome = recurring.isIncome;
+    final colorScheme = Theme.of(context).colorScheme;
+    final secondaryText = colorScheme.onSurfaceVariant;
+    final iconBackground = colorScheme.surfaceContainerHighest;
+    final amountColor = isIncome
+        ? const Color(0xFF4F8A68)
+        : const Color(0xFFB85C5C);
 
     return Card(
       margin: const EdgeInsets.only(
@@ -787,8 +793,7 @@ class _RecurringTransactionsPageState
               width: 46,
               height: 46,
               decoration: BoxDecoration(
-                color:
-                    const Color(0xFF30343A),
+                color: iconBackground,
                 borderRadius:
                     BorderRadius.circular(14),
               ),
@@ -840,9 +845,8 @@ class _RecurringTransactionsPageState
                     maxLines: 1,
                     overflow:
                         TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color:
-                          Color(0xFF9A9DA3),
+                    style: TextStyle(
+                      color: secondaryText,
                       fontSize: 12,
                     ),
                   ),
@@ -850,7 +854,8 @@ class _RecurringTransactionsPageState
                   Text(
                     '${isIncome ? '+' : '-'}'
                     '${_formatRupiah(recurring.amount)}',
-                    style: const TextStyle(
+                    style: TextStyle(
+                      color: amountColor,
                       fontSize: 15,
                       fontWeight:
                           FontWeight.w800,
@@ -860,9 +865,8 @@ class _RecurringTransactionsPageState
                   Text(
                     '${_frequencyDescription(recurring.frequency)} • '
                     'mulai ${_formatDate(recurring.startDate)}',
-                    style: const TextStyle(
-                      color:
-                          Color(0xFF9A9DA3),
+                    style: TextStyle(
+                      color: secondaryText,
                       fontSize: 12,
                     ),
                   ),
@@ -872,9 +876,8 @@ class _RecurringTransactionsPageState
                     Text(
                       'Terakhir dibuat '
                       '${_formatDate(recurring.lastGeneratedDate!)}',
-                      style: const TextStyle(
-                        color:
-                            Color(0xFF9A9DA3),
+                      style: TextStyle(
+                        color: secondaryText,
                         fontSize: 11,
                       ),
                     ),
@@ -979,8 +982,8 @@ class _RecurringTransactionsPageState
               'Buat jadwal pemasukan atau pengeluaran '
               'otomatis untuk akun $account.',
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: Color(0xFF9A9DA3),
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
                 fontSize: 13,
                 height: 1.4,
               ),
@@ -1110,9 +1113,8 @@ class _RecurringTransactionsPageState
                         snapshot.error.toString(),
                         textAlign:
                             TextAlign.center,
-                        style: const TextStyle(
-                          color:
-                              Color(0xFF9A9DA3),
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                           fontSize: 12,
                         ),
                       ),
@@ -1150,9 +1152,8 @@ class _RecurringTransactionsPageState
                 children: [
                   Text(
                     account,
-                    style: const TextStyle(
-                      color:
-                          Color(0xFF9A9DA3),
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -1189,9 +1190,8 @@ class _RecurringTransactionsPageState
                 children: [
                   Text(
                     account,
-                    style: const TextStyle(
-                      color:
-                          Color(0xFF9A9DA3),
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                   ),
                   const SizedBox(height: 14),
@@ -1286,7 +1286,7 @@ class _SummaryItem extends StatelessWidget {
         Text(
           label,
           style: const TextStyle(
-            color: Color(0xFF9A9DA3),
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
             fontSize: 11,
           ),
         ),
