@@ -468,6 +468,8 @@ class _AddTransactionPageState
   @override
   Widget build(BuildContext context) {
     final store = FinanceScope.of(context);
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final accounts = store.accounts;
 
@@ -482,23 +484,93 @@ class _AddTransactionPageState
     }
 
     return Scaffold(
+      backgroundColor: colorScheme.surface,
       appBar: AppBar(
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        titleSpacing: 20,
         title: Text(
-          _isEditing
-              ? 'Edit Transaksi'
-              : 'Tambah Transaksi',
+          _isEditing ? 'Edit Transaksi' : 'Tambah Transaksi',
+          style: const TextStyle(
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.3,
+          ),
         ),
       ),
       body: Form(
         key: _formKey,
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(
-            20,
-            8,
-            20,
-            32,
-          ),
+          keyboardDismissBehavior:
+              ScrollViewKeyboardDismissBehavior.onDrag,
+          padding: const EdgeInsets.fromLTRB(18, 10, 18, 34),
           children: [
+            Container(
+              padding: const EdgeInsets.fromLTRB(18, 17, 18, 18),
+              decoration: BoxDecoration(
+                color: colorScheme.primaryContainer.withValues(
+                  alpha: isDark ? 0.28 : 0.62,
+                ),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(
+                  color: colorScheme.primary.withValues(
+                    alpha: isDark ? 0.20 : 0.10,
+                  ),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 46,
+                    height: 46,
+                    decoration: BoxDecoration(
+                      color: colorScheme.primary.withValues(
+                        alpha: isDark ? 0.20 : 0.10,
+                      ),
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    child: Icon(
+                      _isEditing
+                          ? Icons.edit_rounded
+                          : Icons.receipt_long_rounded,
+                      color: colorScheme.primary,
+                      size: 22,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _isEditing
+                              ? 'Perbarui transaksi'
+                              : 'Catat transaksi baru',
+                          style: TextStyle(
+                            color: colorScheme.onPrimaryContainer,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -0.2,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          _isEditing
+                              ? 'Pastikan detail transaksi sudah sesuai.'
+                              : 'Lengkapi detail berikut agar pencatatan tetap rapi.',
+                          style: TextStyle(
+                            color: colorScheme.onPrimaryContainer
+                                .withValues(alpha: 0.72),
+                            fontSize: 11,
+                            height: 1.35,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 18),
             _TypeSelector(
               value: _type,
               onChanged: (type) {
@@ -506,12 +578,9 @@ class _AddTransactionPageState
                   _type = type;
 
                   if (_selectedCategory != null) {
-                    final categories =
-                        _categoriesForType();
+                    final categories = _categoriesForType();
 
-                    if (!categories.contains(
-                      _selectedCategory,
-                    )) {
+                    if (!categories.contains(_selectedCategory)) {
                       _selectedCategory = null;
                     }
                   }
@@ -525,24 +594,19 @@ class _AddTransactionPageState
               decoration: const InputDecoration(
                 labelText: 'Keterangan',
                 hintText: 'Contoh: Belanja bulanan',
-                prefixIcon: Icon(
-                  Icons.description_outlined,
-                ),
+                prefixIcon: Icon(Icons.description_outlined),
               ),
               validator: (value) {
-                if (value == null ||
-                    value.trim().isEmpty) {
+                if (value == null || value.trim().isEmpty) {
                   return 'Keterangan wajib diisi.';
                 }
-
                 return null;
               },
             ),
             const SizedBox(height: 14),
             TextFormField(
               controller: _amountController,
-              keyboardType:
-                  const TextInputType.numberWithOptions(
+              keyboardType: const TextInputType.numberWithOptions(
                 decimal: false,
               ),
               inputFormatters: <TextInputFormatter>[
@@ -552,18 +616,13 @@ class _AddTransactionPageState
               decoration: const InputDecoration(
                 labelText: 'Nominal',
                 hintText: 'Contoh: 1.500.000',
-                prefixIcon: Icon(
-                  Icons.payments_outlined,
-                ),
+                prefixIcon: Icon(Icons.payments_outlined),
               ),
               validator: (value) {
-                final amount =
-                    _parseAmount(value ?? '');
-
+                final amount = _parseAmount(value ?? '');
                 if (amount == null || amount <= 0) {
                   return 'Masukkan nominal yang valid.';
                 }
-
                 return null;
               },
             ),
@@ -573,14 +632,11 @@ class _AddTransactionPageState
               isExpanded: true,
               decoration: const InputDecoration(
                 labelText: 'Akun',
-                prefixIcon: Icon(
-                  Icons.account_balance_wallet_outlined,
-                ),
+                prefixIcon: Icon(Icons.account_balance_wallet_outlined),
               ),
               items: accounts
                   .map(
-                    (account) =>
-                        DropdownMenuItem<String>(
+                    (account) => DropdownMenuItem<String>(
                       value: account,
                       child: Text(
                         account,
@@ -601,7 +657,6 @@ class _AddTransactionPageState
                 if (value == null || value.isEmpty) {
                   return 'Pilih akun.';
                 }
-
                 return null;
               },
             ),
@@ -609,34 +664,25 @@ class _AddTransactionPageState
             FutureBuilder<List<String>>(
               future: _loadCategories(),
               builder: (context, snapshot) {
-                final categories =
-                    snapshot.data ?? <String>[];
-
-                final selected =
-                    categories.contains(
-                  _selectedCategory,
-                )
-                        ? _selectedCategory
-                        : null;
+                final categories = snapshot.data ?? <String>[];
+                final selected = categories.contains(_selectedCategory)
+                    ? _selectedCategory
+                    : null;
 
                 return DropdownButtonFormField<String>(
                   initialValue: selected,
                   isExpanded: true,
                   decoration: const InputDecoration(
                     labelText: 'Kategori',
-                    prefixIcon: Icon(
-                      Icons.category_outlined,
-                    ),
+                    prefixIcon: Icon(Icons.category_outlined),
                   ),
                   items: categories
                       .map(
-                        (category) =>
-                            DropdownMenuItem<String>(
+                        (category) => DropdownMenuItem<String>(
                           value: category,
                           child: Text(
                             category,
-                            overflow:
-                                TextOverflow.ellipsis,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       )
@@ -649,11 +695,9 @@ class _AddTransactionPageState
                           });
                         },
                   validator: (value) {
-                    if (value == null ||
-                        value.isEmpty) {
+                    if (value == null || value.isEmpty) {
                       return 'Pilih kategori.';
                     }
-
                     return null;
                   },
                 );
@@ -666,71 +710,88 @@ class _AddTransactionPageState
               child: InputDecorator(
                 decoration: const InputDecoration(
                   labelText: 'Tanggal',
-                  prefixIcon: Icon(
-                    Icons.calendar_today_outlined,
-                  ),
-                  suffixIcon: Icon(
-                    Icons.chevron_right,
-                  ),
+                  prefixIcon: Icon(Icons.calendar_today_outlined),
+                  suffixIcon: Icon(Icons.chevron_right_rounded),
                 ),
-                child: Text(
-                  _formatDate(_date),
-                ),
+                child: Text(_formatDate(_date)),
               ),
             ),
-            const SizedBox(height: 28),
+            const SizedBox(height: 22),
             ValueListenableBuilder<TextEditingValue>(
               valueListenable: _amountController,
-              builder: (
-                context,
-                value,
-                child,
-              ) {
-                final amount =
-                    _parseAmount(value.text);
+              builder: (context, value, child) {
+                final amount = _parseAmount(value.text);
 
                 if (amount == null || amount <= 0) {
                   return const SizedBox.shrink();
                 }
 
-                return Padding(
-                  padding: const EdgeInsets.only(
-                    bottom: 14,
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 14),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 13,
                   ),
-                  child: Text(
-                    _formatRupiah(amount),
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Theme.of(context)
-                          .colorScheme
-                          .onSurfaceVariant,
-                      fontSize: 13,
-                    ),
+                  decoration: BoxDecoration(
+                    color: colorScheme.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.payments_rounded,
+                        size: 18,
+                        color: colorScheme.primary,
+                      ),
+                      const SizedBox(width: 9),
+                      Expanded(
+                        child: Text(
+                          'Nominal transaksi',
+                          style: TextStyle(
+                            color: colorScheme.onSurfaceVariant,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      Text(
+                        _formatRupiah(amount),
+                        style: TextStyle(
+                          color: colorScheme.onSurface,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ],
                   ),
                 );
               },
             ),
             SizedBox(
               height: 56,
-              child: FilledButton(
+              child: FilledButton.icon(
                 onPressed: _saving ? null : _save,
-                child: _saving
+                icon: _saving
                     ? const SizedBox(
-                        width: 22,
-                        height: 22,
-                        child:
-                            CircularProgressIndicator(
+                        width: 19,
+                        height: 19,
+                        child: CircularProgressIndicator(
                           strokeWidth: 2,
                         ),
                       )
-                    : Text(
+                    : Icon(
                         _isEditing
-                            ? 'Simpan Perubahan'
-                            : 'Simpan Transaksi',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w700,
-                        ),
+                            ? Icons.check_rounded
+                            : Icons.add_rounded,
                       ),
+                label: Text(
+                  _isEditing
+                      ? 'Simpan Perubahan'
+                      : 'Simpan Transaksi',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
               ),
             ),
           ],
@@ -738,6 +799,7 @@ class _AddTransactionPageState
       ),
     );
   }
+
 }
 
 class _RupiahInputFormatter
