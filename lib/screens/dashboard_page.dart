@@ -14,31 +14,31 @@ class _DashboardTheme {
   final bool isDark;
 
   Color get card =>
-      isDark ? const Color(0xFF1C1E22) : Colors.white;
+      isDark ? const Color(0xFF202227) : Colors.white;
 
   Color get elevatedCard =>
-      isDark ? const Color(0xFF282B30) : const Color(0xFFF6F7F9);
+      isDark ? const Color(0xFF292C32) : const Color(0xFFF8FAFC);
 
   Color get softCard =>
-      isDark ? const Color(0xFF34373D) : const Color(0xFFF0F3F8);
+      isDark ? const Color(0xFF30333A) : const Color(0xFFF2F4F7);
 
   Color get primaryText =>
-      isDark ? Colors.white : const Color(0xFF111827);
+      isDark ? const Color(0xFFF8FAFC) : const Color(0xFF101828);
 
   Color get secondaryText =>
-      isDark ? const Color(0xFF9A9DA3) : const Color(0xFF667085);
+      isDark ? const Color(0xFFA4A7AE) : const Color(0xFF667085);
 
   Color get tertiaryText =>
-      isDark ? const Color(0xFF777B82) : const Color(0xFF98A2B3);
+      isDark ? const Color(0xFF858991) : const Color(0xFF98A2B3);
 
   Color get divider =>
       isDark ? const Color(0xFF3A3D42) : const Color(0xFFE4E7EC);
 
   Color get selectedAccount =>
-      isDark ? const Color(0xFFE8EAED) : const Color(0xFFE8F0FF);
+      isDark ? const Color(0xFF34373D) : const Color(0xFFEEF4FF);
 
   Color get selectedAccountIcon =>
-      isDark ? const Color(0xFF111214) : const Color(0xFF175CD3);
+      isDark ? const Color(0xFFE8EAED) : const Color(0xFF5B7DB1);
 }
 
 class DashboardPage extends StatefulWidget {
@@ -487,12 +487,12 @@ class _DashboardPageState extends State<DashboardPage> {
                   style: FilledButton.styleFrom(
                     backgroundColor: Theme.of(context).brightness ==
                             Brightness.light
-                        ? const Color(0xFFE7EFFC)
-                        : const Color(0xFF2D3F5A),
+                        ? const Color(0xFFE8F0FB)
+                        : const Color(0xFF33445E),
                     foregroundColor: Theme.of(context).brightness ==
                             Brightness.light
-                        ? const Color(0xFF3F6FAE)
-                        : const Color(0xFFAFC7EA),
+                        ? const Color(0xFF54729D)
+                        : const Color(0xFFB9CBE5),
                   ),
                 ),
               ),
@@ -1015,9 +1015,7 @@ class _FinancialHealthCard
                 Container(
                   width: 1,
                   height: 38,
-                  color: const Color(
-                    0xFF3A3D42,
-                  ),
+                  color: dashboardTheme.divider,
                 ),
                 Expanded(
                   child: _HealthValue(
