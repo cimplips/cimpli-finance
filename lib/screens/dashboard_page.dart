@@ -8,6 +8,39 @@ import '../services/finance_store.dart';
 import 'add_transaction_page.dart';
 import 'recurring_transactions_page.dart';
 
+class _DashboardTheme {
+  const _DashboardTheme(this.isDark);
+
+  final bool isDark;
+
+  Color get card =>
+      isDark ? const Color(0xFF1C1E22) : Colors.white;
+
+  Color get elevatedCard =>
+      isDark ? const Color(0xFF282B30) : const Color(0xFFF6F7F9);
+
+  Color get softCard =>
+      isDark ? const Color(0xFF34373D) : const Color(0xFFF0F3F8);
+
+  Color get primaryText =>
+      isDark ? Colors.white : const Color(0xFF111827);
+
+  Color get secondaryText =>
+      isDark ? const Color(0xFF9A9DA3) : const Color(0xFF667085);
+
+  Color get tertiaryText =>
+      isDark ? const Color(0xFF777B82) : const Color(0xFF98A2B3);
+
+  Color get divider =>
+      isDark ? const Color(0xFF3A3D42) : const Color(0xFFE4E7EC);
+
+  Color get selectedAccount =>
+      isDark ? const Color(0xFFE8EAED) : const Color(0xFFE8F0FF);
+
+  Color get selectedAccountIcon =>
+      isDark ? const Color(0xFF111214) : const Color(0xFF175CD3);
+}
+
 class DashboardPage extends StatefulWidget {
   const DashboardPage({
     super.key,
@@ -175,6 +208,9 @@ class _DashboardPageState extends State<DashboardPage> {
 
   void _showAccountSelector() {
     final store = FinanceScope.of(context);
+    final dashboardTheme = _DashboardTheme(
+      Theme.of(context).brightness == Brightness.dark,
+    );
 
     if (store.accounts.isEmpty) {
       return;
@@ -182,7 +218,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
     showModalBottomSheet<void>(
       context: context,
-      backgroundColor: const Color(0xFF1C1E22),
+      backgroundColor: dashboardTheme.card,
       showDragHandle: true,
       builder: (sheetContext) {
         return SafeArea(
@@ -214,13 +250,13 @@ class _DashboardPageState extends State<DashboardPage> {
                       contentPadding: EdgeInsets.zero,
                       leading: CircleAvatar(
                         backgroundColor: selected
-                            ? const Color(0xFFE8EAED)
-                            : const Color(0xFF34373D),
+                            ? dashboardTheme.selectedAccount
+                            : dashboardTheme.softCard,
                         child: Icon(
                           Icons.account_balance_wallet_outlined,
                           color: selected
-                              ? const Color(0xFF111214)
-                              : Colors.white,
+                              ? dashboardTheme.selectedAccountIcon
+                              : dashboardTheme.primaryText,
                         ),
                       ),
                       title: Text(account),
@@ -288,6 +324,9 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   Widget build(BuildContext context) {
     final store = FinanceScope.of(context);
+    final dashboardTheme = _DashboardTheme(
+      Theme.of(context).brightness == Brightness.dark,
+    );
 
     if (store.isLoading) {
       return const Center(
@@ -445,12 +484,22 @@ class _DashboardPageState extends State<DashboardPage> {
                       fontWeight: FontWeight.w700,
                     ),
                   ),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Theme.of(context).brightness ==
+                            Brightness.light
+                        ? const Color(0xFFE7EFFC)
+                        : const Color(0xFF2D3F5A),
+                    foregroundColor: Theme.of(context).brightness ==
+                            Brightness.light
+                        ? const Color(0xFF3F6FAE)
+                        : const Color(0xFFAFC7EA),
+                  ),
                 ),
               ),
               const SizedBox(height: 28),
               Row(
                 children: [
-                  const Expanded(
+                  Expanded(
                     child: Text(
                       'Transaksi Terbaru',
                       style: TextStyle(
@@ -463,8 +512,8 @@ class _DashboardPageState extends State<DashboardPage> {
                       .isNotEmpty)
                     Text(
                       '${data.recentTransactions.length} transaksi',
-                      style: const TextStyle(
-                        color: Color(0xFF9A9DA3),
+                      style: TextStyle(
+                        color: dashboardTheme.secondaryText,
                       ),
                     ),
                 ],
@@ -527,6 +576,10 @@ class _RecurringSummaryCard
 
   @override
   Widget build(BuildContext context) {
+    final dashboardTheme = _DashboardTheme(
+      Theme.of(context).brightness == Brightness.dark,
+    );
+
     final active = recurringTransactions
         .where((item) => item.isActive)
         .toList();
@@ -549,23 +602,23 @@ class _RecurringSummaryCard
       return Container(
         padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
-          color: const Color(0xFF1C1E22),
+          color: dashboardTheme.card,
           borderRadius:
               BorderRadius.circular(20),
         ),
         child: Row(
           children: [
-            const CircleAvatar(
+            CircleAvatar(
               radius: 21,
               backgroundColor:
-                  Color(0xFF34373D),
+                  dashboardTheme.softCard,
               child: Icon(
                 Icons.repeat_rounded,
                 size: 22,
               ),
             ),
             const SizedBox(width: 12),
-            const Expanded(
+            Expanded(
               child: Column(
                 crossAxisAlignment:
                     CrossAxisAlignment.start,
@@ -581,7 +634,7 @@ class _RecurringSummaryCard
                   Text(
                     'Belum ada jadwal transaksi berulang.',
                     style: TextStyle(
-                      color: Color(0xFF9A9DA3),
+                      color: dashboardTheme.secondaryText,
                       fontSize: 12,
                     ),
                   ),
@@ -603,9 +656,21 @@ class _RecurringSummaryCard
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: const Color(0xFF1C1E22),
+        color: dashboardTheme.card,
         borderRadius:
             BorderRadius.circular(20),
+        border: dashboardTheme.isDark
+            ? null
+            : Border.all(color: const Color(0xFFE4E7EC)),
+        boxShadow: dashboardTheme.isDark
+            ? null
+            : const [
+                BoxShadow(
+                  color: Color(0x14000000),
+                  blurRadius: 12,
+                  offset: Offset(0, 4),
+                ),
+              ],
       ),
       child: Column(
         crossAxisAlignment:
@@ -613,17 +678,17 @@ class _RecurringSummaryCard
         children: [
           Row(
             children: [
-              const CircleAvatar(
+              CircleAvatar(
                 radius: 21,
                 backgroundColor:
-                    Color(0xFF34373D),
+                    dashboardTheme.softCard,
                 child: Icon(
                   Icons.repeat_rounded,
                   size: 22,
                 ),
               ),
               const SizedBox(width: 12),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment:
                       CrossAxisAlignment.start,
@@ -639,7 +704,7 @@ class _RecurringSummaryCard
                     Text(
                       'Ringkasan jadwal aktif',
                       style: TextStyle(
-                        color: Color(0xFF9A9DA3),
+                        color: dashboardTheme.secondaryText,
                         fontSize: 11,
                       ),
                     ),
@@ -713,10 +778,14 @@ class _RecurringValue
 
   @override
   Widget build(BuildContext context) {
+    final dashboardTheme = _DashboardTheme(
+      Theme.of(context).brightness == Brightness.dark,
+    );
+
     return Container(
       padding: const EdgeInsets.all(13),
       decoration: BoxDecoration(
-        color: const Color(0xFF282B30),
+        color: dashboardTheme.elevatedCard,
         borderRadius:
             BorderRadius.circular(15),
       ),
@@ -726,8 +795,8 @@ class _RecurringValue
         children: [
           Text(
             label,
-            style: const TextStyle(
-              color: Color(0xFF9A9DA3),
+            style: TextStyle(
+              color: dashboardTheme.secondaryText,
               fontSize: 11,
             ),
           ),
@@ -761,10 +830,14 @@ class _RecurringAmount
 
   @override
   Widget build(BuildContext context) {
+    final dashboardTheme = _DashboardTheme(
+      Theme.of(context).brightness == Brightness.dark,
+    );
+
     return Container(
       padding: const EdgeInsets.all(13),
       decoration: BoxDecoration(
-        color: const Color(0xFF282B30),
+        color: dashboardTheme.elevatedCard,
         borderRadius:
             BorderRadius.circular(15),
       ),
@@ -787,8 +860,8 @@ class _RecurringAmount
                   maxLines: 1,
                   overflow:
                       TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Color(0xFF9A9DA3),
+                  style: TextStyle(
+                    color: dashboardTheme.secondaryText,
                     fontSize: 10,
                   ),
                 ),
@@ -826,6 +899,10 @@ class _FinancialHealthCard
 
   @override
   Widget build(BuildContext context) {
+    final dashboardTheme = _DashboardTheme(
+      Theme.of(context).brightness == Brightness.dark,
+    );
+
     final surplus = income - expense;
 
     final hasIncome = income > 0;
@@ -869,7 +946,7 @@ class _FinancialHealthCard
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: const Color(0xFF1C1E22),
+        color: dashboardTheme.card,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Column(
@@ -881,7 +958,7 @@ class _FinancialHealthCard
               CircleAvatar(
                 radius: 20,
                 backgroundColor:
-                    const Color(0xFF34373D),
+                    dashboardTheme.softCard,
                 child: Icon(
                   icon,
                   size: 21,
@@ -893,17 +970,17 @@ class _FinancialHealthCard
                   crossAxisAlignment:
                       CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Kesehatan Keuangan',
                       style: TextStyle(
-                        color: Color(0xFF9A9DA3),
+                        color: dashboardTheme.secondaryText,
                         fontSize: 12,
                       ),
                     ),
                     const SizedBox(height: 3),
                     Text(
                       title,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w800,
                       ),
@@ -918,7 +995,7 @@ class _FinancialHealthCard
             padding:
                 const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: const Color(0xFF282B30),
+              color: dashboardTheme.elevatedCard,
               borderRadius:
                   BorderRadius.circular(15),
             ),
@@ -956,8 +1033,8 @@ class _FinancialHealthCard
           const SizedBox(height: 12),
           Text(
             description,
-            style: const TextStyle(
-              color: Color(0xFF9A9DA3),
+            style: TextStyle(
+              color: dashboardTheme.secondaryText,
               fontSize: 12,
               height: 1.4,
             ),
@@ -980,6 +1057,10 @@ class _HealthValue
 
   @override
   Widget build(BuildContext context) {
+    final dashboardTheme = _DashboardTheme(
+      Theme.of(context).brightness == Brightness.dark,
+    );
+
     return Padding(
       padding:
           const EdgeInsets.symmetric(
@@ -991,8 +1072,8 @@ class _HealthValue
         children: [
           Text(
             label,
-            style: const TextStyle(
-              color: Color(0xFF9A9DA3),
+            style: TextStyle(
+              color: dashboardTheme.secondaryText,
               fontSize: 11,
             ),
           ),
@@ -1025,6 +1106,10 @@ class _BudgetAlertSection
 
   @override
   Widget build(BuildContext context) {
+    final dashboardTheme = _DashboardTheme(
+      Theme.of(context).brightness == Brightness.dark,
+    );
+
     final alerts = budgets.where(
       (budget) {
         if (budget.limit <= 0) {
@@ -1065,9 +1150,21 @@ class _BudgetAlertSection
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: const Color(0xFF1C1E22),
+        color: dashboardTheme.card,
         borderRadius:
             BorderRadius.circular(20),
+        border: dashboardTheme.isDark
+            ? null
+            : Border.all(color: const Color(0xFFE4E7EC)),
+        boxShadow: dashboardTheme.isDark
+            ? null
+            : const [
+                BoxShadow(
+                  color: Color(0x14000000),
+                  blurRadius: 12,
+                  offset: Offset(0, 4),
+                ),
+              ],
       ),
       child: Column(
         crossAxisAlignment:
@@ -1087,7 +1184,7 @@ class _BudgetAlertSection
                     : Colors.orangeAccent,
               ),
               const SizedBox(width: 10),
-              const Expanded(
+              Expanded(
                 child: Text(
                   'Peringatan Anggaran',
                   style: TextStyle(
@@ -1098,8 +1195,8 @@ class _BudgetAlertSection
               ),
               Text(
                 '${alerts.length}',
-                style: const TextStyle(
-                  color: Color(0xFF9A9DA3),
+                style: TextStyle(
+                  color: dashboardTheme.secondaryText,
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
                 ),
@@ -1111,8 +1208,8 @@ class _BudgetAlertSection
             overBudgetCount > 0
                 ? '$overBudgetCount kategori sudah melewati batas.'
                 : 'Beberapa kategori mulai mendekati batas.',
-            style: const TextStyle(
-              color: Color(0xFF9A9DA3),
+            style: TextStyle(
+              color: dashboardTheme.secondaryText,
               fontSize: 12,
               height: 1.4,
             ),
@@ -1135,8 +1232,8 @@ class _BudgetAlertSection
             Text(
               '+${alerts.length - 4} peringatan lainnya '
               'dapat dilihat di menu Anggaran.',
-              style: const TextStyle(
-                color: Color(0xFF9A9DA3),
+              style: TextStyle(
+                color: dashboardTheme.secondaryText,
                 fontSize: 11,
               ),
             ),
@@ -1158,6 +1255,10 @@ class _BudgetAlertTile
 
   @override
   Widget build(BuildContext context) {
+    final dashboardTheme = _DashboardTheme(
+      Theme.of(context).brightness == Brightness.dark,
+    );
+
     final ratio = budget.limit <= 0
         ? 0.0
         : budget.spent / budget.limit;
@@ -1180,7 +1281,7 @@ class _BudgetAlertTile
     return Container(
       padding: const EdgeInsets.all(13),
       decoration: BoxDecoration(
-        color: const Color(0xFF282B30),
+        color: dashboardTheme.elevatedCard,
         borderRadius:
             BorderRadius.circular(15),
       ),
@@ -1260,19 +1361,35 @@ class _SafeBudgetCard
 
   @override
   Widget build(BuildContext context) {
+    final dashboardTheme = _DashboardTheme(
+      Theme.of(context).brightness == Brightness.dark,
+    );
+
     return Container(
       padding: const EdgeInsets.all(17),
       decoration: BoxDecoration(
-        color: const Color(0xFF1C1E22),
+        color: dashboardTheme.card,
         borderRadius:
             BorderRadius.circular(20),
+        border: dashboardTheme.isDark
+            ? null
+            : Border.all(color: const Color(0xFFE4E7EC)),
+        boxShadow: dashboardTheme.isDark
+            ? null
+            : const [
+                BoxShadow(
+                  color: Color(0x14000000),
+                  blurRadius: 12,
+                  offset: Offset(0, 4),
+                ),
+              ],
       ),
-      child: const Row(
+      child: Row(
         children: [
           CircleAvatar(
             radius: 20,
             backgroundColor:
-                Color(0xFF34373D),
+                dashboardTheme.softCard,
             child: Icon(
               Icons.check_circle_outline,
               size: 21,
@@ -1294,7 +1411,7 @@ class _SafeBudgetCard
                 Text(
                   'Belum ada kategori yang mencapai 80% anggaran.',
                   style: TextStyle(
-                    color: Color(0xFF9A9DA3),
+                    color: dashboardTheme.secondaryText,
                     fontSize: 11,
                     height: 1.35,
                   ),
@@ -1320,38 +1437,54 @@ class _BalanceCard
 
   @override
   Widget build(BuildContext context) {
+    final dashboardTheme = _DashboardTheme(
+      Theme.of(context).brightness == Brightness.dark,
+    );
+
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: const Color(0xFF282B30),
+        color: dashboardTheme.elevatedCard,
         borderRadius:
             BorderRadius.circular(24),
+        border: dashboardTheme.isDark
+            ? null
+            : Border.all(color: const Color(0xFFE4E7EC)),
+        boxShadow: dashboardTheme.isDark
+            ? null
+            : const [
+                BoxShadow(
+                  color: Color(0x14000000),
+                  blurRadius: 12,
+                  offset: Offset(0, 4),
+                ),
+              ],
       ),
       child: Column(
         crossAxisAlignment:
             CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Saldo',
             style: TextStyle(
-              color: Color(0xFFB8BCC2),
+              color: dashboardTheme.secondaryText,
               fontSize: 14,
             ),
           ),
           const SizedBox(height: 10),
           Text(
             formatRupiah(balance),
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 30,
               fontWeight: FontWeight.w800,
               letterSpacing: -0.8,
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Saldo seluruh transaksi akun aktif',
             style: TextStyle(
-              color: Color(0xFF9A9DA3),
+              color: dashboardTheme.secondaryText,
               fontSize: 12,
             ),
           ),
@@ -1377,26 +1510,64 @@ class _SummaryCard
 
   @override
   Widget build(BuildContext context) {
+    final dashboardTheme = _DashboardTheme(
+      Theme.of(context).brightness == Brightness.dark,
+    );
+    final isIncome = title == 'Pemasukan';
+    final accentColor = isIncome
+        ? const Color(0xFF039855)
+        : const Color(0xFFD92D20);
+    final lightCardColor = isIncome
+        ? const Color(0xFFF0FDF4)
+        : const Color(0xFFFFF5F4);
+
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: const Color(0xFF1C1E22),
+        color: dashboardTheme.isDark
+            ? dashboardTheme.card
+            : lightCardColor,
         borderRadius:
             BorderRadius.circular(20),
+        border: dashboardTheme.isDark
+            ? null
+            : Border.all(color: const Color(0xFFE4E7EC)),
+        boxShadow: dashboardTheme.isDark
+            ? null
+            : const [
+                BoxShadow(
+                  color: Color(0x14000000),
+                  blurRadius: 12,
+                  offset: Offset(0, 4),
+                ),
+              ],
       ),
       child: Column(
         crossAxisAlignment:
             CrossAxisAlignment.start,
         children: [
-          Icon(
-            icon,
-            size: 22,
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: dashboardTheme.isDark
+                  ? dashboardTheme.softCard
+                  : accentColor.withValues(alpha: 0.10),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              icon,
+              size: 22,
+              color: dashboardTheme.isDark
+                  ? dashboardTheme.primaryText
+                  : accentColor,
+            ),
           ),
           const SizedBox(height: 12),
           Text(
             title,
-            style: const TextStyle(
-              color: Color(0xFF9A9DA3),
+            style: TextStyle(
+              color: dashboardTheme.secondaryText,
               fontSize: 13,
             ),
           ),
@@ -1406,7 +1577,10 @@ class _SummaryCard
             maxLines: 1,
             overflow:
                 TextOverflow.ellipsis,
-            style: const TextStyle(
+            style: TextStyle(
+              color: dashboardTheme.isDark
+                  ? dashboardTheme.primaryText
+                  : accentColor,
               fontSize: 17,
               fontWeight: FontWeight.w800,
             ),
@@ -1431,6 +1605,10 @@ class _TransactionCard
 
   @override
   Widget build(BuildContext context) {
+    final dashboardTheme = _DashboardTheme(
+      Theme.of(context).brightness == Brightness.dark,
+    );
+
     final isIncome =
         transaction.type ==
             TransactionType.income;
@@ -1438,16 +1616,28 @@ class _TransactionCard
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF1C1E22),
+        color: dashboardTheme.card,
         borderRadius:
             BorderRadius.circular(18),
+        border: dashboardTheme.isDark
+            ? null
+            : Border.all(color: const Color(0xFFE4E7EC)),
+        boxShadow: dashboardTheme.isDark
+            ? null
+            : const [
+                BoxShadow(
+                  color: Color(0x14000000),
+                  blurRadius: 10,
+                  offset: Offset(0, 3),
+                ),
+              ],
       ),
       child: Row(
         children: [
           CircleAvatar(
             radius: 22,
             backgroundColor:
-                const Color(0xFF34373D),
+                dashboardTheme.softCard,
             child: Icon(
               isIncome
                   ? Icons
@@ -1468,7 +1658,7 @@ class _TransactionCard
                   maxLines: 1,
                   overflow:
                       TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -1479,8 +1669,8 @@ class _TransactionCard
                   maxLines: 1,
                   overflow:
                       TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Color(0xFF9A9DA3),
+                  style: TextStyle(
+                    color: dashboardTheme.secondaryText,
                     fontSize: 12,
                   ),
                 ),
@@ -1507,19 +1697,35 @@ class _EmptyTransactions
 
   @override
   Widget build(BuildContext context) {
+    final dashboardTheme = _DashboardTheme(
+      Theme.of(context).brightness == Brightness.dark,
+    );
+
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: const Color(0xFF1C1E22),
+        color: dashboardTheme.card,
         borderRadius:
             BorderRadius.circular(20),
+        border: dashboardTheme.isDark
+            ? null
+            : Border.all(color: const Color(0xFFE4E7EC)),
+        boxShadow: dashboardTheme.isDark
+            ? null
+            : const [
+                BoxShadow(
+                  color: Color(0x14000000),
+                  blurRadius: 12,
+                  offset: Offset(0, 4),
+                ),
+              ],
       ),
-      child: const Column(
+      child: Column(
         children: [
           Icon(
             Icons.receipt_long_outlined,
             size: 42,
-            color: Color(0xFF777B82),
+            color: dashboardTheme.tertiaryText,
           ),
           SizedBox(height: 12),
           Text(
@@ -1534,7 +1740,7 @@ class _EmptyTransactions
             'Tambahkan pemasukan atau pengeluaran pertama Anda.',
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: Color(0xFF9A9DA3),
+              color: dashboardTheme.secondaryText,
               fontSize: 13,
             ),
           ),
@@ -1556,6 +1762,10 @@ class _ErrorView
 
   @override
   Widget build(BuildContext context) {
+    final dashboardTheme = _DashboardTheme(
+      Theme.of(context).brightness == Brightness.dark,
+    );
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -1582,8 +1792,8 @@ class _ErrorView
               maxLines: 4,
               overflow:
                   TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: Color(0xFF9A9DA3),
+              style: TextStyle(
+                color: dashboardTheme.secondaryText,
               ),
             ),
             const SizedBox(height: 18),
