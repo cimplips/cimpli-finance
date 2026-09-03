@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
@@ -799,26 +801,43 @@ class _SettingsPageState extends State<SettingsPage> {
 
   Future<void> _backupData() async {
     final timestamp = _backupTimestamp(DateTime.now());
-
-    final outputPath = await FilePicker.platform.saveFile(
-      dialogTitle: 'Simpan Backup Cimpli Finance',
-      fileName: 'cimpli_finance_backup_$timestamp.json',
-      type: FileType.custom,
-      allowedExtensions: <String>['json'],
-    );
-
-    if (!mounted || outputPath == null || outputPath.isEmpty) {
-      return;
-    }
-
-    _showMessage('Membuat backup data...');
+    final temporaryPath = _temporaryBackupPath(timestamp);
+    final temporaryFile = File(temporaryPath);
 
     try {
+      _showMessage('Membuat backup data...');
+
       await BackupService().exportBackup(
-        outputPath: outputPath,
+        outputPath: temporaryPath,
       );
 
+      if (!await temporaryFile.exists()) {
+        throw const BackupException(
+          'File backup sementara tidak berhasil dibuat.',
+        );
+      }
+
+      final bytes = await temporaryFile.readAsBytes();
+
+      if (bytes.isEmpty) {
+        throw const BackupException(
+          'Data backup kosong.',
+        );
+      }
+
       if (!mounted) {
+        return;
+      }
+
+      final outputPath = await FilePicker.platform.saveFile(
+        dialogTitle: 'Simpan Backup Cimpli Finance',
+        fileName: 'cimpli_finance_backup_$timestamp.json',
+        type: FileType.custom,
+        allowedExtensions: <String>['json'],
+        bytes: bytes,
+      );
+
+      if (!mounted || outputPath == null || outputPath.isEmpty) {
         return;
       }
 
@@ -837,6 +856,14 @@ class _SettingsPageState extends State<SettingsPage> {
       }
 
       _showMessage('Backup gagal: $error');
+    } finally {
+      try {
+        if (await temporaryFile.exists()) {
+          await temporaryFile.delete();
+        }
+      } catch (_) {
+        // File sementara boleh gagal dihapus tanpa mengganggu backup.
+      }
     }
   }
 
@@ -845,27 +872,36 @@ class _SettingsPageState extends State<SettingsPage> {
       dialogTitle: 'Pilih Backup Cimpli Finance',
       type: FileType.custom,
       allowedExtensions: <String>['json'],
-      withData: false,
+      withData: true,
     );
 
     if (!mounted || result == null || result.files.isEmpty) {
       return;
     }
 
-    final inputPath = result.files.single.path;
+    final pickedFile = result.files.single;
+    final bytes = pickedFile.bytes;
 
-    if (inputPath == null || inputPath.isEmpty) {
+    if (bytes == null || bytes.isEmpty) {
       _showMessage(
-        'File backup tidak dapat diakses dari perangkat ini.',
+        'Isi file backup tidak dapat dibaca dari perangkat ini.',
       );
       return;
     }
 
-    final backupService = BackupService();
+    final temporaryPath = _temporaryRestorePath();
+    final temporaryFile = File(temporaryPath);
 
     try {
+      await temporaryFile.writeAsBytes(
+        bytes,
+        flush: true,
+      );
+
+      final backupService = BackupService();
+
       final valid = await backupService.isValidBackup(
-        inputPath,
+        temporaryPath,
       );
 
       if (!mounted) {
@@ -880,7 +916,7 @@ class _SettingsPageState extends State<SettingsPage> {
       }
 
       final itemCount = await backupService.getBackupItemCount(
-        inputPath,
+        temporaryPath,
       );
 
       if (!mounted) {
@@ -922,7 +958,7 @@ class _SettingsPageState extends State<SettingsPage> {
       _showMessage('Memulihkan data...');
 
       await backupService.restoreBackup(
-        inputPath: inputPath,
+        inputPath: temporaryPath,
       );
 
       await store.load();
@@ -948,7 +984,29 @@ class _SettingsPageState extends State<SettingsPage> {
       }
 
       _showMessage('Restore gagal: $error');
+    } finally {
+      try {
+        if (await temporaryFile.exists()) {
+          await temporaryFile.delete();
+        }
+      } catch (_) {
+        // File sementara boleh gagal dihapus tanpa mengganggu aplikasi.
+      }
     }
+  }
+
+  String _temporaryBackupPath(String timestamp) {
+    return '${Directory.systemTemp.path}${Platform.pathSeparator}'
+        'cimpli_finance_backup_$timestamp.json';
+  }
+
+  String _temporaryRestorePath() {
+    final timestamp = _backupTimestamp(
+      DateTime.now(),
+    );
+
+    return '${Directory.systemTemp.path}${Platform.pathSeparator}'
+        'cimpli_finance_restore_$timestamp.json';
   }
 
   String _backupTimestamp(DateTime dateTime) {
