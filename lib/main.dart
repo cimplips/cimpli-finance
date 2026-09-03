@@ -70,11 +70,10 @@ class ThemeController extends ChangeNotifier {
 class ThemeControllerScope extends InheritedNotifier<ThemeController> {
   const ThemeControllerScope({
     super.key,
+    required super.child,
     required ThemeController controller,
-    required Widget child,
   }) : super(
           notifier: controller,
-          child: child,
         );
 
   static ThemeController of(BuildContext context) {
@@ -110,9 +109,12 @@ class FinanceApp extends StatelessWidget {
     const primaryBlue = Color(0xFF5B7DB1);
     const primaryBlueDark = Color(0xFF8EACD5);
 
-    // -------------------------
+    // ============================================================
     // DARK MODE
-    // -------------------------
+    // ============================================================
+
+    // Background dibuat lebih cerah daripada versi sebelumnya
+    // agar nyaman digunakan dalam waktu lama.
     const darkBackground = Color(0xFF17191D);
     const darkSurface = Color(0xFF202227);
     const darkSurfaceVariant = Color(0xFF30333A);
@@ -267,9 +269,10 @@ class FinanceApp extends StatelessWidget {
       ),
     );
 
-    // -------------------------
+    // ============================================================
     // LIGHT MODE
-    // -------------------------
+    // ============================================================
+
     const lightBackground = Color(0xFFF5F6F8);
     const lightSurface = Color(0xFFFFFFFF);
     const lightSurfaceVariant = Color(0xFFE8EBF0);
@@ -356,26 +359,16 @@ class FinanceApp extends StatelessWidget {
       ),
 
       navigationBarTheme: const NavigationBarThemeData(
-        backgroundColor: Color(0xFFFFFFFF),
+        backgroundColor: Colors.white,
         surfaceTintColor: Colors.transparent,
         indicatorColor: Color(0xFFE3ECFA),
-        selectedIconTheme: IconThemeData(
-          color: primaryBlue,
-        ),
-        unselectedIconTheme: IconThemeData(
-          color: lightSecondaryText,
-        ),
-        selectedLabelTextStyle: TextStyle(
-          color: primaryBlue,
-          fontSize: 12,
-          fontWeight: FontWeight.w700,
-        ),
-        unselectedLabelTextStyle: TextStyle(
-          color: lightSecondaryText,
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-        ),
         elevation: 0,
+        labelTextStyle: WidgetStatePropertyAll(
+          TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
       ),
 
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
